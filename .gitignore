@@ -1,0 +1,9 @@
+*.pyc
+*.pdf
+*~
+._*
+*.swap
+*.so
+*archive*.ui
+doc/_build
+build
