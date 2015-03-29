@@ -2,43 +2,37 @@
 # -*- mode: python -*-
 # Adapted from mpl_toolkits.axes_grid2
 # LICENSE: Python Software Foundation (http://docs.python.org/license.html)
-# https://gist.github.com/matejak/4100881
 
 from matplotlib.offsetbox import AnchoredOffsetbox
 class AnchoredScaleBar(AnchoredOffsetbox):
-    def __init__(self, transform, size=0, label=None, horizontal = True, style = 'dark', loc=4,
+    def __init__(self, transform, sizex=0, sizey=0, labelx=None, labely=None, loc=4,
                  pad=0.1, borderpad=0.1, sep=2, prop=None, **kwargs):
         """
         Draw a horizontal and/or vertical  bar with the size in data coordinate
         of the give axes. A label will be drawn underneath (center-aligned).
 
         - transform : the coordinate frame (typically axes.transData)
-        - sizex,sizey : width / height of the bar, in data units.
-        - label: label for bars; None to omit
-        - horizontal: Whether the bar is horizontal (True) or vertical (False)
-        - style: Whether the bar is dark ('dark') or bright (anything else)
+        - sizex,sizey : width of x,y bar, in data units. 0 to omit
+        - labelx,labely : labels for x,y bars; None to omit
         - loc : position in containing axes
         - pad, borderpad : padding, in fraction of the legend font size (or prop)
         - sep : separation between labels and bars in points.
         - **kwargs : additional arguments passed to base class constructor
         """
-        from matplotlib.offsetbox import AuxTransformBox, VPacker, HPacker, TextArea
-        import matplotlib.patches as mpatches
-        if style == 'dark':
-            textcol = 'k'
-        else:
-            textcol = 'w'
+        from matplotlib.patches import Rectangle
+        from matplotlib.offsetbox import AuxTransformBox, VPacker, HPacker, TextArea, DrawingArea
         bars = AuxTransformBox(transform)
-        endpt = (size, 0) if horizontal else (0, size)
-        art = mpatches.FancyArrowPatch((0, 0), endpt, color = textcol,
-                                       arrowstyle = "|-|")
-        # This doesn't work; why?
-        #                              arrowstyle = mpatches.ArrowStyle.BarAB(1, 60, 1))
-        bars.add_artist(art)
+        if sizex:
+            bars.add_artist(Rectangle((0,0), sizex, 0, fc="none"))
+        if sizey:
+            bars.add_artist(Rectangle((0,0), 0, sizey, fc="none"))
 
-        packer = VPacker if horizontal else HPacker
-        bars = packer(children=[bars, TextArea(label, dict(color = textcol), minimumdescent=False)],
-                       align="center", pad=0, sep=sep)
+        if sizex and labelx:
+            bars = VPacker(children=[bars, TextArea(labelx, minimumdescent=False)],
+                           align="center", pad=0, sep=sep)
+        if sizey and labely:
+            bars = HPacker(children=[TextArea(labely), bars],
+                            align="center", pad=0, sep=sep)
 
         AnchoredOffsetbox.__init__(self, loc, pad=pad, borderpad=borderpad,
                                    child=bars, prop=prop, frameon=False, **kwargs)
