@@ -267,7 +267,7 @@ class HaussIO(object):
             e.g. returned by 'fig.add_suplot(1,1,1)'
         """
         sb_int, sb_px = self.get_scale_bar()
-        scale_text = u"{0:0d} \u03BCm".format(int(sb_int))
+        scale_text = u"{0:0d} $\mu$m".format(int(sb_int))
         ax.plot([self.xpx/10.0,
                  self.xpx/10.0+sb_px],
                 [self.ypx/20.0,
