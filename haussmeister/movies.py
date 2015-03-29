@@ -5,6 +5,7 @@ Module for generating movies from 2p images
 GPLv3
 """
 
+import os
 import sys
 try:
     import subprocess32 as sp

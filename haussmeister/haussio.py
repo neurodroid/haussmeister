@@ -154,7 +154,7 @@ class HaussIO(object):
         """
 
         if norm:
-            normbright = get_normbright(self.get_normframe())
+            normbright = movies.get_normbright(self.get_normframe())
         else:
             normbright = None
 
@@ -164,8 +164,8 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        return make_movie(self.ffmpeg_fn, self.movie_fn, self.fps, normbright,
-                          scalebarframe)
+        return movies.make_movie(self.ffmpeg_fn, self.movie_fn, self.fps, normbright,
+                                 scalebarframe)
 
     def make_movie_extern(self, path_extern, norm=True, scalebar=True):
         """
@@ -187,7 +187,7 @@ class HaussIO(object):
             An html tag containing the complete movie
         """
         if norm:
-            normbright = get_normbright(np.asarray(Image.open(
+            normbright = movies.get_normbright(np.asarray(Image.open(
                 path_extern + "/" + self.basefile + "{0:04d}.tif".format(
                     int(self.nframes/2)))))
         else:
@@ -199,7 +199,7 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        return make_movie(
+        return movies.make_movie(
             path_extern + "/" + self.basefile + "%04d.tif",
             path_extern + ".mp4",
             self.fps,
