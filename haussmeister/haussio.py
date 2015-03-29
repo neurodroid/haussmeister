@@ -336,13 +336,12 @@ class PrairieHaussIO(HaussIO):
                 self.ypx = int(fi.attrib['value'])
             elif fi.attrib['key'] == "pixelsPerLine":
                 self.xpx = int(fi.attrib['value'])
-
-            if fi.attrib['key'] == "micronsPerPixel":
+            elif fi.attrib['key'] == "micronsPerPixel":
                 for child in fi:
                     if child.attrib['index'] == 'XAxis':
                         self.xsize = float(child.attrib['value'])
                     if child.attrib['index'] == 'YAxis':
-                        self.xsize = float(child.attrib['value'])
+                        self.ysize = float(child.attrib['value'])
 
         self.xsize *= self.xpx
         self.ysize *= self.ypx
