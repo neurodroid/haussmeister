@@ -2,6 +2,7 @@
 # -*- mode: python -*-
 # Adapted from mpl_toolkits.axes_grid2
 # LICENSE: Python Software Foundation (http://docs.python.org/license.html)
+# https://gist.github.com/dmeliza/3251476
 
 from matplotlib.offsetbox import AnchoredOffsetbox
 class AnchoredScaleBar(AnchoredOffsetbox):
