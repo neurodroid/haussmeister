@@ -382,5 +382,3 @@ def sima_export_frames(dataset, path, filenames):
             frame.asarray())
 
     os.unlink(mptif_fn)
-
-        
