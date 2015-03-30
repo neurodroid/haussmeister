@@ -73,7 +73,7 @@ class HaussIO(object):
         self.nframes = len(self.timing)
         sys.stdout.write("done\n")
 
-        assert(len(self.filenames) == self.nframes)
+        assert(len(self.filenames) <= self.nframes)
 
     @abc.abstractmethod
     def _get_dimensions(self):
@@ -90,7 +90,6 @@ class HaussIO(object):
         self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
         self.filetrunk = self.dirname + '/' + self.basefile
         self.ffmpeg_fn = self.filetrunk + "%04d.tif"
-        self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
     def get_normframe(self):
         """
@@ -288,6 +287,7 @@ class ThorHaussIO(HaussIO):
             self.xml_name = self.dirname + "/Experiment.xml"
         else:
             self.xml_name = xml_path
+        self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
@@ -327,6 +327,8 @@ class PrairieHaussIO(HaussIO):
             self.xml_name = self.dirname + ".xml"
         else:
             self.xml_name = xml_path
+        # This needs to be done *after* the individual tiffs have been written
+        self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
