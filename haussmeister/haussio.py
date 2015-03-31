@@ -58,7 +58,7 @@ class HaussIO(object):
     """
     def __init__(self, dirname, chan='A', xml_path=None):
 
-        self.dirname = dirname
+        self.dirname = os.path.abspath(dirname)
         self.chan = chan
 
         self._get_filenames(xml_path)
