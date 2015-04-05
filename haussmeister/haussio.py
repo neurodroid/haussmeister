@@ -386,7 +386,7 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     for nf,frame in enumerate(mptif.pages[startIdx:stopIdx]):
         tifffile.imsave(
             path + "/" + \
-            os.path.basename(filenames[nf+startIdx]),
+            os.path.basename(filenames[nf]),
             frame.asarray())
 
     os.unlink(mptif_fn)
