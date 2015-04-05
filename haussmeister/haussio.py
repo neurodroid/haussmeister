@@ -353,7 +353,7 @@ class PrairieHaussIO(HaussIO):
                                 for fi in self.xml_root.find(
                                         "Sequence").findall("Frame")])
 
-def sima_export_frames(dataset, path, filenames):
+def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     """
     Export a sima.ImagingDataset to individual tiffs.
     Works around sima only producing multipage tiffs.
@@ -362,9 +362,15 @@ def sima_export_frames(dataset, path, filenames):
     ----------
     dataset : sima.ImagingDataset
         The sima.ImagingDataset to be exported
-    path : Full path to target directory for exported tiffs
-    filenames : Filenames to be used for the export. While these
-        can be full paths, only the file name part will be used.
+    path : string
+        Full path to target directory for exported tiffs
+    filenames : list of strings
+        Filenames to be used for the export. While these can be 
+        full paths, only the file name part will be used.
+    startIdx : int, optional
+        Index of first frame to be exported (inclusive)
+    stopIdx : int, optional
+        Index of last frame to be exported (exclusive)
     """
     if not os.path.exists(path):
         os.makedirs(path)
@@ -375,10 +381,12 @@ def sima_export_frames(dataset, path, filenames):
 
     mptif_fn = path + "/tmp" + os.path.basename(filenames[0])
     mptif = tifffile.TiffFile(mptif_fn)
-    for nf,frame in enumerate(mptif.pages):
+    if stopIdx is None:
+        stopIdx = len(mptif.pages)
+    for nf,frame in enumerate(mptif.pages[startIdx:stopIdx]):
         tifffile.imsave(
             path + "/" + \
-            os.path.basename(filenames[nf]),
+            os.path.basename(filenames[nf+startIdx]),
             frame.asarray())
 
     os.unlink(mptif_fn)
