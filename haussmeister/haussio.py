@@ -304,7 +304,9 @@ class ThorHaussIO(HaussIO):
                             self.ysize = float(ggrandchild.attrib['subOffsetYMM'])*1e3
 
     def _get_timing(self):
-        self.timing = np.loadtxt(self.dirname + "/timing.txt")
+        self.timing = np.loadtxt(
+            os.path.dirname(self.xml_name) + "/timing.txt")
+
 
 class PrairieHaussIO(HaussIO):
     """
