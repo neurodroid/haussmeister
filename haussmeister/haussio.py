@@ -18,6 +18,7 @@ from sima.misc import tifffile
 
 import movies
 
+
 class HaussIO(object):
     """
     Base class for objects representing 2p imaging data.
@@ -51,7 +52,7 @@ class HaussIO(object):
         Full path and file name trunk for individual tiffs
         (e.g. ``/home/cs/data/ChanA_0001_``)
     ffmpeg_fn : str
-        File name filter (full path) used as input to ffmpeg 
+        File name filter (full path) used as input to ffmpeg
         (e.g. ``/home/cs/data/ChanA_0001_%04d.tif``)
     filenames : list of str
         List of file paths (full paths) of individual tiffs
@@ -101,7 +102,8 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        normframe = self.filetrunk + "{0:04d}.tif".format(int(len(self.filenames)/2))
+        normframe = self.filetrunk + "{0:04d}.tif".format(
+            int(len(self.filenames)/2))
         sample = Image.open(normframe)
         arr = np.asarray(sample, dtype=np.float)
         return arr
@@ -129,11 +131,11 @@ class HaussIO(object):
         sequences = [sima.Sequence.create(
             'TIFFs', [[self.filetrunk + "????.tif"]])]
         if stopIdx is not None:
-            sequences = [seq[:stopIdx,:,:,:,:] for seq in sequences]
+            sequences = [seq[:stopIdx, :, :, :, :] for seq in sequences]
         if startIdx != 0:
-            sequences = [seq[startIdx:,:,:,:,:] for seq in sequences]
+            sequences = [seq[startIdx:, :, :, :, :] for seq in sequences]
         return sima.ImagingDataset(
-            sequences, self.sima_dir, channel_names=[self.chan,])
+            sequences, self.sima_dir, channel_names=[self.chan, ])
 
     def make_movie(self, norm=True, scalebar=True):
         """
@@ -163,8 +165,8 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        return movies.make_movie(self.ffmpeg_fn, self.movie_fn, self.fps, normbright,
-                                 scalebarframe)
+        return movies.make_movie(self.ffmpeg_fn, self.movie_fn, self.fps,
+                                 normbright, scalebarframe)
 
     def make_movie_extern(self, path_extern, norm=True, scalebar=True):
         """
@@ -224,7 +226,7 @@ class HaussIO(object):
         scale_length_px : int
             Scale bar length in pixels
         """
-        
+
         # Reasonable scale bar length (in specimen dimensions, e.g. um)
         # given the width of the image:
         scale_length_float = self.xsize * prop
@@ -251,9 +253,9 @@ class HaussIO(object):
         Save scale bar as png (using file name stored in self.scale_png)
         so that it can be used in a movie
         """
-        scale_length_int, scale_length_px =self.get_scale_bar()
-        movies.save_scale_bar(self.scale_png, scale_length_int, scale_length_px,
-                              self.xpx, self.ypx)
+        scale_length_int, scale_length_px = self.get_scale_bar()
+        movies.save_scale_bar(self.scale_png, scale_length_int,
+                              scale_length_px, self.xpx, self.ypx)
 
     def plot_scale_bar(self, ax):
         """
@@ -277,6 +279,7 @@ class HaussIO(object):
                 scale_text,
                 va='top', ha='center', color='w')
 
+
 class ThorHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with ThorImageLS
@@ -293,15 +296,17 @@ class ThorHaussIO(HaussIO):
         self.xsize, self.ysize = None, None
         self.xpx, self.ypx = None, None
         for child in self.xml_root:
-            if child.tag=="LSM":
+            if child.tag == "LSM":
                 self.xpx = int(child.attrib['pixelX'])
                 self.ypx = int(child.attrib['pixelY'])
-            if child.tag=="Sample":
+            if child.tag == "Sample":
                 for grandchild in child:
-                    if grandchild.tag=="Wells":
+                    if grandchild.tag == "Wells":
                         for ggrandchild in grandchild:
-                            self.xsize = float(ggrandchild.attrib['subOffsetXMM'])*1e3
-                            self.ysize = float(ggrandchild.attrib['subOffsetYMM'])*1e3
+                            self.xsize = float(
+                                ggrandchild.attrib['subOffsetXMM'])*1e3
+                            self.ysize = float(
+                                ggrandchild.attrib['subOffsetYMM'])*1e3
 
     def _get_timing(self):
         self.timing = np.loadtxt(
@@ -321,7 +326,7 @@ class PrairieHaussIO(HaussIO):
             sys.stdout.write("Converting to individual tiffs... ")
             sys.stdout.flush()
             self.mptif = tifffile.TiffFile(self.dirname + ".tif")
-            for nf,frame in enumerate(self.mptif.pages):
+            for nf, frame in enumerate(self.mptif.pages):
                 tifffile.imsave(self.filetrunk + "{0:04d}.tif".format(nf+1),
                                 frame.asarray())
             sys.stdout.write("done\n")
@@ -353,7 +358,8 @@ class PrairieHaussIO(HaussIO):
     def _get_timing(self):
         self.timing = np.array([float(fi.attrib['relativeTime'])
                                 for fi in self.xml_root.find(
-                                        "Sequence").findall("Frame")])
+                                    "Sequence").findall("Frame")])
+
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     """
@@ -367,7 +373,7 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     path : string
         Full path to target directory for exported tiffs
     filenames : list of strings
-        Filenames to be used for the export. While these can be 
+        Filenames to be used for the export. While these can be
         full paths, only the file name part will be used.
     startIdx : int, optional
         Index of first frame to be exported (inclusive)
@@ -385,10 +391,9 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     mptif = tifffile.TiffFile(mptif_fn)
     if stopIdx is None:
         stopIdx = len(mptif.pages)
-    for nf,frame in enumerate(mptif.pages[startIdx:stopIdx]):
+    for nf, frame in enumerate(mptif.pages[startIdx:stopIdx]):
         tifffile.imsave(
-            path + "/" + \
-            os.path.basename(filenames[nf]),
+            path + "/" + os.path.basename(filenames[nf]),
             frame.asarray())
 
     os.unlink(mptif_fn)
