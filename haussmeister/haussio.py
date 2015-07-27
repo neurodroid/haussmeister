@@ -12,6 +12,7 @@ import glob
 import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
+import tables
 
 import sima
 from sima.misc import tifffile
@@ -57,18 +58,24 @@ class HaussIO(object):
     filenames : list of str
         List of file paths (full paths) of individual tiffs
     """
-    def __init__(self, dirname, chan='A', xml_path=None):
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None):
 
         self.dirname = os.path.abspath(dirname)
         self.chan = chan
 
-        self._get_filenames(xml_path)
+        self._get_filenames(xml_path, sync_path)
+        if self.sync_path is None:
+            self.sync_episodes = None
+            self.sync_xml = None
+            self.sync_dt = None
+            self.sync_data = None
 
         sys.stdout.write("Reading experiment settings... ")
         sys.stdout.flush()
         self.xml_root = ET.parse(self.xml_name).getroot()
         self._get_dimensions()
         self._get_timing()
+        self._get_sync()
         self.dt = np.mean(np.diff(self.timing))
         self.fps = 1.0/self.dt
         self.nframes = len(self.timing)
@@ -84,13 +91,18 @@ class HaussIO(object):
     def _get_timing(self):
         return
 
-    def _get_filenames(self, xml_path):
+    @abc.abstractmethod
+    def _get_sync(self):
+        return
+
+    def _get_filenames(self, xml_path, sync_path):
         self.movie_fn = self.dirname + ".mp4"
         self.scale_png = self.dirname + "_scale.png"
         self.sima_dir = self.dirname + ".sima"
         self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
         self.filetrunk = self.dirname + '/' + self.basefile
         self.ffmpeg_fn = self.filetrunk + "%04d.tif"
+        self.sync_path = sync_path
 
     def get_normframe(self):
         """
@@ -284,8 +296,8 @@ class ThorHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with ThorImageLS
     """
-    def _get_filenames(self, xml_path):
-        super(ThorHaussIO, self)._get_filenames(xml_path)
+    def _get_filenames(self, xml_path, sync_path):
+        super(ThorHaussIO, self)._get_filenames(xml_path, sync_path)
         if xml_path is None:
             self.xml_name = self.dirname + "/Experiment.xml"
         else:
@@ -312,14 +324,43 @@ class ThorHaussIO(HaussIO):
         self.timing = np.loadtxt(
             os.path.dirname(self.xml_name) + "/timing.txt")
 
+    def _get_sync(self):
+        if self.sync_path is None:
+            return
+
+        self.sync_episodes = sorted(
+            glob.glob(self.sync_path + "/Episode*.h5"))
+        self.sync_xml = self.sync_path + "/ThorRealTimeDataSettings.xml"
+        self.sync_root = ET.parse(self.sync_xml).getroot()
+        for child in self.sync_root:
+            if child.tag == "DaqDevices":
+                for cchild in child:
+                    if cchild.tag == "AcquireBoard":
+                        for ccchild in cchild:
+                            if ccchild.tag == "DataChannel":
+                                if "VR" in ccchild.attrib['alias']:
+                                    board = cchild
+        for cboard in board:
+            if cboard.tag == "SampleRate":
+                if cboard.attrib['enable']:
+                    self.sync_dt = 1.0/float(cboard.attrib['rate']) * 1e3
+
+        self.sync_data = []
+        for episode in self.sync_episodes:
+            self.sync_data.append({})
+            h5 = tables.open_file(episode)
+            for el in h5.root.DI:
+                self.sync_data[-1][el.name] = np.squeeze(el)
+            h5.close()
+
 
 class PrairieHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with Prairie scopes
     """
 
-    def _get_filenames(self, xml_path):
-        super(PrairieHaussIO, self)._get_filenames(xml_path)
+    def _get_filenames(self, xml_path, sync_path):
+        super(PrairieHaussIO, self)._get_filenames(xml_path, sync_path)
         if not os.path.exists(self.filetrunk + "{0:04d}.tif".format(1)):
             if not os.path.exists(self.dirname):
                 os.makedirs(self.dirname)
@@ -359,6 +400,10 @@ class PrairieHaussIO(HaussIO):
         self.timing = np.array([float(fi.attrib['relativeTime'])
                                 for fi in self.xml_root.find(
                                     "Sequence").findall("Frame")])
+
+    def _get_sync(self):
+        if self.sync_path is None:
+            return
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
