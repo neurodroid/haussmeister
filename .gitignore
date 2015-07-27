@@ -7,3 +7,5 @@
 *archive*.ui
 doc/_build
 build
+dist
+*.egg-info
