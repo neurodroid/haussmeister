@@ -67,7 +67,6 @@ class HaussIO(object):
         if self.sync_path is None:
             self.sync_episodes = None
             self.sync_xml = None
-            self.sync_dt = None
 
         sys.stdout.write("Reading experiment settings... ")
         sys.stdout.flush()
@@ -334,6 +333,8 @@ class ThorHaussIO(HaussIO):
         self.sync_episodes = sorted(
             glob.glob(self.sync_path + "/Episode*.h5"))
         self.sync_xml = self.sync_path + "/ThorRealTimeDataSettings.xml"
+
+    def _find_dt(self, name):
         self.sync_root = ET.parse(self.sync_xml).getroot()
         for child in self.sync_root:
             if child.tag == "DaqDevices":
@@ -341,25 +342,29 @@ class ThorHaussIO(HaussIO):
                     if cchild.tag == "AcquireBoard":
                         for ccchild in cchild:
                             if ccchild.tag == "DataChannel":
-                                if "VR" in ccchild.attrib['alias']:
+                                if ccchild.attrib['alias'] == name:
                                     board = cchild
         for cboard in board:
             if cboard.tag == "SampleRate":
-                if cboard.attrib['enable']:
-                    self.sync_dt = 1.0/float(cboard.attrib['rate']) * 1e3
+                if cboard.attrib['enable'] == "1":
+                    return 1.0/float(cboard.attrib['rate']) * 1e3
 
     def read_sync(self):
         if self.sync_path is None:
             return None
 
         sync_data = []
+        sync_dt = []
         for episode in self.sync_episodes:
             sync_data.append({})
+            sync_dt.append({})
             h5 = tables.open_file(episode)
             for el in h5.root.DI:
                 sync_data[-1][el.name] = np.squeeze(el)
+                sync_dt[-1][el.name] = self._find_dt(el.name)
             h5.close()
-        return sync_data
+
+        return sync_data, sync_dt
 
 
 class PrairieHaussIO(HaussIO):
