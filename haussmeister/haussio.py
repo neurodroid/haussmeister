@@ -68,7 +68,6 @@ class HaussIO(object):
             self.sync_episodes = None
             self.sync_xml = None
             self.sync_dt = None
-            self.sync_data = None
 
         sys.stdout.write("Reading experiment settings... ")
         sys.stdout.flush()
@@ -93,6 +92,10 @@ class HaussIO(object):
 
     @abc.abstractmethod
     def _get_sync(self):
+        return
+
+    @abc.abstractmethod
+    def read_sync(self):
         return
 
     def _get_filenames(self, xml_path, sync_path):
@@ -345,13 +348,18 @@ class ThorHaussIO(HaussIO):
                 if cboard.attrib['enable']:
                     self.sync_dt = 1.0/float(cboard.attrib['rate']) * 1e3
 
-        self.sync_data = []
+    def read_sync(self):
+        if self.sync_path is None:
+            return None
+
+        sync_data = []
         for episode in self.sync_episodes:
-            self.sync_data.append({})
+            sync_data.append({})
             h5 = tables.open_file(episode)
             for el in h5.root.DI:
-                self.sync_data[-1][el.name] = np.squeeze(el)
+                sync_data[-1][el.name] = np.squeeze(el)
             h5.close()
+        return sync_data
 
 
 class PrairieHaussIO(HaussIO):
@@ -404,6 +412,10 @@ class PrairieHaussIO(HaussIO):
     def _get_sync(self):
         if self.sync_path is None:
             return
+
+    def read_sync(self):
+        raise NotImplementedError(
+            "Synchronization readout not implemented for Prairie files yet")
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
