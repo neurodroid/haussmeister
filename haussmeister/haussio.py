@@ -151,14 +151,15 @@ class HaussIO(object):
         return sima.ImagingDataset(
             sequences, self.sima_dir, channel_names=[self.chan, ])
 
-    def make_movie(self, norm=True, scalebar=True):
+    def make_movie(self, norm=16.0, scalebar=True):
         """
         Produce a movie of the experiment
 
         Parameters
         ----------
-        norm : bool, optional
-            Normalize min, median and max brightness to 0, 0.5 and 1.0
+        norm : float, optional
+            Normalize min, norm*median and max brightness to 0, 0.5 and 1.0
+            None for no normalization. Default: 16.0
         scalebar : bool, optional
             Show a scale bar in the movie.
 
@@ -168,8 +169,9 @@ class HaussIO(object):
             An html tag containing the complete movie
         """
 
-        if norm:
-            normbright = movies.get_normbright(self.get_normframe())
+        if norm is not None:
+            normbright = movies.get_normbright(
+                self.get_normframe(), mid=norm)
         else:
             normbright = None
 
@@ -182,7 +184,7 @@ class HaussIO(object):
         return movies.make_movie(self.ffmpeg_fn, self.movie_fn, self.fps,
                                  normbright, scalebarframe)
 
-    def make_movie_extern(self, path_extern, norm=True, scalebar=True):
+    def make_movie_extern(self, path_extern, norm=16.0, scalebar=True):
         """
         Produce a movie from a directory with individual tiffs, using
         the present experimental settings for scale bar and frame rate
@@ -191,8 +193,9 @@ class HaussIO(object):
         ----------
         path_extern : str
             Full path to the directory that contains the individual tiffs
-        norm : bool, optional
-            Normalize min, median and max brightness to 0, 0.5 and 1.0
+        norm : float, optional
+            Normalize min, norm*median and max brightness to 0, 0.5 and 1.0
+            None for no normalization. Default: 16.0
         scalebar : bool, optional
             Show a scale bar in the movie.
 

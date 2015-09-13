@@ -20,7 +20,7 @@ from base64 import b64encode
 FFMPEG = "ffmpeg"
 
 
-def get_normbright(arr, mid=4.0):
+def get_normbright(arr, mid=16.0):
     """
     Create 3-point calibration curve. Returns 3 points of input brightness
     that will be mapped to 0, 0.5, and 1.0 output
@@ -30,7 +30,7 @@ def get_normbright(arr, mid=4.0):
     arr : numpy.ndarray
         Frame that will be used for calibration
     mid : float, optional
-        Midpoint value scaling. Default: 4.0
+        Midpoint value scaling. Default: 16.0
 
     Returns
     -------
