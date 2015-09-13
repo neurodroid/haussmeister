@@ -88,7 +88,7 @@ def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
 
 
 def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
-               verbose=False, scale=None):
+               verbose=False, scale=None, quality=28):
     """
     Produce a movie from a directory with individual tiffs
     at given frame rate
@@ -108,8 +108,10 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
         Full path to png with scale bar
     verbose : bool, optional
         Print progress of ffmpeg
-    scale : 2-tuple of ints
-        Rescale movie to given width and height in pixels
+    scale : 2-tuple of ints, optional
+        Rescale movie to given width and height in pixels. Default: None
+    quality : int, optional
+        crf value to be passed to ffmpeg. Default: 28
 
     Returns
     -------
@@ -142,7 +144,9 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
 
     cmd = "{0} -y -r {1} -i {2} {3} {4} ".format(
         FFMPEG, fps, tiff_input, addin, sfilter)
-    cmd += "-an -vcodec libx264 -preset slow -crf 27 -pix_fmt yuv420p "
+    cmd += \
+        "-an -vcodec libx264 -preset slow -crf {0} -pix_fmt yuv420p ".format(
+        quality)
     cmd += "-metadata author=\"(c) 2015 Christoph Schmidt-Hieber\" {0}".format(
         out_file)
 
