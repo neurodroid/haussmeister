@@ -88,7 +88,7 @@ def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
 
 
 def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
-               verbose=False, scale=None, quality=25):
+               verbose=False, scale=None, quality=30):
     """
     Produce a movie from a directory with individual tiffs
     at given frame rate
@@ -111,7 +111,7 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
     scale : 2-tuple of ints, optional
         Rescale movie to given width and height in pixels. Default: None
     quality : int, optional
-        crf value to be passed to ffmpeg. Default: 25
+        crf value to be passed to ffmpeg. Default: 30
 
     Returns
     -------
