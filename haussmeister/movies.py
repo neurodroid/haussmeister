@@ -19,6 +19,7 @@ from base64 import b64encode
 
 FFMPEG = "ffmpeg"
 
+
 def get_normbright(arr):
     """
     Create 3-point calibration curve. Returns 3 points of input brightness
@@ -38,6 +39,7 @@ def get_normbright(arr):
     return(float(np.min(arr))/2**16,
            8.0*float(np.median(arr)-np.min(arr))/2**16,
            float(np.max(arr))/2**16)
+
 
 def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
     """
@@ -66,8 +68,8 @@ def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
     im = Image.new("RGBA", (xpx*aa, ypx*aa))
     draw = ImageDraw.Draw(im)
 
-    draw.line([((xpx-margin_x-scale_length_px)*aa, (ypx*0.9)*aa), 
-               ((xpx-margin_x)*aa, (ypx*0.9)*aa)], 
+    draw.line([((xpx-margin_x-scale_length_px)*aa, (ypx*0.9)*aa),
+               ((xpx-margin_x)*aa, (ypx*0.9)*aa)],
               width=int(ypx/125.0)*aa, fill="white")
 
     # get a font
@@ -75,14 +77,16 @@ def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
         os.path.join(os.path.dirname(os.path.abspath(__file__)),
                      'data/FreeSansBold.ttf'), 24*aa)
     w, h = draw.textsize(scale_text, font=fnt)
-    draw.text(((xpx - margin_x - scale_length_px/2.0)*aa - w/2.0, (ypx*0.91)*aa), 
-              scale_text, fill="white", font=fnt)
+    draw.text(((xpx - margin_x - scale_length_px/2.0)*aa - w/2.0,
+               (ypx*0.91)*aa), scale_text, fill="white", font=fnt)
 
     im = im.resize((xpx, ypx), Image.ANTIALIAS)
 
     im.save(png_name)
 
-def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None, verbose=False, scale=None):
+
+def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
+               verbose=False, scale=None):
     """
     Produce a movie from a directory with individual tiffs
     at given frame rate
@@ -90,12 +94,12 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None, v
     Parameters
     ----------
     tiff_trunk : str
-        File name filter (full path) used as input to ffmpeg 
+        File name filter (full path) used as input to ffmpeg
         (e.g. ``/home/cs/data/ChanA_0001_%04d.tif``)
     out_file : str
         Full path to movie file name
     fps : float
-        Acquisition rate of tiffs in frames per second 
+        Acquisition rate of tiffs in frames per second
     normbright : 3-tuple of floats, optional
         Brightness adjustment curve; see get_normbright() for format
     scalebarframe : str, optional
@@ -112,7 +116,8 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None, v
     """
 
     addin = ""
-    if scale is not None or normbright is not None or scalebarframe is not None:
+    if scale is not None or normbright is not None or \
+       scalebarframe is not None:
         sfilter = "-filter_complex "
     else:
         sfilter = ""
@@ -126,10 +131,10 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None, v
         sfilter += prev + "curves=all='{0}/0 {1}/0.5 {2}/1'".format(
             normbright[0], normbright[1], normbright[2])
         prev = "[bright];[bright]"
-        
+
     if scalebarframe is not None:
         addin = "-i {0}".format(scalebarframe)
-        sfilter +=  prev + "[1:v]overlay=0:0"
+        sfilter += prev + "[1:v]overlay=0:0"
 
     tiff_input = tiff_trunk
 
@@ -138,7 +143,7 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None, v
     cmd += "-an -vcodec libx264 -preset slow -crf 27 -pix_fmt yuv420p "
     cmd += "-metadata author=\"(c) 2015 Christoph Schmidt-Hieber\" {0}".format(
         out_file)
-    
+
     sys.stdout.write(cmd)
     cmd_split = shlex.split(cmd)
     sys.stdout.write("\nCreating movie...")
@@ -161,9 +166,10 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None, v
 
     return html_movie(out_file)
 
+
 def html_movie(fn):
     """
-    Converts an mp4 movie to an html tag containing 
+    Converts an mp4 movie to an html tag containing
     the complete encoded movie
 
     Parameters
@@ -176,9 +182,11 @@ def html_movie(fn):
     html_movie : str
         An html tag containing the complete movie
     """
-    
+
     video = open(fn, "rb").read()
     video_encoded = b64encode(video)
-    video_tag = '<video controls alt="test" src="data:video/mp4;base64,{0}">'.format(video_encoded)
+    video_tag = \
+        '<video controls alt="test" src="data:video/mp4;base64,{0}">'.format(
+            video_encoded)
 
     return video_tag
