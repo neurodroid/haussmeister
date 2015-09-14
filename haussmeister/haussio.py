@@ -151,7 +151,7 @@ class HaussIO(object):
         return sima.ImagingDataset(
             sequences, self.sima_dir, channel_names=[self.chan, ])
 
-    def make_movie(self, norm=16.0, scalebar=True):
+    def make_movie(self, norm=16.0, scalebar=True, crf=28.0):
         """
         Produce a movie of the experiment
 
@@ -162,6 +162,8 @@ class HaussIO(object):
             None for no normalization. Default: 16.0
         scalebar : bool, optional
             Show a scale bar in the movie.
+        crf : int, optional
+            crf value to be passed to ffmpeg. Default: 28
 
         Returns
         -------
@@ -182,9 +184,10 @@ class HaussIO(object):
             scalebarframe = None
 
         return movies.make_movie(self.ffmpeg_fn, self.movie_fn, self.fps,
-                                 normbright, scalebarframe)
+                                 normbright, scalebarframe, crf=crf)
 
-    def make_movie_extern(self, path_extern, norm=16.0, scalebar=True):
+    def make_movie_extern(self, path_extern, norm=16.0, scalebar=True,
+                          crf=28):
         """
         Produce a movie from a directory with individual tiffs, using
         the present experimental settings for scale bar and frame rate
@@ -198,6 +201,8 @@ class HaussIO(object):
             None for no normalization. Default: 16.0
         scalebar : bool, optional
             Show a scale bar in the movie.
+        crf : int, optional
+            crf value to be passed to ffmpeg. Default: 28
 
         Returns
         -------
@@ -223,7 +228,8 @@ class HaussIO(object):
             self.fps,
             normbright,
             scalebarframe,
-            scale=(self.xpx, self.ypx))
+            scale=(self.xpx, self.ypx),
+            crf=crf)
 
     def get_scale_bar(self, prop=1/8.0):
         """
