@@ -17,7 +17,7 @@ import tables
 import sima
 from sima.misc import tifffile
 
-import movies
+from . import movies
 
 
 class HaussIO(object):
