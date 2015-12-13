@@ -5,6 +5,8 @@ Module for importing and exporting 2p imaging datasets
 GPLv3
 """
 
+from __future__ import absolute_import
+
 import os
 import sys
 import abc
@@ -17,7 +19,10 @@ import tables
 import sima
 from sima.misc import tifffile
 
-from . import movies
+try:
+    from . import movies
+except ValueError:
+    import movies
 
 
 class HaussIO(object):

@@ -8,3 +8,5 @@ Haussmeister usage.
 
    haussio
    movies
+   pipeline2p
+   spectral

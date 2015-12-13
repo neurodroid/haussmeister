@@ -6,6 +6,7 @@ pipeline
 GPLv3
 """
 from __future__ import print_function
+from __future__ import absolute_import
 
 import os
 import sys
@@ -26,17 +27,22 @@ import matplotlib.gridspec as gridspec
 
 import cv2
 
-import haussio
-import movies
-import scalebars
-
 import sima
 import sima.motion
 import sima.segment
 import sima.spikes
 from sima.ROI import ROIList
 
-import spectral
+try:
+    from . import haussio
+    from . import movies
+    from . import scalebars
+    from . import spectral
+except ValueError:
+    import haussio
+    import movies
+    import scalebars
+    import spectral
 
 import stfio
 from stfio import plot as stfio_plot
