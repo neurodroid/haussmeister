@@ -8,6 +8,8 @@ setup(name='haussmeister',
           'numpy',
           'pillow',
           'tables',
-          'sima'
+          'sima',
+          'stfio',
+          'pyfftw'
       ]
       )
