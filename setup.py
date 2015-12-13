@@ -1,6 +1,6 @@
 from setuptools import setup
 setup(name='haussmeister',
-      version='0.1.0',
+      version='0.2.0',
       packages=['haussmeister'],
       package_dir={'haussmeister': 'haussmeister'},
       package_data={'haussmeister': ['data/*.ttf']},
@@ -9,7 +9,5 @@ setup(name='haussmeister',
           'pillow',
           'tables',
           'sima',
-          'stfio',
-          'pyfftw'
       ]
       )
