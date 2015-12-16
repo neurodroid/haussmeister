@@ -325,9 +325,9 @@ def activity_level(data, infer_threshold=0.15, roi_subset=""):
     return active, spikes[0].shape[0]
 
 
-def process_data(data, dt, detrend=False):
+def process_data(data, dt, detrend=False, base_fraction=0.05):
     """
-    Compute \delta F / F_0 and detrend if required
+    Compute \Delta F / F_0 and detrend if required
 
     Parameters
     ----------
@@ -337,6 +337,9 @@ def process_data(data, dt, detrend=False):
         Frame interval
     detrend : bool, optional
         Detrend fluorescence traces. Default: False
+    base_fraction : float, optional
+        Fraction of data amplitude for F_0 computation. If None, F_0 is set
+        to data.mean(). Default: 0.05
 
     Returns
     -------
@@ -345,7 +348,13 @@ def process_data(data, dt, detrend=False):
     """
     # return highpass(
     #     (data-data.mean())/data.mean() * 100.0, dt, highpass_f)
-    ret_data = (data-data.mean())/data.mean() * 100.0
+    if base_fraction is None:
+        F0 = data.mean()
+    else:
+        base_threshold = base_fraction*(data.max()-data.min()) + data.min()
+        F0 = data[data < base_threshold].mean()
+
+    ret_data = (data-F0)/F0 * 100.0
     if detrend:
         ret_data = signal.detrend(ret_data,
                                   bp=[0, int(data.shape[0]/4.0),
