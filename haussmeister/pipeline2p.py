@@ -338,8 +338,8 @@ def process_data(data, dt, detrend=False, base_fraction=0.05):
     detrend : bool, optional
         Detrend fluorescence traces. Default: False
     base_fraction : float, optional
-        Fraction of data amplitude for F_0 computation. If None, F_0 is set
-        to data.mean(). Default: 0.05
+        Bottom fraction to be used for F_0 computation. If None, F_0 is set to
+        data.mean(). Default: 0.05
 
     Returns
     -------
@@ -351,10 +351,11 @@ def process_data(data, dt, detrend=False, base_fraction=0.05):
     if base_fraction is None:
         F0 = data.mean()
     else:
-        base_threshold = base_fraction*(data.max()-data.min()) + data.min()
-        F0 = data[data < base_threshold].mean()
+        F0 = data[data.argsort()][
+            :int(np.round(base_fraction*data.shape[0]))].mean()
 
     ret_data = (data-F0)/F0 * 100.0
+
     if detrend:
         ret_data = signal.detrend(ret_data,
                                   bp=[0, int(data.shape[0]/4.0),
