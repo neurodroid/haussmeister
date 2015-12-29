@@ -353,7 +353,9 @@ class ThorHaussIO(HaussIO):
 
     def _get_timing(self):
         if "?" in self.dirname:
-            timings = sorted(glob.glob(self.dirname + "/timing.txt"))
+            dirname_wildcard = self.dirname[
+                :len(os.path.dirname(self.xml_name))] + "/timing.txt"
+            timings = sorted(glob.glob(dirname_wildcard))
             self.timing = np.loadtxt(timings[0])
             for timing in timings[1:]:
                 self.timing = np.concatenate([
