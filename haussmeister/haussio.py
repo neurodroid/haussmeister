@@ -66,6 +66,7 @@ class HaussIO(object):
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None):
 
         self.dirname = os.path.abspath(dirname)
+        self.dirname_comp = self.dirname.replace("?", "n")
         self.chan = chan
 
         self._get_filenames(xml_path, sync_path)
@@ -103,12 +104,15 @@ class HaussIO(object):
         return
 
     def _get_filenames(self, xml_path, sync_path):
-        self.movie_fn = self.dirname + ".mp4"
-        self.scale_png = self.dirname + "_scale.png"
-        self.sima_dir = self.dirname + ".sima"
+        self.movie_fn = self.dirname_comp + ".mp4"
+        self.scale_png = self.dirname_comp + "_scale.png"
+        self.sima_dir = self.dirname_comp + ".sima"
         self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
         self.filetrunk = self.dirname + '/' + self.basefile
-        self.ffmpeg_fn = self.filetrunk + "%04d.tif"
+        if "?" in self.filetrunk:
+            self.ffmpeg_fn = "'" + self.filetrunk + "????.tif'"
+        else:
+            self.ffmpeg_fn = self.filetrunk + "%04d.tif"
         self.sync_path = sync_path
 
     def get_normframe(self):
@@ -121,8 +125,17 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        normframe = self.filetrunk + "{0:04d}.tif".format(
-            int(len(self.filenames)/2))
+        if "?" in self.dirname:
+            dirs = sorted(glob.glob(self.dirname))
+            normdir = dirs[int(np.round(len(dirs)/2.0))]
+            normtrunk = self.filetrunk.replace(
+                self.dirname, normdir)
+            nframes = len(glob.glob(normtrunk + "????.tif"))
+            normframe = normtrunk + "{0:04d}.tif".format(
+                int(nframes/2))
+        else:
+            normframe = self.filetrunk + "{0:04d}.tif".format(
+                int(len(self.filenames)/2))
         sample = Image.open(normframe)
         arr = np.asarray(sample, dtype=np.float)
         return arr
@@ -318,6 +331,8 @@ class ThorHaussIO(HaussIO):
             self.xml_name = self.dirname + "/Experiment.xml"
         else:
             self.xml_name = xml_path
+        if "?" in self.xml_name:
+            self.xml_name = sorted(glob.glob(self.xml_name))[0]
         self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
     def _get_dimensions(self):
@@ -337,8 +352,15 @@ class ThorHaussIO(HaussIO):
                                 ggrandchild.attrib['subOffsetYMM'])*1e3
 
     def _get_timing(self):
-        self.timing = np.loadtxt(
-            os.path.dirname(self.xml_name) + "/timing.txt")
+        if "?" in self.dirname:
+            timings = sorted(glob.glob(self.dirname + "/timing.txt"))
+            self.timing = np.loadtxt(timings[0])
+            for timing in timings[1:]:
+                self.timing = np.concatenate([
+                    self.timing, np.loadtxt(timing)+self.timing[-1]])
+        else:
+            self.timing = np.loadtxt(
+                os.path.dirname(self.xml_name) + "/timing.txt")
 
     def _get_sync(self):
         if self.sync_path is None:

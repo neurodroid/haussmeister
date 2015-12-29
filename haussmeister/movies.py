@@ -142,8 +142,12 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
 
     tiff_input = tiff_trunk
 
-    cmd = "{0} -y -r {1} -i {2} {3} {4} ".format(
-        FFMPEG, fps, tiff_input, addin, sfilter)
+    cmd = "{0} -y -r {1} ".format(
+        FFMPEG, fps)
+    if "?" in tiff_input:
+        cmd += "-pattern_type glob "
+    cmd += "-i {0} {1} {2} ".format(
+        tiff_input, addin, sfilter)
     cmd += \
         "-an -vcodec libx264 -preset slow -crf {0} -pix_fmt yuv420p ".format(
             crf)

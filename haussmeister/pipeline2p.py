@@ -102,6 +102,7 @@ class ThorExperiment(object):
         self.roi_translate = roi_translate
         self.root_path = root_path
         self.data_path = self.root_path + self.fn2p
+        self.data_path_comp = self.data_path.replace("?", "n")
 
         if self.fnsync is not None:
             self.sync_path = os.path.dirname(self.data_path) + "/" + \
@@ -139,21 +140,21 @@ class ThorExperiment(object):
                 granularity='column', max_displacement=[20, 30],
                 n_processes=4, verbose=True)
 
-        self.sima_mc_dir = self.data_path + self.mc_suffix + ".sima"
+        self.sima_mc_dir = self.data_path_comp + self.mc_suffix + ".sima"
 
-        self.mc_tiff_dir = self.data_path + self.mc_suffix
+        self.mc_tiff_dir = self.data_path_comp + self.mc_suffix
 
-        self.movie_mc_fn = self.data_path + self.mc_suffix + ".mp4"
+        self.movie_mc_fn = self.data_path_comp + self.mc_suffix + ".mp4"
 
         # Do not add translation string to original roi file name
-        self.roi_path_mc = self.data_path + self.mc_suffix + '/RoiSet' + \
+        self.roi_path_mc = self.data_path_comp + self.mc_suffix + '/RoiSet' + \
             self.roi_subset + '.zip'
 
         if self.roi_translate is not None:
             self.roi_subset += "_{0}_{1}".format(
                 self.roi_translate[0], self.roi_translate[1])
 
-        self.spikefn = self.data_path + self.mc_suffix + "_infer" + \
+        self.spikefn = self.data_path_comp + self.mc_suffix + "_infer" + \
             self.roi_subset
         self.detrend = detrend
         if self.detrend:
@@ -161,7 +162,7 @@ class ThorExperiment(object):
         else:
             self.spikefn += ".pkl"
 
-        self.proj_fn = self.data_path + self.mc_suffix + "_proj.npy"
+        self.proj_fn = self.data_path_comp + self.mc_suffix + "_proj.npy"
 
     def to_haussio(self, mc=False):
         """
@@ -204,7 +205,7 @@ class ThorExperiment(object):
             suffix = self.mc_suffix
         else:
             suffix = ""
-        sima_dir = self.data_path + suffix + ".sima"
+        sima_dir = self.data_path_comp + suffix + ".sima"
         if not os.path.exists(sima_dir):
             raise IOError(
                 "Couldn't find sima file " + sima_dir)
@@ -992,7 +993,7 @@ def get_vr_data(data, measured, spikes):
             "events_matlab": events_matlab,
             'fluomap': fluomap,
             'infermap': infermap}
-        savemat(data.data_path + "_vr.mat", vrdict)
+        savemat(data.data_path_comp + "_vr.mat", vrdict)
         return vrdict
     else:
         return None
@@ -1016,7 +1017,7 @@ def thor_batch_roi_ij(data, infer=True, infer_threshold=0.15):
 
     vrdict = get_vr_data(data, measured, spikes)
 
-    plot_rois(rois, measured, experiment, seq, data.data_path,
+    plot_rois(rois, measured, experiment, seq, data.data_path_comp,
               pdf_suffix="_ij", spikes=spikes, region=data.area2p,
               infer_threshold=infer_threshold, vrdict=vrdict)
 
@@ -1065,7 +1066,7 @@ def thor_batch_roi_thunder(data, tsc, infer=True, infer_threshold=0.15,
 
     vrdict = get_vr_data(data, measured, spikes)
 
-    plot_rois(rois, measured, experiment, seq, data.data_path,
+    plot_rois(rois, measured, experiment, seq, data.data_path_comp,
               pdf_suffix="_thunder", spikes=spikes, region=data.area2p,
               infer_threshold=infer_threshold, vrdict=vrdict)
 
