@@ -62,12 +62,15 @@ class HaussIO(object):
         (e.g. ``/home/cs/data/ChanA_0001_%04d.tif``)
     filenames : list of str
         List of file paths (full paths) of individual tiffs
+    width_idx : str
+        Width of index string in file names
     """
-    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None):
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4):
 
         self.dirname = os.path.abspath(dirname)
-        self.dirname_comp = self.dirname.replace("?", "n")
         self.chan = chan
+        self.width_idx = width_idx
 
         self._get_filenames(xml_path, sync_path)
         if self.sync_path is None:
@@ -104,16 +107,20 @@ class HaussIO(object):
         return
 
     def _get_filenames(self, xml_path, sync_path):
+        self.dirname_comp = self.dirname.replace("?", "n")
         self.movie_fn = self.dirname_comp + ".mp4"
         self.scale_png = self.dirname_comp + "_scale.png"
         self.sima_dir = self.dirname_comp + ".sima"
         self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
         self.filetrunk = self.dirname + '/' + self.basefile
-        if "?" in self.filetrunk:
-            self.ffmpeg_fn = "'" + self.filetrunk + "????.tif'"
-        else:
-            self.ffmpeg_fn = self.filetrunk + "%04d.tif"
         self.sync_path = sync_path
+        if "?" in self.filetrunk:
+            self.dirnames = sorted(glob.glob(self.dirname))
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.dirnames = [self.dirname]
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def get_normframe(self):
         """
@@ -126,15 +133,13 @@ class HaussIO(object):
             Frame converted to numpy.ndarray
         """
         if "?" in self.dirname:
-            dirs = sorted(glob.glob(self.dirname))
-            normdir = dirs[int(np.round(len(dirs)/2.0))]
+            normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
             normtrunk = self.filetrunk.replace(
                 self.dirname, normdir)
-            nframes = len(glob.glob(normtrunk + "????.tif"))
-            normframe = normtrunk + "{0:04d}.tif".format(
-                int(nframes/2))
+            nframes = len(glob.glob(normdir + "/" + self.basefile + "*.tif"))
+            normframe = normtrunk + self.format_index(int(nframes/2)) + ".tif"
         else:
-            normframe = self.filetrunk + "{0:04d}.tif".format(
+            normframe = self.filetrunk + self.format_index(
                 int(len(self.filenames)/2))
         sample = Image.open(normframe)
         arr = np.asarray(sample, dtype=np.float)
@@ -161,7 +166,7 @@ class HaussIO(object):
         if stopIdx is None:
             stopIdx = self.nframes
         sequences = [sima.Sequence.create(
-            'TIFFs', [[self.filetrunk + "????.tif"]])]
+            'TIFFs', [[self.filetrunk + self.format_index("?") + ".tif"]])]
         if stopIdx is not None:
             sequences = [seq[:stopIdx, :, :, :, :] for seq in sequences]
         if startIdx != 0:
@@ -205,7 +210,7 @@ class HaussIO(object):
                                  normbright, scalebarframe, crf=crf)
 
     def make_movie_extern(self, path_extern, norm=16.0, scalebar=True,
-                          crf=28):
+                          crf=28, width_idx=None):
         """
         Produce a movie from a directory with individual tiffs, using
         the present experimental settings for scale bar and frame rate
@@ -221,6 +226,8 @@ class HaussIO(object):
             Show a scale bar in the movie.
         crf : int, optional
             crf value to be passed to ffmpeg. Default: 28
+        width_idx : int, optional
+            Override default index string width. Default: None
 
         Returns
         -------
@@ -229,8 +236,8 @@ class HaussIO(object):
         """
         if norm:
             normbright = movies.get_normbright(np.asarray(Image.open(
-                path_extern + "/" + self.basefile + "{0:04d}.tif".format(
-                    int(self.nframes/2)))))
+                path_extern + "/" + self.basefile + self.format_index(
+                    int(self.nframes/2), width_idx=width_idx) + ".tif")))
         else:
             normbright = None
 
@@ -241,7 +248,8 @@ class HaussIO(object):
             scalebarframe = None
 
         return movies.make_movie(
-            path_extern + "/" + self.basefile + "%04d.tif",
+            path_extern + "/" + self.basefile + self.format_index(
+                "%", width_idx=width_idx) + ".tif",
             path_extern + ".mp4",
             self.fps,
             normbright,
@@ -320,6 +328,37 @@ class HaussIO(object):
                 scale_text,
                 va='top', ha='center', color='w')
 
+    def format_index(self, n, width_idx=None):
+        """
+        Return formatted index string
+
+        Parameters
+        ----------
+        n : int or str
+            Index as int, or "?" (returns series of "?"), or "%" (returns
+            old-school formatter)
+        width_idx : int, optional
+            Override default width of index string. Default: None
+
+        Returns
+        -------
+        format : string
+            Formatted index string, or series of "?", or old-school formatter
+        """
+        if width_idx is None:
+            width_idx = self.width_idx
+
+        if isinstance(n, str):
+            if n == "?":
+                ret = "?"
+                for nq in range(width_idx-1):
+                    ret += "?"
+                return ret
+            elif n == "%":
+                return "%0{0:01d}d".format(width_idx)
+        else:
+            return "{0:0{width}d}".format(n, width=width_idx)
+
 
 class ThorHaussIO(HaussIO):
     """
@@ -333,7 +372,18 @@ class ThorHaussIO(HaussIO):
             self.xml_name = xml_path
         if "?" in self.xml_name:
             self.xml_name = sorted(glob.glob(self.xml_name))[0]
-        self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
+        if "?" in self.dirname:
+            self.filenames = []
+            for dirname in self.dirnames:
+                filenames_orig = sorted(glob.glob(
+                    dirname + "/" + self.basefile + "*.tif"))
+                nf = len(self.filenames)
+                self.filenames += [
+                    self.dirname_comp + "/" + self.basefile +
+                    self.format_index(nf+nfno) + ".tif"
+                    for nfno, fno in enumerate(filenames_orig)]
+        else:
+            self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
@@ -368,12 +418,14 @@ class ThorHaussIO(HaussIO):
         if self.sync_path is None:
             return
 
-        self.sync_episodes = sorted(
-            glob.glob(self.sync_path + "/Episode*.h5"))
-        self.sync_xml = self.sync_path + "/ThorRealTimeDataSettings.xml"
+        self.sync_paths = sorted(glob.glob(self.sync_path))
+        self.sync_episodes = [sorted(glob.glob(sync_path + "/Episode*.h5"))
+                              for sync_path in self.sync_paths]
+        self.sync_xml = [sync_path + "/ThorRealTimeDataSettings.xml"
+                         for sync_path in self.sync_paths]
 
-    def _find_dt(self, name):
-        self.sync_root = ET.parse(self.sync_xml).getroot()
+    def _find_dt(self, name, nsync=0):
+        self.sync_root = ET.parse(self.sync_xml[nsync]).getroot()
         for child in self.sync_root:
             if child.tag == "DaqDevices":
                 for cchild in child:
@@ -393,14 +445,17 @@ class ThorHaussIO(HaussIO):
 
         sync_data = []
         sync_dt = []
-        for episode in self.sync_episodes:
-            sync_data.append({})
-            sync_dt.append({})
-            h5 = tables.open_file(episode)
-            for el in h5.root.DI:
-                sync_data[-1][el.name] = np.squeeze(el)
-                sync_dt[-1][el.name] = self._find_dt(el.name)
-            h5.close()
+        for epi_files in self.sync_episodes:
+            for episode in epi_files:
+                sync_data.append({})
+                sync_dt.append({})
+                print(episode)
+                h5 = tables.open_file(episode)
+                for el in h5.root.DI:
+                    sync_data[-1][el.name] = np.squeeze(el)
+                    sync_dt[-1][el.name] = self._find_dt(
+                        el.name, len(sync_dt)-1)
+                h5.close()
 
         return sync_data, sync_dt
 
@@ -428,6 +483,12 @@ class PrairieHaussIO(HaussIO):
             self.xml_name = xml_path
         # This needs to be done *after* the individual tiffs have been written
         self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
+
+        if "?" in self.filetrunk:
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None

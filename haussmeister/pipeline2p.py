@@ -180,12 +180,12 @@ class ThorExperiment(object):
         """
         if not mc:
             return haussio.ThorHaussIO(self.data_path, chan=self.ch2p,
-                                       sync_path=self.sync_path)
+                                       sync_path=self.sync_path, width_idx=4)
         else:
             return haussio.ThorHaussIO(
                 self.data_path + self.mc_suffix,
                 chan=self.ch2p, xml_path=self.data_path+"/Experiment.xml",
-                sync_path=self.sync_path)
+                sync_path=self.sync_path, width_idx=5)
 
     def to_sima(self, mc=False):
         """
@@ -264,8 +264,8 @@ def thor_batch(data):
     else:
         dataset_mc = data.to_sima(mc=True)
 
-    if not os.path.exists(
-            data.mc_tiff_dir + "/" + os.path.basename(experiment.filenames[-1])):
+    if not os.path.exists(data.mc_tiff_dir + "/" + os.path.basename(
+            experiment.filenames[-1])):
         print("Exporting frames...")
         haussio.sima_export_frames(dataset_mc, data.mc_tiff_dir,
                                    experiment.filenames)
@@ -273,12 +273,8 @@ def thor_batch(data):
     if os.path.exists(data.movie_mc_fn):
         corr_movie = movies.html_movie(data.movie_mc_fn)
     else:
-        try:
-            corr_movie = experiment.make_movie_extern(
-                data.mc_tiff_dir, norm=14.0, crf=28)
-        except IOError:
-            corr_movie = experiment.make_movie_extern(
-                data.mc_tiff_dir, norm=False, crf=28)
+        corr_movie = experiment.make_movie_extern(
+            data.mc_tiff_dir, norm=14.0, crf=28, width_idx=5)
 
 
 def activity_level(data, infer_threshold=0.15, roi_subset=""):
