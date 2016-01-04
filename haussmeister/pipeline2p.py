@@ -58,6 +58,10 @@ bar_width = 0.5
 
 NCPUS = int(mp.cpu_count()/2)
 
+# Maximal frames that thunder ICA can deal with before running
+# out of memory (128 GB)
+MAXFRAMES_ICA = 1600
+
 
 class ThorExperiment(object):
     """
@@ -856,17 +860,23 @@ def get_rois_sima(data, infer=True):
     return rois, measured, experiment, seq, spikes
 
 
-def get_rois_thunder(data, tsc, infer=True, stopIdx=None):
+def get_rois_thunder(data, tsc, infer=True, speed=None):
     """
     Extract fluorescence data from ROIs that are identified
-    by thunder's ICA
+    by thunder's ICA. If running speed is available, ROIs will
+    be determined during running periods. Otherwise, MAXFRAMES_ICA
+    at the beginning of the recording will be used.
 
     Parameters
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    tsc : thunder.ThunderContext
+        Thunder wrapper for a Spark context
     infer : bool, optional
         Perform spike inference. Default: True
+    speed : numpy.ndarray, optional
+        Running speed. Default: None
 
     Returns
     -------
@@ -884,14 +894,25 @@ def get_rois_thunder(data, tsc, infer=True, stopIdx=None):
     experiment = data.to_haussio()
     dataset_mc = data.to_sima(mc=True)
 
-    thunder_roiraw_fn = data.data_path + "_thunder_rois.npy"
+    thunder_roiraw_fn = data.data_path_comp + "_thunder_rois.npy"
     if not os.path.exists(thunder_roiraw_fn):
+        # Find longest contiguous running region:
+        if speed is not None:
+            assert(experiment.nframes == len(speed))
+            # find startIdx that maximizes the median speed over MAXFRAMES_ICA
+            maxstart = np.argmax(
+                [np.median(speed[start:start+MAXFRAMES_ICA])
+                 for start in range(len(speed)-MAXFRAMES_ICA)])
+        else:
+            maxstart = 0
+
         from thunder import ICA
 
         print("Reading files into thunder... ")
 
-        data_thunder = tsc.loadImages(data.mc_tiff_dir, inputFormat='tif',
-                                      stopIdx=stopIdx)
+        data_thunder = tsc.loadImages(
+            data.mc_tiff_dir, inputFormat='tif',
+            startIdx=maxstart, stopIdx=maxstart+MAXFRAMES_ICA)
         data_thunder.cache()
         data_thunder.count()
 
