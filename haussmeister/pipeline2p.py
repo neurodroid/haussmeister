@@ -47,6 +47,8 @@ except ValueError:
 import stfio
 from stfio import plot as stfio_plot
 
+import haussmeister
+
 sys.path.append("%s/py2p/tools" % (
     os.environ["HOME"]))
 
@@ -238,7 +240,7 @@ class ThorExperiment(object):
         return dataset
 
 
-def thor_batch(data):
+def thor_preprocess(data):
     """
     Read in ThorImage dataset, apply motion correction, export motion-corrected
     tiffs, produce movie of corrected and uncorrected data
@@ -378,7 +380,7 @@ def xcorr(data, chan, roi_subset1="DG", roi_subset2="CA3",
     data : ThorExperiment
         The ThorExperiment to be processed
     chan : str
-        Channel characted
+        Channel character
     roi_subset1 : str, optional
         Roi subset 1 suffix. Default: "DG"
     roi_subset2 : str, optional
@@ -436,7 +438,7 @@ def norm(sig):
 
 
 def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
-              spikes=None, infer_threshold=0.15, region="", vrdict=None,
+              spikes=None, infer_threshold=0.15, region="", mapdict=None,
               lopass=1.0):
 
     """
@@ -463,7 +465,7 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
         Spike inference threshold. Default: 0.15
     region : str, optional
         Brain region. Default: ""
-    vrdict : dict, optional
+    mapdict : dict, optional
         Dictionary containing processed VR data. Default: None
     lopass : float, optional
         Lowpass filter frequency for plotted traces. Default: 1.0
@@ -473,7 +475,7 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
 
     nrows = 8
     strow = 2
-    if vrdict is None:
+    if mapdict is None:
         stcol = 0
         ncols = 2
     else:
@@ -503,18 +505,18 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
 
     ndiscard = 5
 
-    if vrdict is not None:
-        dtvr = np.mean(np.diff(vrdict['t_vr']))*1e-3
+    if mapdict is not None:
+        dtvr = np.mean(np.diff(mapdict['t_vr']))*1e-3
         ax_pos = stfio_plot.StandardAxis(fig, gs[1, 0:1], hasx=False,
                                          sharex=ax_spike)
         ax_pos_nospike = stfio_plot.StandardAxis(
             fig, gs[1, 1:2], hasx=False, hasy=False,
             sharex=ax_nospike, sharey=ax_pos)
-        ax_pos.plot(vrdict['t_vr']*1e-3, vrdict['posy_vr'])
-        ax_pos_nospike.plot(vrdict['t_vr']*1e-3, vrdict['posy_vr'])
+        ax_pos.plot(mapdict['t_vr']*1e-3, mapdict['posy_vr'])
+        ax_pos_nospike.plot(mapdict['t_vr']*1e-3, mapdict['posy_vr'])
         ax_pos.set_ylabel("VR position (m)")
-        # ax_pos.set_ylim(vrdict['posy_vr'].min(), vrdict['posy_vr'].max())
-        for ev in vrdict['events']:
+        # ax_pos.set_ylim(mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
+        for ev in mapdict['events']:
             if ev.evcode in [b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']:
                 ax_pos.plot(ev.time, -0.05, ev.marker, mec='none', ms=ev.ms)
         ax_speed = stfio_plot.StandardAxis(
@@ -522,11 +524,11 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
         ax_speed_nospike = stfio_plot.StandardAxis(
             fig, gs[0, 1:2], hasx=False, hasy=False,
             sharex=ax_nospike, sharey=ax_speed)
-        ax_speed.plot(vrdict['t_vr'][:-1]*1e-3+dtvr/2.0, vrdict['speed_vr'])
+        ax_speed.plot(mapdict['t_vr'][:-1]*1e-3+dtvr/2.0, mapdict['speed_vr'])
         ax_speed_nospike.plot(
-            vrdict['t_vr'][:-1]*1e-3+dtvr/2.0, vrdict['speed_vr'])
+            mapdict['t_vr'][:-1]*1e-3+dtvr/2.0, mapdict['speed_vr'])
         ax_speed.set_ylabel("Speed (m/s)")
-        ax_speed.set_ylim(vrdict['speed_vr'].min(), vrdict['speed_vr'].max())
+        ax_speed.set_ylim(mapdict['speed_vr'].min(), mapdict['speed_vr'].max())
 
         ax_maps_fluo = stfio_plot.StandardAxis(
             fig, gs[strow:, 2:3], hasx=True, hasy=False, sharey=ax_spike)
@@ -558,10 +560,10 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
         except sima.ROI.NonBooleanMask:
             print("NonBooleanMask")
 
-        if vrdict is None:
+        if mapdict is None:
             trange = np.arange(len(meas_filt))*experiment.dt
         else:
-            trange = vrdict['t_2p'][ndiscard:] * 1e-3
+            trange = mapdict['t_2p'][ndiscard:] * 1e-3
 
         ax = ax_spike
         pos = pos_spike
@@ -592,16 +594,16 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
                 "{0}".format(nroi + 1),
                 color=colors[nroi % len(colors)], ha='right',
                 fontweight=fontweight, fontsize=fontsize)
-        if vrdict is not None:
-            fluo = norm(vrdict['fluomap'][nroi][1]) * normamp
+        if mapdict is not None:
+            fluo = norm(mapdict['fluomap'][nroi][1]) * normamp
             fluo -= fluo.min()
-            ax_maps_fluo.plot(vrdict['fluomap'][nroi][0],
+            ax_maps_fluo.plot(mapdict['fluomap'][nroi][0],
                               fluo + pos,
                               colors[nroi % len(colors)])
             if spikes is not None:
-                infer = norm(vrdict['infermap'][nroi][1]) * normamp
+                infer = norm(mapdict['infermap'][nroi][1]) * normamp
                 infer -= infer.min()
-                ax_maps_infer.plot(vrdict['infermap'][nroi][0],
+                ax_maps_infer.plot(mapdict['infermap'][nroi][0],
                                    infer + pos,
                                    colors[nroi % len(colors)])
         if infer_threshold is None:
@@ -623,11 +625,13 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
 
     fig.suptitle(experiment.filetrunk.replace("_", " ") + " " + regionstr,
                  fontsize=18)
-    if vrdict is not None:
-        ax_maps_fluo.set_xlim(vrdict['posy_vr'].min(), vrdict['posy_vr'].max())
+    if mapdict is not None:
+        ax_maps_fluo.set_xlim(
+            mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
         ax_maps_fluo.set_xlabel("VR position (m)")
         if spikes is not None:
-            ax_maps_infer.set_xlim(vrdict['posy_vr'].min(), vrdict['posy_vr'].max())
+            ax_maps_infer.set_xlim(
+                mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
             ax_maps_infer.set_xlabel("VR position (m)")
 
     plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf")
@@ -933,12 +937,12 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
 
         imgs = np.load(thunder_roiraw_fn)
 
-    thunder_roi_fn = data.data_path + "_rois_thunder.pkl"
+    thunder_roi_fn = data.data_path_comp + "_rois_thunder.pkl"
     if not os.path.exists(thunder_roi_fn):
         rois = ROIList([sima.ROI.ROI(img) for img in imgs])
 
-        sparsify = sima.segment.SparseROIsFromMasks(min_size=80.0,
-                                                    n_processes=NCPUS)
+        sparsify = sima.segment.SparseROIsFromMasks(
+            min_size=80.0, n_processes=NCPUS)
         smoothen = sima.segment.SmoothROIBoundaries(n_processes=NCPUS)
         merge = sima.segment.MergeOverlapping(threshold=0.5)
         t0 = time.time()
@@ -967,7 +971,7 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
     return rois, measured, experiment, seq, spikes
 
 
-def get_vr_data(data, measured, spikes):
+def get_vr_maps(data, measured, spikes, vrdict):
     """
     Read and assemble VR data
 
@@ -979,92 +983,49 @@ def get_vr_data(data, measured, spikes):
         Processed fluorescence data for each ROI
     spikes : numpy.ndarray
         Spike inference values
+    vrdict : dict
+        Dictionary with processed VR data
 
     Returns
     -------
-    vrdict : dict
+    mapdict : dict
         Dictionary with processed VR data
     """
     import syncfiles
+    import imp
+    imp.reload(syncfiles)
+    imp.reload(syncfiles.haussmeister)
 
     if data.fnvr is not None:
-        vrtimes, framet2p, frametvr, posy, speedvr, fluomap, infermap, evlist, timeev = \
-            syncfiles.assemble_files_2p(data, measured, spikes)
-        t_ev_matlab = [ev.time for ev in evlist
+        fluomap, infermap = syncfiles.create_maps_2p(
+            data, measured, spikes, vrdict)
+        t_ev_matlab = [ev.time for ev in vrdict["evlist"]
                        if ev.evcode in [
                            b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']]
-        events_matlab = [ev.evcode.decode() for ev in evlist
+        events_matlab = [ev.evcode.decode() for ev in vrdict["evlist"]
                          if ev.evcode in [
                              b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']]
         if infermap is None:
             infermap = [0]
-        vrdict = {
-            "t_2p": framet2p,
+        mapdict = {
+            "t_2p": vrdict["framet2p"],
             "DFoF_2p": measured,
-            "t_vr": frametvr,
-            "posy_vr": posy,
-            "speed_vr": speedvr,
-            "t_ev": timeev,
-            "events": evlist,
+            "t_vr": vrdict["frametvr"],
+            "posy_vr": vrdict["posy"],
+            "speed_vr": vrdict["speedvr"],
+            "events": vrdict["evlist"],
             "t_ev_matlab": t_ev_matlab,
             "events_matlab": events_matlab,
             'fluomap': fluomap,
             'infermap': infermap}
-        savemat(data.data_path_comp + "_vr.mat", vrdict)
-        return vrdict
+        savemat(data.data_path_comp + "_maps.mat", mapdict)
+        return mapdict
     else:
         return None
 
 
-def thor_batch_roi_ij(data, infer=True, infer_threshold=0.15):
-    """
-    Extract and process fluorescence data from ImageJ ROIs
-
-    Parameters
-    ----------
-    data : ThorExperiment
-        The ThorExperiment to be processed
-    infer : bool, optional
-        Perform spike inference. Default: True
-    infer_threshold : float, optional
-        Activity threshold of spike inference. Default: 0.15
-    """
-    rois, measured, experiment, seq, spikes = \
-        get_rois_ij(data, infer)
-
-    vrdict = get_vr_data(data, measured, spikes)
-
-    plot_rois(rois, measured, experiment, seq, data.data_path_comp,
-              pdf_suffix="_ij", spikes=spikes, region=data.area2p,
-              infer_threshold=infer_threshold, vrdict=vrdict)
-
-
-def thor_batch_roi_sima(data, infer=True, infer_threshold=0.15):
-    """
-    Extract and process fluorescence data from ROIs that are identified
-    by sima's stICA
-
-    Parameters
-    ----------
-    data : ThorExperiment
-        The ThorExperiment to be processed
-    infer : bool, optional
-        Perform spike inference. Default: True
-    infer_threshold : float, optional
-        Activity threshold of spike inference. Default: 0.15
-    """
-    rois, measured, experiment, seq, spikes = \
-        get_rois_sima(data, infer)
-
-    vrdict = get_vr_data(data, measured, spikes)
-
-    plot_rois(rois, measured, experiment, seq, data.data_path,
-              pdf_suffix="_sima", spikes=spikes, region=data.area2p,
-              infer_threshold=infer_threshold, vrdict=vrdict)
-
-
-def thor_batch_roi_thunder(data, tsc, infer=True, infer_threshold=0.15,
-                           stopIdx=None):
+def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
+                     infer_threshold=0.15):
     """
     Extract and process fluorescence data from ROIs that are identified
     by thunder's ICA
@@ -1073,19 +1034,41 @@ def thor_batch_roi_thunder(data, tsc, infer=True, infer_threshold=0.15,
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    method : str, optional
+        One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
+        are identified by SIMA's stICA), or "ij" (an ImageJ RoiSet is used).
+        Default: "thunder"
+    tsc : thunder.ThunderContext, optional
+        A ThunderContext in case the method is "thunder"
     infer : bool, optional
         Perform spike inference. Default: True
     infer_threshold : float, optional
         Activity threshold of spike inference. Default: 0.15
     """
-    rois, measured, experiment, seq, spikes = \
-        get_rois_thunder(data, tsc, infer, stopIdx=stopIdx)
+    assert(method in ["thunder", "sima", "ij"])
 
-    vrdict = get_vr_data(data, measured, spikes)
+    import syncfiles
+    import imp
+    imp.reload(syncfiles)
+    imp.reload(syncfiles.haussmeister)
+
+    vrdict = syncfiles.read_files_2p(data)
+
+    if method == "thunder":
+        rois, measured, experiment, seq, spikes = get_rois_thunder(
+            data, tsc, infer, speed=vrdict["speed2p"][0])
+    elif method == "sima":
+        rois, measured, experiment, seq, spikes = get_rois_sima(
+            data, infer)
+    elif method == "ij":
+        rois, measured, experiment, seq, spikes = get_rois_ij(
+            data, infer)
+
+    mapdict = get_vr_maps(data, measured, spikes, vrdict)
 
     plot_rois(rois, measured, experiment, seq, data.data_path_comp,
-              pdf_suffix="_thunder", spikes=spikes, region=data.area2p,
-              infer_threshold=infer_threshold, vrdict=vrdict)
+              pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
+              infer_threshold=infer_threshold, mapdict=mapdict)
 
 
 def eta(measured, vrdict, evcodelist):
