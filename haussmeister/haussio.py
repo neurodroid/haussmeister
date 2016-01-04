@@ -543,18 +543,11 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     """
     if not os.path.exists(path):
         os.makedirs(path)
-    output_filenames = [
-        [[path + "/tmp" + os.path.basename(fn)]]
-        for fn in filenames]
-    dataset.export_frames(output_filenames, fill_gaps=True)
 
-    mptif_fn = path + "/tmp" + os.path.basename(filenames[0])
-    mptif = tifffile.TiffFile(mptif_fn)
-    if stopIdx is None:
-        stopIdx = len(mptif.pages)
-    for nf, frame in enumerate(mptif.pages[startIdx:stopIdx]):
+    if stopIdx is None or stopIdx > len(filenames):
+        stopIdx = len(filenames)
+    for nf in range(startIdx, stopIdx):
         tifffile.imsave(
             path + "/" + os.path.basename(filenames[nf]),
-            frame.asarray())
-
-    os.unlink(mptif_fn)
+            np.array(dataset.sequences[0][nf, :, :, :, :]).squeeze().astype(
+                np.uint16))
