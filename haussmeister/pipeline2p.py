@@ -1056,7 +1056,7 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
 
     if method == "thunder":
         rois, measured, experiment, seq, spikes = get_rois_thunder(
-            data, tsc, infer, speed=vrdict["speed2p"][0])
+            data, tsc, infer, speed=vrdict["speed2p"])
     elif method == "sima":
         rois, measured, experiment, seq, spikes = get_rois_sima(
             data, infer)
