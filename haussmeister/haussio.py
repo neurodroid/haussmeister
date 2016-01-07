@@ -140,7 +140,7 @@ class HaussIO(object):
             normframe = normtrunk + self.format_index(int(nframes/2)) + ".tif"
         else:
             normframe = self.filetrunk + self.format_index(
-                int(len(self.filenames)/2))
+                int(len(self.filenames)/2)) + ".tif"
         sample = Image.open(normframe)
         arr = np.asarray(sample, dtype=np.float)
         return arr
