@@ -948,12 +948,16 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
             min_size=80.0, n_processes=NCPUS)
         smoothen = sima.segment.SmoothROIBoundaries(n_processes=NCPUS)
         merge = sima.segment.MergeOverlapping(threshold=0.5)
+        remove_lines = sima.segment.ROIFilter(
+            lambda roi: (
+                (roi.coords[0].T[1].max()-roi.coords[0].T[1].min()) /
+                (roi.coords[0].T[0].max()-roi.coords[0].T[0].min()) > 0.125))
         t0 = time.time()
         print("Postprocessing... ")
-        rois = merge.apply(
-            smoothen.apply(
-                sparsify.apply(
-                    rois)))
+        rois = remove_lines.apply(
+            merge.apply(
+                smoothen.apply(
+                    sparsify.apply(rois))))
         print("Postprocessing took {:.2f}".format(time.time()-t0))
         rois.save(thunder_roi_fn)
     else:
