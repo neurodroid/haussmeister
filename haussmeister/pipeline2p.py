@@ -267,14 +267,17 @@ def thor_preprocess(data):
 
     if not os.path.exists(data.sima_mc_dir):
         dataset_mc = data.mc_approach.correct(dataset, data.sima_mc_dir)
+        dataset_mc.save(data.sima_mc_dir)
     else:
         dataset_mc = data.to_sima(mc=True)
 
+    filenames_mc = ["{0}{1:05d}.tif".format(experiment.filetrunk, nf)
+                    for nf, fn in enumerate(experiment.filenames)]
     if not os.path.exists(data.mc_tiff_dir + "/" + os.path.basename(
-            experiment.filenames[-1])):
+            filenames_mc[-1])):
         print("Exporting frames...")
         haussio.sima_export_frames(dataset_mc, data.mc_tiff_dir,
-                                   experiment.filenames)
+                                   filenames_mc)
 
     if os.path.exists(data.movie_mc_fn):
         corr_movie = movies.html_movie(data.movie_mc_fn)
