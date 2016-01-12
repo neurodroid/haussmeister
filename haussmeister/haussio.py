@@ -88,7 +88,11 @@ class HaussIO(object):
         self.nframes = len(self.timing)
         sys.stdout.write("done\n")
 
-        assert(len(self.filenames) <= self.nframes)
+        try:
+            assert(len(self.filenames) <= self.nframes)
+        except AssertionError as err:
+            print(len(self.filenames), self.nframes)
+            raise err
 
     @abc.abstractmethod
     def _get_dimensions(self):
@@ -541,6 +545,11 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     stopIdx : int, optional
         Index of last frame to be exported (exclusive)
     """
+    try:
+        assert(len(filenames) == dataset.sequences[0].shape[0])
+    except AssertionError as err:
+        print(len(filenames), dataset.sequences[0].shape[0])
+        raise err
     if not os.path.exists(path):
         os.makedirs(path)
 
