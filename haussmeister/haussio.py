@@ -546,8 +546,12 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
 
     if stopIdx is None or stopIdx > len(filenames):
         stopIdx = len(filenames)
-    for nf in range(startIdx, stopIdx):
-        tifffile.imsave(
-            path + "/" + os.path.basename(filenames[nf]),
-            np.array(dataset.sequences[0][nf, :, :, :, :]).squeeze().astype(
-                np.uint16))
+    print(startIdx, stopIdx)
+    save_frames = sima.sequence._fill_gaps(
+        iter(dataset.sequences[0]), iter(dataset.sequences[0]))
+    for nf, frame in enumerate(save_frames):
+        if nf >= startIdx and nf < stopIdx:
+            tifffile.imsave(
+                path + "/" + os.path.basename(filenames[nf]),
+                np.array(frame[0]).squeeze().astype(
+                    np.uint16))
