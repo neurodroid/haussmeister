@@ -234,7 +234,15 @@ class ThorExperiment(object):
 
         if restore:
             experiment = self.to_haussio(mc=mc)
+            sima_bak = experiment.sima_dir + ".bak"
+            if os.path.exists(sima_bak):
+                shutil.rmtree(sima_bak)
+            while os.path.exists(sima_bak):
+                time.wait(1)
+            shutil.copytree(experiment.sima_dir, sima_bak)
             shutil.rmtree(experiment.sima_dir)
+            while os.path.exists(experiment.sima_dir):
+                time.wait(1)
             dataset = experiment.tosima(stopIdx=None)
 
         return dataset
