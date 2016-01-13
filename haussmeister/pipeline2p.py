@@ -986,7 +986,7 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
     return rois, measured, experiment, seq, spikes
 
 
-def get_vr_maps(data, measured, spikes, vrdict):
+def get_vr_maps(data, measured, spikes, vrdict, method):
     """
     Read and assemble VR data
 
@@ -1000,6 +1000,8 @@ def get_vr_maps(data, measured, spikes, vrdict):
         Spike inference values
     vrdict : dict
         Dictionary with processed VR data
+    method : str
+        Method that was used to extract ROIs
 
     Returns
     -------
@@ -1013,7 +1015,7 @@ def get_vr_maps(data, measured, spikes, vrdict):
 
     if data.fnvr is not None:
         fluomap, infermap = syncfiles.create_maps_2p(
-            data, measured, spikes, vrdict)
+            data, measured, spikes, vrdict, method)
         t_ev_matlab = [ev.time for ev in vrdict["evlist"]
                        if ev.evcode in [
                            b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']]
@@ -1033,7 +1035,7 @@ def get_vr_maps(data, measured, spikes, vrdict):
             "events_matlab": events_matlab,
             'fluomap': fluomap,
             'infermap': infermap}
-        savemat(data.data_path_comp + "_maps.mat", mapdict)
+        savemat(data.data_path_comp + "_" + method + "_maps.mat", mapdict)
         return mapdict
     else:
         return None
@@ -1079,7 +1081,7 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
         rois, measured, experiment, seq, spikes = get_rois_ij(
             data, infer)
 
-    mapdict = get_vr_maps(data, measured, spikes, vrdict)
+    mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
 
     plot_rois(rois, measured, experiment, seq, data.data_path_comp,
               pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
