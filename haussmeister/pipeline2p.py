@@ -216,7 +216,6 @@ class ThorExperiment(object):
             raise IOError(
                 "Couldn't find sima file " + sima_dir)
 
-        dataset = sima.ImagingDataset.load(sima_dir)
         try:
             dataset = sima.ImagingDataset.load(sima_dir)
             restore = False
@@ -277,10 +276,16 @@ def thor_preprocess(data):
         dataset_mc = data.mc_approach.correct(dataset, data.sima_mc_dir)
         dataset_mc.save(data.sima_mc_dir)
     else:
-        dataset_mc = data.to_sima(mc=True)
+        try:
+            dataset_mc = sima.ImagingDataset.load(data.sima_mc_dir)
+            print("Loaded sima dataset from " + data.sima_mc_dir)
+        except Exception as err:
+            print("Couldn't load sima dataset: ", err)
+            dataset_mc = data.to_sima(mc=True)
 
     filenames_mc = ["{0}{1:05d}.tif".format(experiment.filetrunk, nf)
                     for nf, fn in enumerate(experiment.filenames)]
+    assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
     if not os.path.exists(data.mc_tiff_dir + "/" + os.path.basename(
             filenames_mc[-1])):
         print("Exporting frames...")
