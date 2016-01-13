@@ -119,8 +119,10 @@ class ThorExperiment(object):
         if self.fnvr is not None:
             self.vr_path = os.path.dirname(self.data_path) + "/" + \
                 self.fnvr
+            self.vr_path_comp = self.vr_path.replace("?", "n")
         else:
             self.vr_path = None
+            self.vr_path_comp = None
 
         self.mc_method = mc_method
         self.mc_suffix = "_mc_" + self.mc_method
