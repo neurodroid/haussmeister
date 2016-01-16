@@ -2,10 +2,13 @@ import sys
 import time
 
 import numpy as np
-import pyfftw
-from stfio import plot as stfio_plot
+try:
+    import pyfftw
+    pyfftw.interfaces.cache.enable()
+except ImportError:
+    sys.stderr.write("pyfftw unavailable\n")
 
-pyfftw.interfaces.cache.enable()
+from stfio import plot as stfio_plot
 
 
 def fgaussColqu(x, f_c):
