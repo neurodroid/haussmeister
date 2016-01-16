@@ -150,7 +150,8 @@ class HaussIO(object):
             normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
             normtrunk = self.filetrunk.replace(
                 self.dirname, normdir)
-            nframes = len(glob.glob(normdir + "/" + self.basefile + "*.tif"))
+            nframes = len(
+                glob.glob(os.path.join(normdir, self.basefile + "*.tif")))
             normframe = normtrunk + self.format_index(int(nframes/2)) + ".tif"
         else:
             normframe = self.filetrunk + self.format_index(
@@ -255,8 +256,8 @@ class HaussIO(object):
         """
         if norm:
             normbright = movies.get_normbright(np.asarray(Image.open(
-                path_extern + "/" + self.basefile + self.format_index(
-                    int(self.nframes/2), width_idx=width_idx) + ".tif")))
+                os.path.join(path_extern, self.basefile + self.format_index(
+                    int(self.nframes/2), width_idx=width_idx) + ".tif"))))
         else:
             normbright = None
 
@@ -267,8 +268,8 @@ class HaussIO(object):
             scalebarframe = None
 
         return movies.make_movie(
-            path_extern + "/" + self.basefile + self.format_index(
-                "%", width_idx=width_idx) + ".tif",
+            os.path.join(path_extern, self.basefile + self.format_index(
+                "%", width_idx=width_idx) + ".tif"),
             path_extern + ".mp4",
             self.fps,
             normbright,
@@ -394,12 +395,12 @@ class ThorHaussIO(HaussIO):
         if "?" in self.dirname:
             self.filenames = []
             for dirname in self.dirnames:
-                filenames_orig = sorted(glob.glob(
-                    dirname + "/" + self.basefile + "*.tif"))
+                filenames_orig = sorted(glob.glob(os.path.join(
+                    dirname, self.basefile + "*.tif")))
                 nf = len(self.filenames)
-                self.filenames += [
-                    self.dirname_comp + "/" + self.basefile +
-                    self.format_index(nf+nfno) + ".tif"
+                self.filenames += [os.path.join(
+                    self.dirname_comp, self.basefile +
+                    self.format_index(nf+nfno) + ".tif")
                     for nfno, fno in enumerate(filenames_orig)]
         else:
             self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
@@ -605,6 +606,6 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     for nf, frame in enumerate(save_frames):
         if nf >= startIdx and nf < stopIdx:
             tifffile.imsave(
-                path + "/" + os.path.basename(filenames[nf]),
+                os.path.join(path, os.path.basename(filenames[nf])),
                 np.array(frame[0]).squeeze().astype(
                     np.uint16))
