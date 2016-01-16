@@ -21,7 +21,7 @@ from sima.misc import tifffile
 
 try:
     from . import movies
-except ValueError:
+except (SystemError, ValueError):
     import movies
 
 
@@ -88,11 +88,12 @@ class HaussIO(object):
         self.nframes = len(self.timing)
         sys.stdout.write("done\n")
 
-        try:
-            assert(len(self.filenames) <= self.nframes)
-        except AssertionError as err:
-            print(len(self.filenames), self.nframes)
-            raise err
+        if self.rawfile is None or not os.path.exists(self.rawfile):
+            try:
+                assert(len(self.filenames) <= self.nframes)
+            except AssertionError as err:
+                print(len(self.filenames), self.nframes)
+                raise err
 
     @abc.abstractmethod
     def _get_dimensions(self):
@@ -110,13 +111,22 @@ class HaussIO(object):
     def read_sync(self):
         return
 
+    @abc.abstractmethod
+    def read_raw(self):
+        return
+
+    @abc.abstractmethod
+    def raw2tiff(self, mp=False):
+        return
+
     def _get_filenames(self, xml_path, sync_path):
         self.dirname_comp = self.dirname.replace("?", "n")
         self.movie_fn = self.dirname_comp + ".mp4"
         self.scale_png = self.dirname_comp + "_scale.png"
         self.sima_dir = self.dirname_comp + ".sima"
         self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
-        self.filetrunk = self.dirname + '/' + self.basefile
+        self.rawfile = None
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
         self.sync_path = sync_path
         if "?" in self.filetrunk:
             self.dirnames = sorted(glob.glob(self.dirname))
@@ -165,13 +175,18 @@ class HaussIO(object):
         dataset : sima.ImagingDataset
             A sima.ImagingDataset
         """
-        # The string paths[i][j] is a unix style expression for the
-        # filenames for plane i and channel j
+        if self.rawfile is None or not os.path.exists(self.rawfile):
+            # The string paths[i][j] is a unix style expression for the
+            # filenames for plane i and channel j
+            sequences = [sima.Sequence.create(
+                'TIFFs', [[self.filetrunk + self.format_index("?") + ".tif"]])]
+        else:
+            sequences = [sima.Sequence.create(
+                'ndarray', self.read_raw()[:, np.newaxis, :, :, np.newaxis])]
+
         if stopIdx is None:
             stopIdx = self.nframes
-        sequences = [sima.Sequence.create(
-            'TIFFs', [[self.filetrunk + self.format_index("?") + ".tif"]])]
-        if stopIdx is not None:
+        else:
             sequences = [seq[:stopIdx, :, :, :, :] for seq in sequences]
         if startIdx != 0:
             sequences = [seq[startIdx:, :, :, :, :] for seq in sequences]
@@ -389,6 +404,8 @@ class ThorHaussIO(HaussIO):
         else:
             self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
+        self.rawfile = os.path.join(self.dirname_comp, "Image_0001_0001.raw")
+
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
         self.xpx, self.ypx = None, None
@@ -463,6 +480,25 @@ class ThorHaussIO(HaussIO):
 
         return sync_data, sync_dt
 
+    def read_raw(self):
+        return np.fromfile(self.rawfile, dtype=np.uint16).reshape(
+            self.nframes, self.xpx, self.ypx)
+
+    def raw2tiff(self, mp=False):
+        arr = self.read_raw()
+        if not mp:
+            for ni, img in enumerate(arr):
+                sys.stdout.write(
+                    "\r{0:6.2f}%".format(float(ni)/arr.shape[0] * 100.0))
+                sys.stdout.flush()
+                tifffile.imsave(os.path.join(
+                    self.dirname_comp,
+                    self.basefile + self.format_index(ni+1)) + ".tif", img)
+                sys.stdout.write("\n")
+        else:
+            tifffile.imsave(os.path.join(
+                self.dirname_comp, self.basefile + "mp.tif"), arr)
+
 
 class PrairieHaussIO(HaussIO):
     """
@@ -524,6 +560,14 @@ class PrairieHaussIO(HaussIO):
     def read_sync(self):
         raise NotImplementedError(
             "Synchronization readout not implemented for Prairie files yet")
+
+    def read_raw(self):
+        raise NotImplementedError(
+            "Raw file reading not implemented for Prairie files yet")
+
+    def raw2tiff(self, mp=False):
+        raise NotImplementedError(
+            "Raw file reading not implemented for Prairie files yet")
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):

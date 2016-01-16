@@ -8,5 +8,6 @@ from . import movies
 from . import scalebars
 from . import pipeline2p
 from . import spectral
+from . import thor2tiff
 
 __version__ = '0.2.0'
