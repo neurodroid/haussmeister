@@ -49,8 +49,9 @@ from stfio import plot as stfio_plot
 
 import haussmeister
 
-sys.path.append("%s/py2p/tools" % (
-    os.environ["HOME"]))
+if not os.name == "nt":
+    sys.path.append("%s/py2p/tools" % (
+        os.environ["HOME"]))
 
 bar1_color = 'k'   # black
 bar2_color = 'w'   # white
