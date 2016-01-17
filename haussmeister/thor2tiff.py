@@ -2,7 +2,7 @@ import sys
 import os
 import argparse
 
-if sys.version_info.major < 3:
+try:
     from Tkinter import Tk
     from Tkinter import IntVar
     from Tkinter import Checkbutton
@@ -11,7 +11,7 @@ if sys.version_info.major < 3:
     from Tkinter import mainloop
     from Tkinter import W
     from tkFileDialog import askopenfilename
-else:
+except ImportError:
     from tkinter import Tk
     from tkinter import IntVar
     from tkinter import Checkbutton
