@@ -526,12 +526,12 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
 
         assert(spikes.shape[0] == len(rois))
 
-    ndiscard = 5
+    ndiscard = 0
 
     if mapdict is not None:
         dtvr = np.mean(np.diff(mapdict['t_vr']))*1e-3
-        ax_pos = stfio_plot.StandardAxis(fig, gs[1, 0:1], hasx=False,
-                                         sharex=ax_spike)
+        ax_pos = stfio_plot.StandardAxis(
+            fig, gs[1, 0:1], hasx=False, sharex=ax_spike)
         ax_pos_nospike = stfio_plot.StandardAxis(
             fig, gs[1, 1:2], hasx=False, hasy=False,
             sharex=ax_nospike, sharey=ax_pos)
@@ -605,7 +605,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
             else:
                 spikes_filt -= spikes_filt.min()
                 ax_nospike.plot(
-                    trange[1:], spikes_filt[
+                    trange[1:1+len(spikes_filt)], spikes_filt[
                         ndiscard:ndiscard+len(trange[1:])] /
                     spikes_filt[
                         ndiscard:ndiscard+len(trange[1:])].max() *
@@ -614,7 +614,8 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
         fontweight = 'normal'
         fontsize = 14
         ax.plot(
-            trange, meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos,
+            trange[:len(meas_filt)],
+            meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos,
             colors[nroi % len(colors)])
         ax.text(0, (meas_filt-meas_filt.min()+pos).mean(),
                 "{0}".format(nroi + 1),
