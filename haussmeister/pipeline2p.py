@@ -415,10 +415,10 @@ def xcorr(data, chan, roi_subset1="DG", roi_subset2="CA3",
         List of roi indices with xcorr values > 0.5
     """
 
-    rois1, meas1, experiment1, seq1, spikes1 = \
+    rois1, meas1, experiment1, zproj1, spikes1 = \
         get_rois_ij(data, infer=True)
 
-    rois2, meas2, experiment2, seq2, spikes2 = \
+    rois2, meas2, experiment2, zproj2, spikes2 = \
         get_rois_ij(data, infer=True)
 
     meas1_filt = [process_data(m1, experiment1.dt, detrend=data.detrend)
@@ -474,7 +474,7 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
         Processed fluorescence data for each ROI
     experiment : haussio.HaussIO
         haussio.HaussIO instance
-    seq : numpy.ndarray
+    zproj : numpy.ndarray
         z-projected fluorescence image
     data_path : str
         Path to data directory
@@ -508,7 +508,7 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
     plt.axis('off')
 
     ax2 = fig.add_subplot(gs[:strow, stcol:])
-    ax2.imshow(seq, cmap='gray')
+    ax2.imshow(zproj, cmap='gray')
     experiment.plot_scale_bar(ax2)
     plt.axis('off')
 
@@ -732,7 +732,7 @@ def extract_signals(signal_label, rois, data, infer=True):
     -------
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    seq : numpy.ndarray
+    zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
         Spike inference for each ROI
@@ -745,7 +745,7 @@ def extract_signals(signal_label, rois, data, infer=True):
         "Extracting signals with label {0}... ".format(signal_label))
     sys.stdout.flush()
     t0 = time.time()
-    measured, seq = extract_rois(
+    measured, zproj = extract_rois(
         signal_label, dataset, rois, data, experiment.dt)
     sys.stdout.write("done (took %.2fs)\n" % (time.time()-t0))
     sys.stdout.flush()
@@ -779,7 +779,7 @@ def extract_signals(signal_label, rois, data, infer=True):
     else:
         spikes = measured
 
-    return measured, seq, spikes
+    return measured, zproj, spikes
 
 
 def get_rois_ij(data, infer=True):
@@ -801,7 +801,7 @@ def get_rois_ij(data, infer=True):
         Processed fluorescence data for each ROI
     experiment : haussio.HaussIO
         haussio.HaussIO instance
-    seq : numpy.ndarray
+    zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
         Spike inference values
@@ -822,10 +822,10 @@ def get_rois_ij(data, infer=True):
 
     signal_label = 'imagej_rois' + data.roi_subset
 
-    measured, seq, spikes = extract_signals(
+    measured, zproj, spikes = extract_signals(
         signal_label, rois, data, infer=infer)
 
-    return rois, measured, experiment, seq, spikes
+    return rois, measured, experiment, zproj, spikes
 
 
 def get_rois_sima(data, infer=True):
@@ -848,7 +848,7 @@ def get_rois_sima(data, infer=True):
         Processed fluorescence data for each ROI
     experiment : haussio.HaussIO
         haussio.HaussIO instance
-    seq : numpy.ndarray
+    zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
         Spike inference values
@@ -879,10 +879,10 @@ def get_rois_sima(data, infer=True):
 
     signal_label = 'sima_stICA_rois' + data.roi_subset
 
-    measured, seq, spikes = extract_signals(
+    measured, zproj, spikes = extract_signals(
         signal_label, rois, data, infer=infer)
 
-    return rois, measured, experiment, seq, spikes
+    return rois, measured, experiment, zproj, spikes
 
 
 def get_rois_thunder(data, tsc, infer=True, speed=None):
@@ -911,7 +911,7 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
         Processed fluorescence data for each ROI
     experiment : haussio.HaussIO
         haussio.HaussIO instance
-    seq : numpy.ndarray
+    zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
         Spike inference values
@@ -990,10 +990,10 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
 
     signal_label = 'thunder_ICA_rois' + data.roi_subset
 
-    measured, seq, spikes = extract_signals(
+    measured, zproj, spikes = extract_signals(
         signal_label, rois, data, infer=infer)
 
-    return rois, measured, experiment, seq, spikes
+    return rois, measured, experiment, zproj, spikes
 
 
 def get_vr_maps(data, measured, spikes, vrdict, method):
@@ -1083,13 +1083,13 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
     vrdict = syncfiles.read_files_2p(data)
 
     if method == "thunder":
-        rois, measured, experiment, seq, spikes = get_rois_thunder(
+        rois, measured, experiment, zproj, spikes = get_rois_thunder(
             data, tsc, infer, speed=vrdict["speed2p"])
     elif method == "sima":
-        rois, measured, experiment, seq, spikes = get_rois_sima(
+        rois, measured, experiment, zproj, spikes = get_rois_sima(
             data, infer)
     elif method == "ij":
-        rois, measured, experiment, seq, spikes = get_rois_ij(
+        rois, measured, experiment, zproj, spikes = get_rois_ij(
             data, infer)
     elif method == "cnmf":
         speed_thr = 0.01  # m/s
@@ -1099,7 +1099,7 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
 
-    plot_rois(rois, measured, experiment, seq, data.data_path_comp,
+    plot_rois(rois, measured, experiment, zproj, data.data_path_comp,
               pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
               infer_threshold=infer_threshold, mapdict=mapdict)
 
@@ -1175,7 +1175,7 @@ def eta(measured, vrdict, evcodelist):
 
 def thor_gain_roi_ij(exp_list, infer=True, infer_threshold=0.15):
     for data in exp_list:
-        rois, measured, experiment, seq, spikes = \
+        rois, measured, experiment, zproj, spikes = \
             get_rois_ij(data, infer)
 
         vrdict = get_vr_data(data, measured, spikes)
@@ -1219,7 +1219,7 @@ def extract_rois(signal_label, dataset, rois, data, dt):
     -------
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    seq : numpy.ndarray
+    zproj : numpy.ndarray
         z-projected fluorescence image
     """
     if signal_label in dataset.signals().keys():
@@ -1254,9 +1254,9 @@ def extract_rois(signal_label, dataset, rois, data, dt):
 
         np.save(data.proj_fn, seq)
     else:
-        seq = np.load(data.proj_fn)
+        zproj = np.load(data.proj_fn)
 
-    return measured, seq
+    return measured, zproj
 
 
 class Bardata(object):
