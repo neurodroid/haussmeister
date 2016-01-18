@@ -63,7 +63,7 @@ bar_width = 0.5
 
 NCPUS = int(mp.cpu_count()/2)
 
-# Maximal frames that thunder ICA can deal with before running
+# Maximal number of frames that thunder ICA can deal with before running
 # out of memory (128 GB)
 MAXFRAMES_ICA = 1600
 
@@ -302,6 +302,8 @@ def thor_preprocess(data):
     else:
         corr_movie = experiment.make_movie_extern(
             data.mc_tiff_dir, norm=14.0, crf=28, width_idx=5)
+
+    return dataset_mc
 
 
 def activity_level(data, infer_threshold=0.15, roi_subset=""):
