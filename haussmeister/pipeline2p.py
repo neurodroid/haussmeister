@@ -458,9 +458,9 @@ def norm(sig):
     return (sig-sig.min())/(sig.max()-sig.min())
 
 
-def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
+def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
-              lopass=1.0):
+              lopass=1.0, plot_events=False):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -490,6 +490,8 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
         Dictionary containing processed VR data. Default: None
     lopass : float, optional
         Lowpass filter frequency for plotted traces. Default: 1.0
+    plot_events : bool, optional
+        Plot events. Default: False
     """
     fig = plt.figure(figsize=(18, 24))
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
@@ -537,9 +539,12 @@ def plot_rois(rois, measured, experiment, seq, data_path, pdf_suffix="",
         ax_pos_nospike.plot(mapdict['t_vr']*1e-3, mapdict['posy_vr'])
         ax_pos.set_ylabel("VR position (m)")
         # ax_pos.set_ylim(mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
-        for ev in mapdict['events']:
-            if ev.evcode in [b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']:
-                ax_pos.plot(ev.time, -0.05, ev.marker, mec='none', ms=ev.ms)
+        if plot_events:
+            for ev in mapdict['events']:
+                if ev.evcode in [
+                        b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']:
+                    ax_pos.plot(
+                        ev.time, -0.05, ev.marker, mec='none', ms=ev.ms)
         ax_speed = stfio_plot.StandardAxis(
             fig, gs[0, 0:1], hasx=False, sharex=ax_spike)
         ax_speed_nospike = stfio_plot.StandardAxis(
