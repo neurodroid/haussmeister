@@ -20,8 +20,6 @@ import scipy.signal as signal
 import scipy.stats as stats
 from scipy.io import savemat
 
-import bottleneck
-
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
 
@@ -34,12 +32,14 @@ import sima.spikes
 from sima.ROI import ROIList
 
 try:
+    from . import utils
     from . import haussio
     from . import movies
     from . import scalebars
     from . import spectral
     from . import cnmf
 except ValueError:
+    import utils
     import haussio
     import movies
     import scalebars
@@ -692,27 +692,6 @@ def infer_spikes(dataset, signal_label):
     return res
 
 
-def affine_transform_matrix(dx, dy):
-    """
-    Compute affine transformations
-
-    Parameters
-    ----------
-    dx : int
-        Shift in x
-    dy : int
-        Shift in y
-
-    Returns
-    -------
-    matrix : numpy.ndarray
-        2x3 numpy array to be used by roi.transform
-    """
-    return [np.array([
-        [1, 0, dx],
-        [0, 1, dy]])]
-
-
 def extract_signals(signal_label, rois, data, infer=True):
     """
     Extract fluorescence data from ROIs
@@ -817,7 +796,7 @@ def get_rois_ij(data, infer=True):
     rois = ROIList.load(data.roi_path_mc, fmt='ImageJ')
     dataset_mc.add_ROIs(rois, 'from_ImageJ' + data.roi_subset)
     if data.roi_translate is not None:
-        rois = rois.transform(affine_transform_matrix(
+        rois = rois.transform(utils.affine_transform_matrix(
             data.roi_translate[0], data.roi_translate[1]))
 
     signal_label = 'imagej_rois' + data.roi_subset
@@ -874,7 +853,7 @@ def get_rois_sima(data, infer=True):
         rois = dataset_mc.ROIs['from_sima_stICA']
 
     if data.roi_translate is not None:
-        rois = rois.transform(affine_transform_matrix(
+        rois = rois.transform(utils.affine_transform_matrix(
             data.roi_translate[0], data.roi_translate[1]))
 
     signal_label = 'sima_stICA_rois' + data.roi_subset
@@ -982,7 +961,7 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
         rois = ROIList.load(thunder_roi_fn)
 
     if data.roi_translate is not None:
-        rois = rois.transform(affine_transform_matrix(
+        rois = rois.transform(utils.affine_transform_matrix(
             data.roi_translate[0], data.roi_translate[1]))
 
     dataset_mc.delete_ROIs('from_thunder_ICA')
@@ -1236,23 +1215,9 @@ def extract_rois(signal_label, dataset, rois, data, dt):
                          for meas in signals['raw'][0]])
 
     if not os.path.exists(data.proj_fn):
-        try:
-            seq = bottleneck.nanmax(
-                np.array(
-                    dataset.sequences[0][:, 0, :, :, 0]).squeeze(), axis=0)
-        except MemoryError:
-            nframes = dataset.sequences[0].shape[0]
-            nseqs = 32
-            nsubseqs = int(nframes)/nseqs
-            seq = bottleneck.nanmax(np.array([
-                bottleneck.nanmax(
-                    np.array(dataset.sequences[0][
-                        nseq*nsubseqs:(nseq+1)*nsubseqs, 0, :, :, 0]
-                    ).squeeze(), axis=0)
-                for nseq in range(nseqs)
-            ]), axis=0)
-
-        np.save(data.proj_fn, seq)
+        zproj = utils.zproject(
+            np.array(dataset.sequences[0][:, 0, :, :, 0]).squeeze())
+        np.save(data.proj_fn, zproj)
     else:
         zproj = np.load(data.proj_fn)
 

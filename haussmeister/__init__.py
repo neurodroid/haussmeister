@@ -3,6 +3,7 @@
 Python module to read common electrophysiology file formats.
 '''
 
+from . import utils
 from . import haussio
 from . import movies
 from . import scalebars
