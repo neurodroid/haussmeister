@@ -38,11 +38,13 @@ try:
     from . import movies
     from . import scalebars
     from . import spectral
+    from . import cnmf
 except ValueError:
     import haussio
     import movies
     import scalebars
     import spectral
+    import cnmf
 
 import stfio
 from stfio import plot as stfio_plot
@@ -1061,7 +1063,8 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
         The ThorExperiment to be processed
     method : str, optional
         One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
-        are identified by SIMA's stICA), or "ij" (an ImageJ RoiSet is used).
+        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used), 
+        "cnmf" (constrained non-negative matrix factorization).
         Default: "thunder"
     tsc : thunder.ThunderContext, optional
         A ThunderContext in case the method is "thunder"
@@ -1070,7 +1073,7 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
     infer_threshold : float, optional
         Activity threshold of spike inference. Default: 0.15
     """
-    assert(method in ["thunder", "sima", "ij"])
+    assert(method in ["thunder", "sima", "ij", "cnmf"])
 
     import syncfiles
     import imp
@@ -1088,6 +1091,11 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
     elif method == "ij":
         rois, measured, experiment, seq, spikes = get_rois_ij(
             data, infer)
+    elif method == "cnmf":
+        speed_thr = 0.01  # m/s
+        time_thr = 2000.0  # ms 
+        rois, measured, experiment, zproj, spikes, vrdict = get_rois_cnmf(
+            data, vrdict, speed_thr, time_thr)
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
 
@@ -1377,3 +1385,142 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
             sys.stdout.write(", P=%.4f\n" % (P))
 
     return xret
+
+
+def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
+    """
+    Extract fluorescence data from ROIs that are identified
+    by thunder's ICA. If running speed is available, ROIs will
+    be determined during running periods. Otherwise, MAXFRAMES_ICA
+    at the beginning of the recording will be used.
+
+    Parameters
+    ----------
+    data : ThorExperiment
+        The ThorExperiment to be processed
+    vrdict : dict
+        Dictionary with processed VR data
+    speed_thr : float
+        Speed threshold
+    time_thr : float
+        Maximal resting duration
+        If the resting period is shorter than time_thr, it will be counted as
+        a non-stationary period
+
+    Returns
+    -------
+    rois : sima.ROI.ROIList
+        sima ROIList to be plotted
+    measured : numpy.ndarray
+        Processed fluorescence data for each ROI
+    experiment : haussio.HaussIO
+        haussio.HaussIO instance
+    zproj : numpy.ndarray
+        z-projected fluorescence image
+    spikes : numpy.ndarray
+        Spike inference values
+    vrdict : dict
+        Dictionary with processed VR data
+    """
+    # Remove data periods during which the animal is moving at less than
+    # 1cm/s for more than 2s:
+    mask2p = contiguous_stationary(
+        vrdict["speed2p"], vrdict["framet2p"], speed_thr, time_thr)
+    print("{0:.2f} %% stationary".format(
+        np.sum(mask2p)/float(mask2p.shape[0])*100.0))
+    data_haussio = data.to_haussio(mc=True)
+    rois, measured, experiment, zproj, spikes = cnmf.process_data(
+        data_haussio, mask=mask2p, p=2)
+
+    maskvr = contiguous_stationary(
+        vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
+
+    vrdict["evlist"] = collapse_events(
+        vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
+    vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
+    vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
+    vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
+    vrdict["posy"] = vrdict["posy"][np.invert(maskvr)]
+    vrdict["speedvr"] = vrdict["speedvr"][np.invert(maskvr)][:-1]
+    vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
+    vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
+
+    return rois, measured, experiment, zproj, spikes, vrdict
+
+
+def collapse_time(time_full, maskvr):
+    if len(time_full) == len(maskvr):
+        maskvr = maskvr.copy()[1:]
+    try:
+        assert(len(time_full) == len(maskvr)+1)
+    except AssertionError as err:
+        print(len(time_full), len(maskvr))
+        raise err
+
+    time_collapse = [0, ]
+    for dtf, mask in zip(np.diff(time_full), maskvr):
+        if not mask:
+            time_collapse.append(time_collapse[-1] + dtf)
+
+    return np.array(time_collapse)
+
+
+def collapse_events(time_full, maskvr, evlist):
+    import training
+    import imp
+    imp.reload(training)
+
+    evlist_collapse = []
+    old_times = []
+    for ev in evlist:
+        # find closest time:
+        closest_time = np.where(ev.time <= time_full)[0][0]
+        if not maskvr[closest_time]:
+            old_times.append(ev.time)
+            evlist_collapse.append(training.event(ev.time, ev.evcode))
+
+    for tf, dtf, mask in zip(time_full[1:], np.diff(time_full), maskvr):
+        if mask:
+            for nev, ev in enumerate(evlist_collapse):
+                if old_times[nev] > tf:
+                    evlist_collapse[nev].time -= dtf
+
+    return evlist_collapse
+
+
+def contiguous_stationary(speed, speed_time, speed_thr, time_thr):
+    """
+    Find contiguous stationary periods
+
+    Parameters
+    ----------
+    speed : numpy.ndarray
+        Running speed
+    speed_time : numpy.ndarray
+        Time of running speed
+    speed_thr : float
+        Speed threshold
+    time_thr : float
+        Maximal resting duration
+        If the resting period is shorter than time_thr, it will be counted as
+        a non-stationary period
+
+    Returns
+    -------
+    running_mask : numpy.ndarray
+        Boolean mask denoting stationary periods
+    """
+    # Mask running periods (running: mask=True)
+    speed_masked = np.ma.array(speed, mask=speed >= speed_thr)
+
+    # Look for contiguous regions of unmasked (resting) values:
+    contiguous_indices = np.ma.notmasked_contiguous(speed_masked)
+    for nci, ci in enumerate(contiguous_indices):
+        contiguous_duration = speed_time[ci.stop-1]-speed_time[ci.start]
+        if contiguous_duration < time_thr:
+            # If this resting period is shorter than time_thr,
+            # count it as a running period (mask=True)
+            speed_masked.mask[ci] = True
+
+    # return inverted mask (stationary: mask=True)
+    return np.invert(speed_masked.mask)
