@@ -16,6 +16,8 @@ import time
 import subprocess
 import multiprocessing as mp
 
+import ipyparallel
+
 import numpy as np
 from scipy.io import savemat, loadmat
 
@@ -64,21 +66,42 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
 
 
 def start_server():
-    print("Restarting server...")
+    sys.stdout.write("Restarting server...\n")
+
+    stop_server()
+
+    sys.stdout.write("Starting cluster...")
     sys.stdout.flush()
 
-    subprocess.Popen(["ipcluster stop"], shell=True)
-    time.sleep(5)
-
-    sys.stdout.flush()
     subprocess.Popen(["ipcluster start -n {0}".format(NCPUS)], shell=True)
+    while True:
+        try:
+            c = ipyparallel.Client()
+            c.close()
+            break
+        except IOError:
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(1)
+
+    sys.stdout.write(" done\n")
 
 
 def stop_server():
-    print("Stopping Cluster...")
+    sys.stdout.write("Stopping cluster...")
     sys.stdout.flush()
-
     subprocess.Popen(["ipcluster stop"], shell=True)
+    while True:
+        try:
+            c = ipyparallel.Client()
+            c.close()
+            sys.stdout.write(".")
+            sys.stdout.flush()
+            time.sleep(5)
+        except IOError:
+            break
+
+    sys.stdout.write(" done\n")
 
 
 def process_data(haussio_data, mask=None, p=2):
