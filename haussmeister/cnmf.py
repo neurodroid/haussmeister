@@ -99,40 +99,26 @@ def process_data(haussio_data, mask=None, p=2):
 
         # how to subdivide the work among processes
         n_pixels_per_process = d1*d2/NCPUS
-        preprocess_defaults = {
-            'sn': None, 'g': None,
-            'noise_range': [0.25, 0.5], 'noise_method': 'logmexp',
-            'n_processes': NCPUS, 'n_pixels_per_process': n_pixels_per_process,
-            'compute_g': False, 'p': p,
-            'lags': 5, 'include_noise': False, 'pixels': None}
-        init_defaults = {
-            'K': 200, 'gSig': [9, 9], 'gSiz': [16, 16],
-            'ssub': 1, 'tsub': 1,
-            'nIter': 10, 'kernel': None,
-            'maxIter': 10
-        }
-        spatial_defaults = {
-            'd1': d1,  'd2': d2, 'dist': 3, 'method': 'ellipse',
-            'n_processes': NCPUS, 'n_pixels_per_process': n_pixels_per_process,
-            'backend': 'ipyparallel',
-            'memory_efficient': True
-        }
-        temporal_defaults = {
-            'ITER': 2, 'method': 'spgl1', 'p': p,
-            'n_processes': NCPUS, 'backend': 'ipyparallel',
-            'memory_efficient': True,
-            'bas_nonneg': True,
-            'noise_range': [.25, .5], 'noise_method': 'logmexp',
-            'lags': 5, 'fudge_factor': 1.,
-            'verbosity': False
-        }
+
+        options = cse.utilities.CNMFSetParms(Y, K=200, p=p, gSig=[9, 9])
+        options['preprocess_params']['n_processes'] = NCPUS
+        options['preprocess_params'][
+            'n_pixels_per_process'] =  n_pixels_per_process
+        options['init_params']['nIter'] = 10
+        options['init_params']['maxIter'] = 10
+        options['spatial_params']['n_processes'] = NCPUS
+        options['spatial_params'][
+            'n_pixels_per_process'] = n_pixels_per_process
+        options['temporal_params']['n_processes'] = NCPUS
+        options['temporal_params'][
+            'n_pixels_per_process'] = n_pixels_per_process
 
         start_server()
 
         t0 = time.time()
         sys.stdout.write("Preprocessing... ")
         sys.stdout.flush()
-        Yr, sn, g = cse.preprocess_data(Yr, **preprocess_defaults)
+        Yr, sn, g = cse.preprocess_data(Yr, **options['preprocess_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 224.94s
 
@@ -140,15 +126,15 @@ def process_data(haussio_data, mask=None, p=2):
         sys.stdout.write("Initializing components... ")
         sys.stdout.flush()
         Ain, Cin, b_in, f_in, center = cse.initialize_components(
-            Y, **init_defaults)
+            Y, **options['init_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 2281.37s
 
         t0 = time.time()
         sys.stdout.write("Updating spatial components... ")
         sys.stdout.flush()
-        A, b, Cin = cse.update_spatial_components_parallel(
-            Yr, Cin, f_in, Ain, sn=sn, **spatial_defaults)
+        A, b, Cin = cse.update_spatial_components(
+            Yr, Cin, f_in, Ain, sn=sn, **options['spatial_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 252.57s
 
@@ -156,9 +142,9 @@ def process_data(haussio_data, mask=None, p=2):
         sys.stdout.write("Updating temporal components... ")
         sys.stdout.flush()
         C, f, S, bl, c1, neurons_sn, g = \
-            cse.update_temporal_components_parallel(
+            cse.update_temporal_components(
                 Yr, A, b, Cin, f_in, bl=None, c1=None, sn=None, g=None,
-                **temporal_defaults)
+                **options['temporal_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 455.14s
 
@@ -166,17 +152,18 @@ def process_data(haussio_data, mask=None, p=2):
         sys.stdout.write("Merging ROIs... ")
         sys.stdout.flush()
         A_m, C_m, nr_m, merged_ROIs, S_m, bl_m, c1_m, sn_m, g_m = \
-            cse.mergeROIS_parallel(
-                Yr, A, b, C, f, S, sn, temporal_defaults, spatial_defaults,
-                bl=bl, c1=c1, sn=neurons_sn, g=g, thr=0.7, mx=100)
+            cse.merge_components(
+                Yr, A, b, C, f, S, sn, options['temporal_params'],
+                options['spatial_params'], bl=bl, c1=c1, sn=neurons_sn, g=g,
+                thr=0.7, mx=100, fast_merge=True)
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 702.55s
 
         t0 = time.time()
         sys.stdout.write("Updating spatial components... ")
         sys.stdout.flush()
-        A2, b2, C2 = cse.update_spatial_components_parallel(
-            Yr, C_m, f, A_m, sn=sn, **spatial_defaults)
+        A2, b2, C2 = cse.update_spatial_components(
+            Yr, C_m, f, A_m, sn=sn, **options['spatial_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 77.16s
 
@@ -184,9 +171,9 @@ def process_data(haussio_data, mask=None, p=2):
         sys.stdout.write("Updating temporal components... ")
         sys.stdout.flush()
         C2, f2, S2, bl2, c12, neurons_sn2, g21 = \
-            cse.update_temporal_components_parallel(
+            cse.update_temporal_components(
                 Yr, A2, b2, C2, f, bl=None, c1=None, sn=None, g=None,
-                **temporal_defaults)
+                **options['temporal_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 483.41s
 
