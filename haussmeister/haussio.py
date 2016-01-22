@@ -204,6 +204,9 @@ class HaussIO(object):
         return sima.ImagingDataset(
             sequences, self.sima_dir, channel_names=[self.chan, ])
 
+    def asarray(self):
+        return np.array(self.tosima().sequences[0]).squeeze()
+
     def make_movie(self, norm=16.0, scalebar=True, crf=28.0):
         """
         Produce a movie of the experiment
