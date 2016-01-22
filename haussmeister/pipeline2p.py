@@ -351,43 +351,70 @@ def activity_level(data, infer_threshold=0.15, roi_subset=""):
     return active, spikes[0].shape[0]
 
 
-def process_data(data, dt, detrend=False, base_fraction=0.05):
+def process_data(data, movie, detrend=False, base_fraction=0.05, zscore=True):
     """
     Compute \Delta F / F_0 and detrend if required
 
     Parameters
     ----------
     data : numpy.ndarray
-        Fluorescence trace
-    infer_threshold : dt
-        Frame interval
+        Fluorescence trace, shape: (nrois, nframes)
+    movie : numpy.ndarray
+        Full movie, shape: (nframes, x, y)
     detrend : bool, optional
         Detrend fluorescence traces. Default: False
     base_fraction : float, optional
         Bottom fraction to be used for F_0 computation. If None, F_0 is set to
         data.mean(). Default: 0.05
+    zscore : bool, optional
+        Use z score instead of mean
 
     Returns
     -------
     ret_data : numpy.ndarray
         Processed data
     """
-    # return highpass(
-    #     (data-data.mean())/data.mean() * 100.0, dt, highpass_f)
-    if base_fraction is None:
-        F0 = data.mean()
-    else:
-        F0 = data[data.argsort()][
-            :int(np.round(base_fraction*data.shape[0]))].mean()
+    try:
+        assert(data.shape[-1] == movie.shape[0])
+    except AssertionError as err:
+        print(data.shape, movie.shape)
+        raise err
 
-    ret_data = (data-F0)/F0 * 100.0
+    if base_fraction is None:
+        movie_base = movie
+    else:
+        # Find pixels that are in the lower base_fraction
+        # across time
+
+        # pixels sorted by mean fluorescence across time
+        sorted_indcs = movie.mean(axis=0).flatten().argsort()
+
+        # for each point in time, get the lower base_fraction
+        # of the sorted pixels
+        movie_base = np.array([
+            img[sorted_indcs][
+                :int(np.round(base_fraction*img.shape[0]))]
+            for img in movie.reshape(
+                    movie.shape[0], movie.shape[1]*movie.shape[2])])
+
+    Fmu = movie_base.mean(axis=1)
+    if zscore:
+        Fsig = movie_base.std(axis=1)
+    else:
+        Fsig = Fmu
+
+    # Fmu and Fsig should be of shape (nframes)
+    # data and ret_data should be of shape (nrois, nframes)
+    ret_data = (data-Fmu)/Fsig * 100.0
 
     if detrend:
-        ret_data = signal.detrend(ret_data,
-                                  bp=[0, int(data.shape[0]/4.0),
-                                      int(data.shape[0]/2.0),
-                                      int(3.0*data.shape[0]/4.0),
-                                      int(data.shape[0])])
+        ret_data = np.array([
+            signal.detrend(
+                trace, bp=[0, int(data.shape[0]/4.0),
+                           int(data.shape[0]/2.0),
+                           int(3.0*data.shape[0]/4.0),
+                           int(data.shape[0])])
+            for trace in ret_data])
 
     return ret_data
 
@@ -423,10 +450,11 @@ def xcorr(data, chan, roi_subset1="DG", roi_subset2="CA3",
     rois2, meas2, experiment2, zproj2, spikes2 = \
         get_rois_ij(data, infer=True)
 
-    meas1_filt = [process_data(m1, experiment1.dt, detrend=data.detrend)
-                  for m1 in meas1]
-    meas2_filt = [process_data(m2, experiment2.dt, detrend=data.detrend)
-                  for m2 in meas2]
+    meas1_filt = process_data(meas1, data.to_haussio().asarray(),
+                              detrend=data.detrend)
+    meas2_filt = process_data(meas2, data.to_haussio().asarray(),
+                              detrend=data.detrend)
+
     high_xcs = []
     for nroi1, m1 in enumerate(meas1_filt):
         spikes1_filt = (spikes1[0][nroi1]-spikes1[0][nroi1].min())[1:]
@@ -1219,8 +1247,9 @@ def extract_rois(signal_label, dataset, rois, data, dt):
         signals = dataset.extract(rois, label=signal_label,
                                   save_summary=False, n_processes=NCPUS)
 
-    measured = np.array([process_data(meas, dt, detrend=data.detrend)
-                         for meas in signals['raw'][0]])
+    measured = process_data(
+        signals['raw'][0], np.array(dataset.sequences[0]).squeeze(),
+        detrend=data.detrend)
 
     if not os.path.exists(data.proj_fn):
         zproj = utils.zproject(
@@ -1402,7 +1431,7 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
     print("{0:.2f} %% stationary".format(
         np.sum(mask2p)/float(mask2p.shape[0])*100.0))
     data_haussio = data.to_haussio(mc=True)
-    rois, measured, experiment, zproj, spikes = cnmf.process_data(
+    rois, measured, experiment, zproj, spikes, movie = cnmf.process_data(
         data_haussio, mask=mask2p, p=2)
 
     maskvr = contiguous_stationary(
@@ -1417,6 +1446,8 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
     vrdict["speedvr"] = vrdict["speedvr"][np.invert(maskvr)][:-1]
     vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
     vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
+
+    measured = process_data(measured, movie.transpose((2, 0, 1)))
 
     return rois, measured, experiment, zproj, spikes, vrdict
 
