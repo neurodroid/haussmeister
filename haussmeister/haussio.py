@@ -176,6 +176,16 @@ class HaussIO(object):
         dataset : sima.ImagingDataset
             A sima.ImagingDataset
         """
+        if os.path.exists(self.sima_dir):
+            try:
+                return sima.ImagingDataset.load(self.sima_dir)
+            except EOFError as err:
+                sys.stderr.write("Could not read from " + self.sima_dir +
+                                 "regenerating sima files: " + err + "\n")
+            except IndexError as err:
+                sys.stderr.write("Could not read from " + self.sima_dir +
+                                 "regenerating sima files: " + err + "\n")
+
         if self.rawfile is None or not os.path.exists(self.rawfile):
             # The string paths[i][j] is a unix style expression for the
             # filenames for plane i and channel j
