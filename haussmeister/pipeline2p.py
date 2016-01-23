@@ -351,7 +351,7 @@ def activity_level(data, infer_threshold=0.15, roi_subset=""):
     return active, spikes[0].shape[0]
 
 
-def process_data(data, detrend=False, base_fraction=0.05, zscore=True):
+def process_data(data, detrend=False, base_fraction=0.2, zscore=True):
     """
     Compute \Delta F / F_0 and detrend if required
 
@@ -383,6 +383,8 @@ def process_data(data, detrend=False, base_fraction=0.05, zscore=True):
         Fsig = data[sortedi].std(axis=1)
     else:
         Fsig = Fmu
+
+    Fsig[Fsig == 0] = 1.0
 
     # Fmu and Fsig should be of shape (nrois)
     # data and ret_data should be of shape (nrois, nframes)
@@ -670,7 +672,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
                 mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
             ax_maps_infer.set_xlabel("VR position (m)")
 
-    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf", dpi=4800)
+    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf")
 
 
 def infer_spikes(dataset, signal_label):
@@ -1424,7 +1426,7 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
     vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
     vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
 
-    measured = process_data(measured)
+    measured = process_data(measured, base_fraction=None, zscore=False)
 
     return rois, measured, experiment, zproj, spikes, vrdict
 
