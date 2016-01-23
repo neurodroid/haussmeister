@@ -97,7 +97,7 @@ def stop_server():
             c.close()
             sys.stdout.write(".")
             sys.stdout.flush()
-            time.sleep(5)
+            time.sleep(4)
         except IOError:
             break
 
