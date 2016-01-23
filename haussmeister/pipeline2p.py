@@ -372,28 +372,21 @@ def process_data(data, detrend=False, base_fraction=0.05, zscore=True):
     ret_data : numpy.ndarray
         Processed data
     """
-    try:
-        assert(data.shape[-1] == movie.shape[0])
-    except AssertionError as err:
-        print(data.shape, movie.shape)
-        raise err
-
-    if base_fraction is None:
-        sorted_idcs = data.shape
-    else:
+    sortedi = np.ogrid[:data.shape[0], :data.shape[1]]
+    if base_fraction is not None:
         # Sort data by brightness, select lower base_fraction:
-        sorted_idcs = np.argsort(data, axis=1)[
-            :int(np.round(base_fraction*data.shape[1]))]
+        sortedi[1] = data.argsort(axis=1)[
+            :, :int(np.round(base_fraction*data.shape[1]))]
 
-    Fmu = data[sorted_idcs].mean(axis=1)
+    Fmu = data[sortedi].mean(axis=1)
     if zscore:
-        Fsig = data[sorted_idcs].std(axis=1)
+        Fsig = data[sortedi].std(axis=1)
     else:
         Fsig = Fmu
 
-    # Fmu and Fsig should be of shape (nframes)
+    # Fmu and Fsig should be of shape (nrois)
     # data and ret_data should be of shape (nrois, nframes)
-    ret_data = (data-Fmu)/Fsig * 100.0
+    ret_data = ((data.T-Fmu)/Fsig).T * 100.0
 
     if detrend:
         ret_data = np.array([
