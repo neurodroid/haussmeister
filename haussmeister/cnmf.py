@@ -79,7 +79,7 @@ def start_server():
             c = ipyparallel.Client()
             c.close()
             break
-        except IOError:
+        except (IOError, ipyparallel.error.TimeoutError):
             sys.stdout.write(".")
             sys.stdout.flush()
             time.sleep(1)
@@ -98,9 +98,8 @@ def stop_server():
             sys.stdout.write(".")
             sys.stdout.flush()
             time.sleep(4)
-        except IOError:
+        except (IOError, ipyparallel.error.TimeoutError):
             break
-
     sys.stdout.write(" done\n")
 
 
@@ -209,7 +208,7 @@ def process_data(haussio_data, mask=None, p=2):
         A2 = resdict["A"]
         C2 = resdict["C"]
         S2 = resdict["S"]
-        bl2 = resdict["bl2"]
+        bl2 = resdict["bl"]
 
     proj_fn = haussio_data.dirname_comp + "_proj.npy"
     if not os.path.exists(proj_fn):
