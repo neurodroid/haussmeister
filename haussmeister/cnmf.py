@@ -203,12 +203,13 @@ def process_data(haussio_data, mask=None, p=2):
         # A: spatial components (ROIs)
         # C: [Ca2+]
         # S: Spikes
-        savemat(fn_cnmf, {"A": A2, "C": C2, "S": S2})
+        savemat(fn_cnmf, {"A": A2, "C": C2, "S": S2, "bl": bl2})
     else:
         resdict = loadmat(fn_cnmf)
         A2 = resdict["A"]
         C2 = resdict["C"]
         S2 = resdict["S"]
+        bl2 = resdict["bl2"]
 
     proj_fn = haussio_data.dirname_comp + "_proj.npy"
     if not os.path.exists(proj_fn):
