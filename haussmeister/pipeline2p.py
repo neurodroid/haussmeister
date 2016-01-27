@@ -1083,6 +1083,7 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
 
     vrdict = syncfiles.read_files_2p(data)
 
+    lopass = 1.0
     if method == "thunder":
         rois, measured, experiment, zproj, spikes = get_rois_thunder(
             data, tsc, infer, speed=vrdict["speed2p"])
@@ -1097,12 +1098,13 @@ def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
         time_thr = 2000.0  # ms 
         rois, measured, experiment, zproj, spikes, vrdict = get_rois_cnmf(
             data, vrdict, speed_thr, time_thr)
+        lopass = None
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
 
     plot_rois(rois, measured, experiment, zproj, data.data_path_comp,
               pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
-              infer_threshold=infer_threshold, mapdict=mapdict)
+              infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass)
 
 
 def eta(measured, vrdict, evcodelist):
