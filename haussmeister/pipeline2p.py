@@ -1080,7 +1080,10 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
     imp.reload(syncfiles)
     imp.reload(syncfiles.haussmeister)
 
-    vrdict = syncfiles.read_files_2p(data)
+    if data.fnvr is not None:
+        vrdict = syncfiles.read_files_2p(data)
+    else:
+        vrdict = None
 
     lopass = 1.0
     if method == "thunder":
@@ -1407,28 +1410,33 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
     vrdict : dict
         Dictionary with processed VR data
     """
-    # Remove data periods during which the animal is moving at less than
-    # 1cm/s for more than 2s:
-    mask2p = contiguous_stationary(
-        vrdict["speed2p"], vrdict["framet2p"], speed_thr, time_thr)
-    print("{0:.2f} %% stationary".format(
-        np.sum(mask2p)/float(mask2p.shape[0])*100.0))
+    if vrdict is not None:
+        # Remove data periods during which the animal is moving at less than
+        # 1cm/s for more than 2s:
+        mask2p = contiguous_stationary(
+            vrdict["speed2p"], vrdict["framet2p"], speed_thr, time_thr)
+        print("{0:.2f} %% stationary".format(
+            np.sum(mask2p)/float(mask2p.shape[0])*100.0))
+    else:
+        mask2p = None
+
     data_haussio = data.to_haussio(mc=True)
     rois, measured, experiment, zproj, spikes, movie = cnmf.process_data(
         data_haussio, mask=mask2p, p=2)
 
-    maskvr = contiguous_stationary(
-        vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
+    if vrdict is not None:
+        maskvr = contiguous_stationary(
+            vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
 
-    vrdict["evlist"] = collapse_events(
-        vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
-    vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
-    vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
-    vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
-    vrdict["posy"] = vrdict["posy"][np.invert(maskvr)]
-    vrdict["speedvr"] = vrdict["speedvr"][np.invert(maskvr)][:-1]
-    vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
-    vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
+        vrdict["evlist"] = collapse_events(
+            vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
+        vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
+        vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
+        vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
+        vrdict["posy"] = vrdict["posy"][np.invert(maskvr)]
+        vrdict["speedvr"] = vrdict["speedvr"][np.invert(maskvr)][:-1]
+        vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
+        vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
 
     measured = process_data(measured, base_fraction=None, zscore=False)
 
