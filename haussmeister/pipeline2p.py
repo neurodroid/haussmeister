@@ -264,13 +264,14 @@ def thor_preprocess(data):
     """
     experiment = data.to_haussio(mc=False)
 
-    if os.path.exists(experiment.movie_fn):
-        raw_movie = movies.html_movie(experiment.movie_fn)
-    else:
-        try:
-            raw_movie = experiment.make_movie(norm=14.0, crf=28)
-        except IOError:
-            raw_movie = experiment.make_movie(norm=False, crf=28)
+    if not os.path.exists(experiment.rawfile):
+        if os.path.exists(experiment.movie_fn):
+            raw_movie = movies.html_movie(experiment.movie_fn)
+        else:
+            try:
+                raw_movie = experiment.make_movie(norm=14.0, crf=28)
+            except IOError:
+                raw_movie = experiment.make_movie(norm=False, crf=28)
 
     if not os.path.exists(experiment.sima_dir):
         dataset = experiment.tosima(stopIdx=None)
