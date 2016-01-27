@@ -1052,11 +1052,10 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
         return None
 
 
-def thor_extract_roi(data, method="thunder", tsc=None, infer=True,
+def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
                      infer_threshold=0.15):
     """
-    Extract and process fluorescence data from ROIs that are identified
-    by thunder's ICA
+    Extract and process fluorescence data from ROIs
 
     Parameters
     ----------
@@ -1377,10 +1376,8 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
 
 def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
     """
-    Extract fluorescence data from ROIs that are identified
-    by thunder's ICA. If running speed is available, ROIs will
-    be determined during running periods. Otherwise, MAXFRAMES_ICA
-    at the beginning of the recording will be used.
+    Identify ROIs, extract fluorescence and infer spikes using constrained
+    non-negative matrix factorization (CNMF)
 
     Parameters
     ----------
