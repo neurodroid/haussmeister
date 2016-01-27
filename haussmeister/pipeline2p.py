@@ -289,9 +289,13 @@ def thor_preprocess(data):
             print("Couldn't load sima dataset: ", err)
             dataset_mc = data.to_sima(mc=True)
 
-    filenames_mc = ["{0}{1:05d}.tif".format(experiment.filetrunk, nf)
-                    for nf, fn in enumerate(experiment.filenames)]
-    assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
+    filenames_mc = ["{0}{1:05d}.tif".format(experiment.filetrunk, nf+1)
+                    for nf in range(experiment.nframes)]
+    try:
+        assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
+    except AssertionError as err:
+        print(len(filenames_mc), dataset_mc.sequences[0].shape[0])
+        raise err
     if not os.path.exists(data.mc_tiff_dir + "/" + os.path.basename(
             filenames_mc[-1])):
         print("Exporting frames...")
