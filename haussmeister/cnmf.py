@@ -65,44 +65,6 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         # 888s
 
 
-def start_server():
-    sys.stdout.write("Restarting server...\n")
-
-    stop_server()
-
-    sys.stdout.write("Starting cluster...")
-    sys.stdout.flush()
-
-    subprocess.Popen(["ipcluster start -n {0}".format(NCPUS)], shell=True)
-    while True:
-        try:
-            c = ipyparallel.Client()
-            c.close()
-            break
-        except (IOError, ipyparallel.error.TimeoutError):
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            time.sleep(1)
-
-    sys.stdout.write(" done\n")
-
-
-def stop_server():
-    sys.stdout.write("Stopping cluster...")
-    sys.stdout.flush()
-    subprocess.Popen(["ipcluster stop"], shell=True)
-    while True:
-        try:
-            c = ipyparallel.Client()
-            c.close()
-            sys.stdout.write(".")
-            sys.stdout.flush()
-            time.sleep(4)
-        except (IOError, ipyparallel.error.TimeoutError):
-            break
-    sys.stdout.write(" done\n")
-
-
 def process_data(haussio_data, mask=None, p=2):
     fn_cnmf = haussio_data.dirname_comp + '_cnmf.mat'
 
@@ -113,6 +75,8 @@ def process_data(haussio_data, mask=None, p=2):
     d1, d2, T = Y.shape
 
     if not os.path.exists(fn_cnmf):
+
+        cse.utilities.stop_server(NCPUS)
 
         sys.stdout.flush()
         t0 = time.time()
@@ -135,7 +99,7 @@ def process_data(haussio_data, mask=None, p=2):
         options['temporal_params'][
             'n_pixels_per_process'] = n_pixels_per_process
 
-        start_server()
+        cse.utilities.start_server(NCPUS)
 
         t0 = time.time()
         sys.stdout.write("Preprocessing... ")
@@ -217,11 +181,15 @@ def process_data(haussio_data, mask=None, p=2):
     else:
         zproj = np.load(proj_fn)
 
+    # DF_F, DF = cse.extract_DF_F(Y.reshape(d1*d2, T), A2, C2)
+
     t0 = time.time()
     sys.stdout.write("Ordering components... ")
     sys.stdout.flush()
     A_or, C_or, srt = cse.order_components(A2, C2)
     sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
+
+    cse.utilities.stop_server()
 
     polygons = contour(A2, d1, d2, thr=0.9)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
