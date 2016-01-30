@@ -76,7 +76,7 @@ def process_data(haussio_data, mask=None, p=2):
 
     if not os.path.exists(fn_cnmf):
 
-        cse.utilities.stop_server(NCPUS)
+        cse.utilities.stop_server()
 
         sys.stdout.flush()
         t0 = time.time()
