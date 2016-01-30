@@ -1097,7 +1097,7 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
             data, infer)
     elif method == "cnmf":
         speed_thr = 0.01  # m/s
-        time_thr = 2000.0  # ms 
+        time_thr = 5000.0  # ms
         rois, measured, experiment, zproj, spikes, vrdict = get_rois_cnmf(
             data, vrdict, speed_thr, time_thr)
         lopass = None
