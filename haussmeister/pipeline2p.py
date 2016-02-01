@@ -1038,6 +1038,7 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
         mapdict = {
             "t_2p": vrdict["framet2p"],
             "DFoF_2p": measured,
+            "spikes_2p": spikes,
             "t_vr": vrdict["frametvr"],
             "posy_vr": vrdict["posy"],
             "speed_vr": vrdict["speedvr"],
