@@ -47,8 +47,15 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         if mask is None:
             filenames = haussio_data.filenames
         else:
-            filenames = [fn for fn, masked in zip(haussio_data.filenames, mask)
-                         if not masked]
+            if len(haussio_data.filenames) > mask.shape[0]:
+                mask_full = np.concatenate([
+                    mask, np.ones((
+                        len(haussio_data.filenames)-mask.shape[0])).astype(
+                            np.bool)])
+            else:
+                mask_full = mask
+            filenames = [fn for fn, masked in zip(
+                haussio_data.filenames, mask_full) if not masked]
         t0 = time.time()
         tiff_sequence = tifffile.TiffSequence(filenames, pattern=None)
         tiff_data = tiff_sequence.asarray(memmap=True).astype(dtype=np.float32)

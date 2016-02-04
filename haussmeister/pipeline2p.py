@@ -1426,6 +1426,11 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
         data_haussio, mask=mask2p, p=2)
 
     if vrdict is not None:
+        if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
+            vrdict["evlist"] = [
+                ev for ev in vrdict["evlist"]
+                if ev.time <= vrdict["frametvr"][-1]*1e-3]
+
         maskvr = contiguous_stationary(
             vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
 
