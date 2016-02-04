@@ -525,7 +525,12 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
     ax_nospike = fig.add_subplot(gs[strow:, 1:2])
     plt.axis('off')
 
-    ax2 = fig.add_subplot(gs[:strow, stcol:])
+    ax_blank = fig.add_subplot(gs[:strow, stcol:stcol+1])
+    ax_blank.imshow(zproj, cmap='gray')
+    experiment.plot_scale_bar(ax_blank)
+    plt.axis('off')
+
+    ax2 = fig.add_subplot(gs[:strow, stcol+1:])
     ax2.imshow(zproj, cmap='gray')
     experiment.plot_scale_bar(ax2)
     plt.axis('off')
@@ -677,7 +682,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
                 mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
             ax_maps_infer.set_xlabel("VR position (m)")
 
-    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf")
+    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf", dpi=4800)
 
 
 def infer_spikes(dataset, signal_label):
