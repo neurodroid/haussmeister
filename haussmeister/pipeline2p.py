@@ -1029,15 +1029,15 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
     imp.reload(syncfiles)
     imp.reload(syncfiles.haussmeister)
 
+    matlab_evcodes = [
+        b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR', b'SR', b'SM']
     if data.fnvr is not None:
         fluomap, infermap = syncfiles.create_maps_2p(
             data, measured, spikes, vrdict, method)
         t_ev_matlab = [ev.time for ev in vrdict["evlist"]
-                       if ev.evcode in [
-                           b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']]
+                       if ev.evcode in matlab_evcodes]
         events_matlab = [ev.evcode.decode() for ev in vrdict["evlist"]
-                         if ev.evcode in [
-                             b'GZ', b'GL', b'GN', b'GH', b'TP', b'UP', b'UR']]
+                         if ev.evcode in matlab_evcodes]
         if infermap is None:
             infermap = [0]
         mapdict = {
@@ -1476,9 +1476,18 @@ def collapse_events(time_full, maskvr, evlist):
     import imp
     imp.reload(training)
 
+    evlist_copy = [ev for ev in evlist]
     evlist_collapse = []
     old_times = []
-    for ev in evlist:
+
+    maskvr_start_rest = np.where(np.diff(maskvr.astype(np.int)) == 1)[0]
+    maskvr_stop_rest = np.where(np.diff(maskvr.astype(np.int)) == -1)[0]
+    for start_rest in maskvr_start_rest:
+        evlist_copy.append(training.event(time_full[start_rest], b'SR'))
+    for stop_rest in maskvr_stop_rest:
+        evlist_copy.append(training.event(time_full[stop_rest], b'SM'))
+
+    for ev in evlist_copy:
         # find closest time:
         closest_time = np.where(ev.time <= time_full)[0][0]
         if not maskvr[closest_time]:
