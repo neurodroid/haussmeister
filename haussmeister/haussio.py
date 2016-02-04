@@ -427,7 +427,11 @@ class ThorHaussIO(HaussIO):
             if child.tag == "LSM":
                 self.xpx = int(child.attrib['pixelX'])
                 self.ypx = int(child.attrib['pixelY'])
-            if child.tag == "Sample":
+                if int(child.attrib['averageMode']) == 1:
+                    self.naverage = int(child.attrib['averageNum'])
+                else:
+                    self.naverage = None
+            elif child.tag == "Sample":
                 for grandchild in child:
                     if grandchild.tag == "Wells":
                         for ggrandchild in grandchild:
@@ -561,6 +565,7 @@ class PrairieHaussIO(HaussIO):
 
         self.xsize *= self.xpx
         self.ysize *= self.ypx
+        self.naverage = None
 
     def _get_timing(self):
         self.timing = np.array([float(fi.attrib['relativeTime'])
