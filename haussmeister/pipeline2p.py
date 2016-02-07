@@ -477,7 +477,7 @@ def norm(sig):
 
 def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
-              lopass=1.0, plot_events=False, minimaps=None):
+              lopass=1.0, plot_events=False, minimaps=None, dpi=4800):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -683,7 +683,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
                 mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
             ax_maps_infer.set_xlabel("VR position (m)")
 
-    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf")
+    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf", dpi=dpi)
 
     if minimaps is None:
         return
@@ -700,32 +700,43 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
         col = nroi % ncols
         row = int(nroi/ncols)
         ax_fluo = stfio_plot.StandardAxis(
-            fig_rois_fluo, gs_fluo[row,col],
-            hasx=nroi==len(minimaps)-1, hasy=True)
+            fig_rois_fluo, gs_fluo[row, col],
+            hasx=nroi == len(minimaps)-1, hasy=True)
         ax_spikes = stfio_plot.StandardAxis(
-            fig_rois_spikes, gs_spikes[row,col],
-            hasx=nroi==len(minimaps)-1, hasy=True)
+            fig_rois_spikes, gs_spikes[row, col],
+            hasx=nroi == len(minimaps)-1, hasy=True)
         ax_fluo.set_title(r"{0}".format(iroi))
         ax_spikes.set_title(r"{0}".format(iroi))
         for minimap in minimaps_roi:
             minimap_fluo, minimap_spikes = minimap
             ax_fluo.plot(
-                minimap_fluo[0][0], norm(minimap_fluo[0][1]), alpha=0.5)
+                minimap_fluo[0][0],
+                minimap_fluo[0][1]-minimap_fluo[0][1].min(), alpha=0.5)
             ax_spikes.plot(
-                minimap_spikes[0][0], norm(minimap_spikes[0][1]), alpha=0.5)
+                minimap_spikes[0][0],
+                minimap_spikes[0][1]-minimap_spikes[0][1].min(), alpha=0.5)
         ax_fluo.plot(
-            mapdict['fluomap'][iroi][0], norm(mapdict['fluomap'][iroi][1]),
-            '-k', lw=2, alpha=0.8)
+            mapdict['fluomap'][iroi][0],
+            mapdict['fluomap'][iroi][1]-mapdict['fluomap'][iroi][1].min(),
+            '-k', lw=3, alpha=0.6)
         ax_spikes.plot(
-            mapdict['infermap'][iroi][0], norm(mapdict['infermap'][iroi][1]),
-            '-k', lw=2, alpha=0.8)
+            mapdict['infermap'][iroi][0],
+            mapdict['infermap'][iroi][1]-mapdict['infermap'][iroi][1].min(),
+            '-k', lw=3, alpha=0.6)
         ax_fluo.set_xlim(
             mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
         ax_spikes.set_xlim(
             mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
-
-    fig_rois_fluo.savefig(data_path + "_rois_fluo" + pdf_suffix + ".pdf")
-    fig_rois_spikes.savefig(data_path + "_rois_spikes" + pdf_suffix + ".pdf")
+        ax_fluo.set_ylim(
+            0, (mapdict['fluomap'][iroi][1].max() -
+                mapdict['fluomap'][iroi][1].min())*2)
+        ax_spikes.set_ylim(
+            0, (mapdict['infermap'][iroi][1].max() -
+                mapdict['infermap'][iroi][1].min())*2)
+    fig_rois_fluo.savefig(
+        data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
+    fig_rois_spikes.savefig(
+        data_path + "_rois_spikes" + pdf_suffix + ".pdf", dpi=dpi)
 
 
 def infer_spikes(dataset, signal_label):
