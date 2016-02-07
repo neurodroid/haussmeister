@@ -476,7 +476,7 @@ def norm(sig):
 
 def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
-              lopass=1.0, plot_events=False):
+              lopass=1.0, plot_events=False, minimaps=None):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -682,7 +682,49 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
                 mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
             ax_maps_infer.set_xlabel("VR position (m)")
 
-    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf", dpi=4800)
+    plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf")
+
+    if minimaps is None:
+        return
+
+    fig_rois_fluo = plt.figure(figsize=(24, 24))
+    fig_rois_spikes = plt.figure(figsize=(24, 24))
+    ncols = int(np.ceil(np.sqrt(len(minimaps))))
+    nrows = int(np.ceil(len(minimaps)/float(ncols)))
+
+    gs_fluo = gridspec.GridSpec(nrows, ncols)
+    gs_spikes = gridspec.GridSpec(nrows, ncols)
+
+    for nroi, (iroi, minimaps_roi) in enumerate(minimaps):
+        col = nroi % ncols
+        row = int(nroi/ncols)
+        ax_fluo = stfio_plot.StandardAxis(
+            fig_rois_fluo, gs_fluo[row,col],
+            hasx=nroi==len(minimaps)-1, hasy=True)
+        ax_spikes = stfio_plot.StandardAxis(
+            fig_rois_spikes, gs_spikes[row,col],
+            hasx=nroi==len(minimaps)-1, hasy=True)
+        ax_fluo.set_title(r"{0}".format(iroi))
+        ax_spikes.set_title(r"{0}".format(iroi))
+        for minimap in minimaps_roi:
+            minimap_fluo, minimap_spikes = minimap
+            ax_fluo.plot(
+                minimap_fluo[0][0], norm(minimap_fluo[0][1]), alpha=0.5)
+            ax_spikes.plot(
+                minimap_spikes[0][0], norm(minimap_spikes[0][1]), alpha=0.5)
+        ax_fluo.plot(
+            mapdict['fluomap'][iroi][0], norm(mapdict['fluomap'][iroi][1]),
+            '-k', lw=2, alpha=0.8)
+        ax_spikes.plot(
+            mapdict['infermap'][iroi][0], norm(mapdict['infermap'][iroi][1]),
+            '-k', lw=2, alpha=0.8)
+        ax_fluo.set_xlim(
+            mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
+        ax_spikes.set_xlim(
+            mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
+
+    fig_rois_fluo.savefig(data_path + "_rois_fluo" + pdf_suffix + ".pdf")
+    fig_rois_spikes.savefig(data_path + "_rois_spikes" + pdf_suffix + ".pdf")
 
 
 def infer_spikes(dataset, signal_label):
@@ -1110,9 +1152,75 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
 
+    fnmini = data.vr_path_comp + "_" + method + "_minimaps.pck"
+    if not os.path.exists(fnmini):
+        minimaps = create_mini_maps(measured, spikes, mapdict, vrdict)
+        with open(fnmini, 'wb') as pckf:
+            pickle.dump(minimaps, pckf)
+    else:
+        sys.stdout.write("Loading from " + fnmini + "...")
+        sys.stdout.flush()
+        with open(fnmini, 'rb') as pckf:
+            minimaps = pickle.load(pckf)
+        sys.stdout.write(" done\n")
+
     plot_rois(rois, measured, experiment, zproj, data.data_path_comp,
               pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
-              infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass)
+              infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
+              minimaps=minimaps)
+
+
+def create_mini_maps(measured, spikes, mapdict, vrdict):
+    import syncfiles
+    import imp
+    imp.reload(syncfiles)
+    imp.reload(syncfiles.haussmeister)
+
+    iroi_with_peaks = find_peaks(mapdict)
+    sys.stdout.write("Found {0}/{1} ROIs with spatial peaks\n".format(
+        len(iroi_with_peaks), len(mapdict['fluomap'])))
+    teleport_times = [ev.time for ev in mapdict['events'] if ev.evcode == b'TP']
+    minimaps = []
+    print("")
+    for iroi in iroi_with_peaks:
+        sys.stdout.write("\rComputing minimap for ROI# {0}".format(iroi))
+        sys.stdout.flush()
+        minimaps_roi = []
+        for start, end in zip([0]+teleport_times[:-1], teleport_times):
+            mask2p = np.where(
+                (vrdict["framet2p"] >= start*1e3) & (vrdict["framet2p"] < end*1e3))[0]
+            maskvr = np.where(
+                (vrdict["frametvr"] >= start*1e3) & (vrdict["frametvr"] < end*1e3))[0]
+            vrdict_mini = {
+                "posx": vrdict["posx"][maskvr],
+                "posy": vrdict["posy"][maskvr],
+                "frametvr": vrdict["frametvr"][maskvr],
+                "speedvr": vrdict["speedvr"][maskvr][:-1],
+                "framet2p": vrdict["framet2p"][mask2p],
+                "speed2p": vrdict["speed2p"][mask2p]
+                }
+            minimaps_roi.append(syncfiles.create_maps_2p(
+                None, [measured[iroi][mask2p]], [spikes[iroi][mask2p]],
+                vrdict_mini))
+        minimaps.append((iroi, minimaps_roi))
+
+    print("")
+    return minimaps
+
+
+def running_mean(x, N):
+    return np.convolve(x, np.ones((N,))/N, mode='valid')
+
+
+def find_peaks(mapdict, zscore=3.0, size=8):
+    return [
+        nroi for nroi, (fluomap, infermap) in enumerate(
+            zip(mapdict['fluomap'], mapdict['infermap']))
+        if running_mean(norm(fluomap[1]), size).max() >
+        zscore*norm(fluomap[1]).std() or
+        running_mean(norm(infermap[1]), size).max() >
+        zscore*norm(infermap[1]).std()
+    ]
 
 
 def eta(measured, vrdict, evcodelist):
