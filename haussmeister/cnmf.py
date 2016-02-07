@@ -134,7 +134,7 @@ def process_data(haussio_data, mask=None, p=2):
         t0 = time.time()
         sys.stdout.write("Updating temporal components... ")
         sys.stdout.flush()
-        C, f, S, bl, c1, neurons_sn, g = \
+        C, f, S, bl, c1, neurons_sn, g, YrA = \
             cse.update_temporal_components(
                 Yr, A, b, Cin, f_in, bl=None, c1=None, sn=None, g=None,
                 **options['temporal_params'])
@@ -163,7 +163,7 @@ def process_data(haussio_data, mask=None, p=2):
         t0 = time.time()
         sys.stdout.write("Updating temporal components... ")
         sys.stdout.flush()
-        C2, f2, S2, bl2, c12, neurons_sn2, g21 = \
+        C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = \
             cse.update_temporal_components(
                 Yr, A2, b2, C2, f, bl=None, c1=None, sn=None, g=None,
                 **options['temporal_params'])
