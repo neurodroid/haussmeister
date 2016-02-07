@@ -14,6 +14,7 @@ import shutil
 import time
 import pickle
 import multiprocessing as mp
+from functools import partial
 
 import numpy as np
 import scipy.signal as signal
@@ -1170,6 +1171,37 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
               minimaps=minimaps)
 
 
+def create_roi_map(iroi, teleport_times, measured, spikes, vrdict):
+    import syncfiles
+    import imp
+    imp.reload(syncfiles)
+    imp.reload(syncfiles.haussmeister)
+
+    sys.stdout.write("\rComputing minimap for ROI# {0}".format(iroi))
+    sys.stdout.flush()
+    minimaps_roi = []
+    for start, end in zip([0]+teleport_times[:-1], teleport_times):
+        mask2p = np.where(
+            (vrdict["framet2p"] >= start*1e3) &
+            (vrdict["framet2p"] < end*1e3))[0]
+        maskvr = np.where(
+            (vrdict["frametvr"] >= start*1e3) &
+            (vrdict["frametvr"] < end*1e3))[0]
+        vrdict_mini = {
+            "posx": vrdict["posx"][maskvr],
+            "posy": vrdict["posy"][maskvr],
+            "frametvr": vrdict["frametvr"][maskvr],
+            "speedvr": vrdict["speedvr"][maskvr][:-1],
+            "framet2p": vrdict["framet2p"][mask2p],
+            "speed2p": vrdict["speed2p"][mask2p]
+        }
+        minimaps_roi.append(syncfiles.create_maps_2p(
+            None, [measured[iroi][mask2p]], [spikes[iroi][mask2p]],
+            vrdict_mini))
+
+    return (iroi, minimaps_roi)
+
+
 def create_mini_maps(measured, spikes, mapdict, vrdict):
     import syncfiles
     import imp
@@ -1179,32 +1211,18 @@ def create_mini_maps(measured, spikes, mapdict, vrdict):
     iroi_with_peaks = find_peaks(mapdict)
     sys.stdout.write("Found {0}/{1} ROIs with spatial peaks\n".format(
         len(iroi_with_peaks), len(mapdict['fluomap'])))
-    teleport_times = [ev.time for ev in mapdict['events'] if ev.evcode == b'TP']
-    minimaps = []
-    print("")
-    for iroi in iroi_with_peaks:
-        sys.stdout.write("\rComputing minimap for ROI# {0}".format(iroi))
-        sys.stdout.flush()
-        minimaps_roi = []
-        for start, end in zip([0]+teleport_times[:-1], teleport_times):
-            mask2p = np.where(
-                (vrdict["framet2p"] >= start*1e3) & (vrdict["framet2p"] < end*1e3))[0]
-            maskvr = np.where(
-                (vrdict["frametvr"] >= start*1e3) & (vrdict["frametvr"] < end*1e3))[0]
-            vrdict_mini = {
-                "posx": vrdict["posx"][maskvr],
-                "posy": vrdict["posy"][maskvr],
-                "frametvr": vrdict["frametvr"][maskvr],
-                "speedvr": vrdict["speedvr"][maskvr][:-1],
-                "framet2p": vrdict["framet2p"][mask2p],
-                "speed2p": vrdict["speed2p"][mask2p]
-                }
-            minimaps_roi.append(syncfiles.create_maps_2p(
-                None, [measured[iroi][mask2p]], [spikes[iroi][mask2p]],
-                vrdict_mini))
-        minimaps.append((iroi, minimaps_roi))
+    teleport_times = [
+        ev.time for ev in mapdict['events'] if ev.evcode == b'TP']
 
     print("")
+    pool = mp.Pool(processes=int(mp.cpu_count()/2))
+    map_function = partial(
+        create_roi_map, teleport_times=teleport_times, measured=measured,
+        spikes=spikes, vrdict=vrdict)
+    minimaps = pool.map(map_function, iroi_with_peaks)
+    pool.close()
+    print("")
+
     return minimaps
 
 
