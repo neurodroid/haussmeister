@@ -1183,19 +1183,23 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
             data, vrdict, speed_thr, time_thr, data.nrois_init)
         lopass = None
 
-    mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
+    if data.fnvr is not None:
+        mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
 
-    fnmini = data.vr_path_comp + "_" + method + "_minimaps.pck"
-    if not os.path.exists(fnmini):
-        minimaps = create_mini_maps(measured, spikes, mapdict, vrdict)
-        with open(fnmini, 'wb') as pckf:
-            pickle.dump(minimaps, pckf)
+        fnmini = data.vr_path_comp + "_" + method + "_minimaps.pck"
+        if not os.path.exists(fnmini):
+            minimaps = create_mini_maps(measured, spikes, mapdict, vrdict)
+            with open(fnmini, 'wb') as pckf:
+                pickle.dump(minimaps, pckf)
+        else:
+            sys.stdout.write("Loading from " + fnmini + "...")
+            sys.stdout.flush()
+            with open(fnmini, 'rb') as pckf:
+                minimaps = pickle.load(pckf)
+            sys.stdout.write(" done\n")
     else:
-        sys.stdout.write("Loading from " + fnmini + "...")
-        sys.stdout.flush()
-        with open(fnmini, 'rb') as pckf:
-            minimaps = pickle.load(pckf)
-        sys.stdout.write(" done\n")
+        mapdict = None
+        minimaps = None
 
     plot_rois(rois, measured, experiment, zproj, data.data_path_comp,
               pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
