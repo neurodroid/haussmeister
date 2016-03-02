@@ -72,7 +72,7 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         # 888s
 
 
-def process_data(haussio_data, mask=None, p=2):
+def process_data(haussio_data, mask=None, p=2, nrois_init=200):
     fn_cnmf = haussio_data.dirname_comp + '_cnmf.mat'
 
     tiffs_to_cnmf(haussio_data, mask)
@@ -93,7 +93,7 @@ def process_data(haussio_data, mask=None, p=2):
         # how to subdivide the work among processes
         n_pixels_per_process = d1*d2/NCPUS
 
-        options = cse.utilities.CNMFSetParms(Y, K=200, p=p, gSig=[9, 9])
+        options = cse.utilities.CNMFSetParms(Y, K=nrois_init, p=p, gSig=[9, 9])
         options['preprocess_params']['n_processes'] = NCPUS
         options['preprocess_params'][
             'n_pixels_per_process'] =  n_pixels_per_process

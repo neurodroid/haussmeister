@@ -101,7 +101,7 @@ class ThorExperiment(object):
         Root directory leading to fn2p. Default: ""
     """
     def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
-                 roi_subset="", mc_method="hmmc", detrend=False,
+                 roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
                  roi_translate=None, root_path=""):
         self.fn2p = fn2p
         self.ch2p = ch2p
@@ -113,6 +113,7 @@ class ThorExperiment(object):
         self.root_path = root_path
         self.data_path = self.root_path + self.fn2p
         self.data_path_comp = self.data_path.replace("?", "n")
+        self.nrois_init = nrois_init
 
         if self.fnsync is not None:
             self.sync_path = os.path.dirname(self.data_path) + "/" + \
@@ -1132,6 +1133,8 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
         Perform spike inference. Default: True
     infer_threshold : float, optional
         Activity threshold of spike inference. Default: 0.15
+    nrois_init : int, optional
+        Initial estimate of number of ROIs
     """
     assert(method in ["thunder", "sima", "ij", "cnmf"])
 
@@ -1159,7 +1162,7 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
         speed_thr = 0.01  # m/s
         time_thr = 5000.0  # ms
         rois, measured, experiment, zproj, spikes, vrdict = get_rois_cnmf(
-            data, vrdict, speed_thr, time_thr)
+            data, vrdict, speed_thr, time_thr, data.nrois_init)
         lopass = None
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
@@ -1520,7 +1523,7 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
     return xret
 
 
-def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
+def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
     """
     Identify ROIs, extract fluorescence and infer spikes using constrained
     non-negative matrix factorization (CNMF)
@@ -1565,7 +1568,7 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr):
 
     data_haussio = data.to_haussio(mc=True)
     rois, measured, experiment, zproj, spikes, movie = cnmf.process_data(
-        data_haussio, mask=mask2p, p=2)
+        data_haussio, mask=mask2p, p=2, nrois_init=nrois_init)
 
     if vrdict is not None:
         if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
