@@ -227,6 +227,9 @@ def contour(A, d1, d2, thr=None):
         Bmat = np.reshape(Bvec, (d1, d2), order='F')
         cntr = _cntr.Cntr(y, x, Bmat)
         cs = cntr.trace(thr)
-        coordinates.append(cs[0])
+        if len(cs) > 0:
+            coordinates.append(cs[0])
+        else:
+            coordinates.append([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
     return coordinates
