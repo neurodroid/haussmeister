@@ -99,6 +99,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
             'n_pixels_per_process'] =  n_pixels_per_process
         options['init_params']['nIter'] = 10
         options['init_params']['maxIter'] = 10
+        options['init_params']['use_hals'] = False
         options['spatial_params']['n_processes'] = NCPUS
         options['spatial_params'][
             'n_pixels_per_process'] = n_pixels_per_process
