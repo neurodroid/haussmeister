@@ -102,7 +102,8 @@ class ThorExperiment(object):
     """
     def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
                  roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
-                 roi_translate=None, root_path=""):
+                 roi_translate=None, root_path="", ftype="thor",
+                 dx=None, dt=None):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -113,6 +114,9 @@ class ThorExperiment(object):
         self.root_path = root_path
         self.data_path = self.root_path + self.fn2p
         self.data_path_comp = self.data_path.replace("?", "n")
+        self.ftype = ftype
+        self.dx = dx
+        self.dt = dt
         self.nrois_init = nrois_init
 
         if self.fnsync is not None:
@@ -152,6 +156,9 @@ class ThorExperiment(object):
             self.mc_approach = sima.motion.HiddenMarkov2D(
                 granularity='column', max_displacement=[20, 30],
                 n_processes=4, verbose=True)
+        elif self.mc_method == "none":
+            self.mc_suffix = ""
+            self.mc_approach = None
 
         self.sima_mc_dir = self.data_path_comp + self.mc_suffix + ".sima"
 
@@ -188,17 +195,28 @@ class ThorExperiment(object):
 
         Returns
         -------
-        dataset : haussio.ThorHaussIO
-            A haussio.ThorHaussio instance
+        dataset : haussio.HaussIO
+            A haussio.HaussIO instance
         """
-        if not mc:
-            return haussio.ThorHaussIO(self.data_path, chan=self.ch2p,
-                                       sync_path=self.sync_path, width_idx=4)
-        else:
-            return haussio.ThorHaussIO(
-                self.data_path + self.mc_suffix,
-                chan=self.ch2p, xml_path=self.data_path+"/Experiment.xml",
-                sync_path=self.sync_path, width_idx=5)
+        if self.ftype == "thor":
+            if not mc:
+                return haussio.ThorHaussIO(
+                    self.data_path, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4)
+            else:
+                return haussio.ThorHaussIO(
+                    self.data_path + self.mc_suffix,
+                    chan=self.ch2p, xml_path=self.data_path+"/Experiment.xml",
+                    sync_path=self.sync_path, width_idx=5)
+        elif self.ftype == "movie":
+            if not mc:
+                return haussio.MovieHaussIO(
+                    self.data_path, self.dx, self.dt, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4)
+            else:
+                return haussio.MovieHaussIO(
+                    self.data_path + self.mc_suffix, self.dx, self.dt,
+                    chan=self.ch2p, sync_path=self.sync_path, width_idx=5)
 
     def to_sima(self, mc=False):
         """

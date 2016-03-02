@@ -79,7 +79,8 @@ class HaussIO(object):
 
         sys.stdout.write("Reading experiment settings... ")
         sys.stdout.flush()
-        self.xml_root = ET.parse(self.xml_name).getroot()
+        if self.xml_name is not None:
+            self.xml_root = ET.parse(self.xml_name).getroot()
         self._get_dimensions()
         self._get_timing()
         self._get_sync()
@@ -115,9 +116,20 @@ class HaussIO(object):
     def read_raw(self):
         return
 
-    @abc.abstractmethod
     def raw2tiff(self, mp=False):
-        return
+        arr = self.read_raw()
+        if not mp:
+            for ni, img in enumerate(arr):
+                sys.stdout.write(
+                    "\r{0:6.2f}%".format(float(ni)/arr.shape[0] * 100.0))
+                sys.stdout.flush()
+                tifffile.imsave(os.path.join(
+                    self.dirname_comp,
+                    self.basefile + self.format_index(ni+1)) + ".tif", img)
+                sys.stdout.write("\n")
+        else:
+            tifffile.imsave(os.path.join(
+                self.dirname_comp, self.basefile + "mp.tif"), arr)
 
     def _get_filenames(self, xml_path, sync_path):
         self.dirname_comp = self.dirname.replace("?", "n")
@@ -502,21 +514,6 @@ class ThorHaussIO(HaussIO):
         return np.fromfile(self.rawfile, dtype=np.uint16).reshape(
             self.nframes, self.xpx, self.ypx)
 
-    def raw2tiff(self, mp=False):
-        arr = self.read_raw()
-        if not mp:
-            for ni, img in enumerate(arr):
-                sys.stdout.write(
-                    "\r{0:6.2f}%".format(float(ni)/arr.shape[0] * 100.0))
-                sys.stdout.flush()
-                tifffile.imsave(os.path.join(
-                    self.dirname_comp,
-                    self.basefile + self.format_index(ni+1)) + ".tif", img)
-                sys.stdout.write("\n")
-        else:
-            tifffile.imsave(os.path.join(
-                self.dirname_comp, self.basefile + "mp.tif"), arr)
-
 
 class PrairieHaussIO(HaussIO):
     """
@@ -584,9 +581,60 @@ class PrairieHaussIO(HaussIO):
         raise NotImplementedError(
             "Raw file reading not implemented for Prairie files yet")
 
-    def raw2tiff(self, mp=False):
+
+class MovieHaussIO(HaussIO):
+    """
+    Object representing 2p imaging data for which only a movie is available
+    """
+    def __init__(self, dirname, dx, dt, chan='A', xml_path=None,
+                 sync_path=None, width_idx=4):
+        self.dx = dx
+        self.dt = dt
+        print(dirname + ".mp4")
+        self.movie = movies.numpy_movie(dirname + ".mp4")
+        super(MovieHaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path, width_idx)
+
+    def _get_dimensions(self):
+        self.xpx = self.movie.shape[2]
+        self.ypx = self.movie.shape[1]
+        self.xsize = self.xpx*self.dx
+        self.ysize = self.ypx*self.dx
+        self.naverage = None
+
+    def _get_filenames(self, xml_path, sync_path):
+        self.dirname_comp = self.dirname.replace("?", "n")
+        self.movie_fn = self.dirname_comp + ".mp4"
+        self.scale_png = self.dirname_comp + "_scale.png"
+        self.sima_dir = self.dirname_comp + ".sima"
+        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
+        self.rawfile = self.movie_fn
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
+        self.sync_path = sync_path
+        if "?" in self.filetrunk:
+            self.dirnames = sorted(glob.glob(self.dirname))
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.dirnames = [self.dirname]
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+
+        self.xml_name = None
+        self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
+
+    def _get_timing(self):
+        self.timing = np.arange(self.movie.shape[0]) * self.dt
+
+    def _get_sync(self):
+        if self.sync_path is None:
+            return
+
+    def read_sync(self):
         raise NotImplementedError(
-            "Raw file reading not implemented for Prairie files yet")
+            "Synchronization readout not implemented for Prairie files yet")
+
+    def read_raw(self):
+        return self.movie
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):

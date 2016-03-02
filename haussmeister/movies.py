@@ -16,6 +16,13 @@ import shlex
 import numpy as np
 from PIL import Image, ImageDraw, ImageFont
 from base64 import b64encode
+try:
+    import cv2
+except:
+    sys.stderr.write("cv2 module not found\n")
+    HAS_CV2 = False
+else:
+    HAS_CV2 = True
 
 FFMPEG = "ffmpeg"
 
@@ -200,3 +207,33 @@ def html_movie(fn):
             video_encoded)
 
     return video_tag
+
+
+def numpy_movie(fn):
+    """
+    Converts a movie to a numpy array
+
+    Parameters
+    ----------
+    fn : str
+        Full path to movie file name
+
+    Returns
+    -------
+    array : numpy.ndarray
+        Numpy array of shape (nframes, npixels_x, npixels_y)
+    """
+
+    cap = cv2.VideoCapture(fn)
+
+    np_movie = []
+    while True:
+        ret, img = cap.read()
+        if ret:
+            np_movie.append(cv2.cvtColor(img, cv2.COLOR_BGR2GRAY))
+        else:
+            break
+
+    cap.release()
+
+    return np.array(np_movie)
