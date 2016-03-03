@@ -99,11 +99,16 @@ class ThorExperiment(object):
         Apply ROI translation in x and y. Default: None
     root_path : str
         Root directory leading to fn2p. Default: ""
+    seg_method : str, optional
+        One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
+        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used), 
+        "cnmf" (constrained non-negative matrix factorization).
+        Default: "cnmf"
     """
     def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
                  roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
                  roi_translate=None, root_path="", ftype="thor",
-                 dx=None, dt=None):
+                 dx=None, dt=None, seg_method="cnmf"):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -118,6 +123,9 @@ class ThorExperiment(object):
         self.dx = dx
         self.dt = dt
         self.nrois_init = nrois_init
+
+        assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
+        self.seg_method = seg_method
 
         if self.fnsync is not None:
             self.sync_path = os.path.dirname(self.data_path) + "/" + \
@@ -1131,8 +1139,7 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
         return None
 
 
-def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
-                     infer_threshold=0.15):
+def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1140,11 +1147,6 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
-    method : str, optional
-        One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
-        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used), 
-        "cnmf" (constrained non-negative matrix factorization).
-        Default: "thunder"
     tsc : thunder.ThunderContext, optional
         A ThunderContext in case the method is "thunder"
     infer : bool, optional
@@ -1154,7 +1156,7 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
     nrois_init : int, optional
         Initial estimate of number of ROIs
     """
-    assert(method in ["thunder", "sima", "ij", "cnmf"])
+    assert(data.seg_method in ["thunder", "sima", "ij", "cnmf"])
 
     import syncfiles
     import imp
@@ -1167,16 +1169,16 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
         vrdict = None
 
     lopass = 1.0
-    if method == "thunder":
+    if data.seg_method == "thunder":
         rois, measured, experiment, zproj, spikes = get_rois_thunder(
-            data, tsc, infer, speed=vrdict["speed2p"])
-    elif method == "sima":
+            data, tsc, infer, speed=vrspeed, nrois_init=data.nrois_init)
+    elif data.seg_method == "sima":
         rois, measured, experiment, zproj, spikes = get_rois_sima(
             data, infer)
-    elif method == "ij":
+    elif data.seg_method == "ij":
         rois, measured, experiment, zproj, spikes = get_rois_ij(
             data, infer)
-    elif method == "cnmf":
+    elif data.seg_method == "cnmf":
         speed_thr = 0.01  # m/s
         time_thr = 5000.0  # ms
         rois, measured, experiment, zproj, spikes, vrdict = get_rois_cnmf(
@@ -1184,9 +1186,9 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
         lopass = None
 
     if data.fnvr is not None:
-        mapdict = get_vr_maps(data, measured, spikes, vrdict, method)
+        mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
 
-        fnmini = data.vr_path_comp + "_" + method + "_minimaps.pck"
+        fnmini = data.vr_path_comp + "_" + data.seg_method + "_minimaps.pck"
         if not os.path.exists(fnmini):
             minimaps = create_mini_maps(measured, spikes, mapdict, vrdict)
             with open(fnmini, 'wb') as pckf:
@@ -1202,7 +1204,7 @@ def thor_extract_roi(data, method="cnmf", tsc=None, infer=True,
         minimaps = None
 
     plot_rois(rois, measured, experiment, zproj, data.data_path_comp,
-              pdf_suffix="_" + method, spikes=spikes, region=data.area2p,
+              pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
               infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
               minimaps=minimaps)
 
