@@ -972,7 +972,7 @@ def get_rois_sima(data, infer=True):
     return rois, measured, experiment, zproj, spikes
 
 
-def get_rois_thunder(data, tsc, infer=True, speed=None):
+def get_rois_thunder(data, tsc, infer=True, speed=None, nrois_init=100):
     """
     Extract fluorescence data from ROIs that are identified
     by thunder's ICA. If running speed is available, ROIs will
@@ -989,6 +989,8 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
         Perform spike inference. Default: True
     speed : numpy.ndarray, optional
         Running speed. Default: None
+    nrois_init: int, optional
+        Initial estimate of the number of ROIs
 
     Returns
     -------
@@ -1034,7 +1036,8 @@ def get_rois_thunder(data, tsc, infer=True, speed=None):
 
         print("Running thunder ICA... ")
         t0 = time.time()
-        model = ICA(k=100, c=50, svdMethod='em').fit(data_time_series)
+        model = ICA(k=nrois_init, c=int(nrois_init/2),
+                    svdMethod='em').fit(data_time_series)
         print("Thunder ICA took {0:.2f} s".format(time.time()-t0))
 
         imgs = model.sigs.pack()
@@ -1154,7 +1157,7 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
     infer_threshold : float, optional
         Activity threshold of spike inference. Default: 0.15
     nrois_init : int, optional
-        Initial estimate of number of ROIs
+        Initial estimate of number of ROIs. Default: 200
     """
     assert(data.seg_method in ["thunder", "sima", "ij", "cnmf"])
 
