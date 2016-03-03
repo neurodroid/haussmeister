@@ -1168,8 +1168,10 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
 
     if data.fnvr is not None:
         vrdict = syncfiles.read_files_2p(data)
+        vrspeed = vrdict["speed2p"]
     else:
         vrdict = None
+        vrspeed = None
 
     lopass = 1.0
     if data.seg_method == "thunder":
