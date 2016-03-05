@@ -246,15 +246,12 @@ class ThorExperiment(object):
             suffix = ""
         sima_dir = self.data_path_comp + suffix + ".sima"
         if not os.path.exists(sima_dir):
-            raise IOError(
-                "Couldn't find sima file " + sima_dir)
+            restore = True
 
         try:
             dataset = sima.ImagingDataset.load(sima_dir)
             restore = False
-        except EOFError:
-            restore = True
-        except IndexError:
+        except (EOFError, IOError, IndexError):
             restore = True
 
         if not restore:
@@ -267,14 +264,15 @@ class ThorExperiment(object):
         if restore:
             experiment = self.to_haussio(mc=mc)
             sima_bak = experiment.sima_dir + ".bak"
-            if os.path.exists(sima_bak):
-                shutil.rmtree(sima_bak)
-            while os.path.exists(sima_bak):
-                time.wait(1)
-            shutil.copytree(experiment.sima_dir, sima_bak)
-            shutil.rmtree(experiment.sima_dir)
-            while os.path.exists(experiment.sima_dir):
-                time.wait(1)
+            if os.path.exists(experiment.sima_dir):
+                if os.path.exists(sima_bak):
+                    shutil.rmtree(sima_bak)
+                while os.path.exists(sima_bak):
+                    time.wait(1)
+                shutil.copytree(experiment.sima_dir, sima_bak)
+                shutil.rmtree(experiment.sima_dir)
+                while os.path.exists(experiment.sima_dir):
+                    time.wait(1)
             dataset = experiment.tosima(stopIdx=None)
 
         return dataset
