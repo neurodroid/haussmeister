@@ -1597,7 +1597,7 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
         mask2p = None
 
     data_haussio = data.to_haussio(mc=True)
-    rois, measured, experiment, zproj, spikes, movie = cnmf.process_data(
+    rois, measured, experiment, zproj, spikes, movie, noise = cnmf.process_data(
         data_haussio, mask=mask2p, p=2, nrois_init=nrois_init)
 
     if vrdict is not None:

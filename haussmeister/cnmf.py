@@ -172,13 +172,15 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
         # 483.41s
 
         # A: spatial components (ROIs)
-        # C: [Ca2+]
+        # C: denoised [Ca2+]
+        # YrA: residuals ("noise")
         # S: Spikes
-        savemat(fn_cnmf, {"A": A2, "C": C2, "S": S2, "bl": bl2})
+        savemat(fn_cnmf, {"A": A2, "C": C2, "YrA": YrA, "S": S2, "bl": bl2})
     else:
         resdict = loadmat(fn_cnmf)
         A2 = resdict["A"]
         C2 = resdict["C"]
+        YrA = resdict["YrA"]
         S2 = resdict["S"]
         bl2 = resdict["bl"]
 
@@ -202,7 +204,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
     polygons = contour(A2, d1, d2, thr=0.9)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
 
-    return rois, C2, haussio_data, zproj, S2, Y
+    return rois, C2, haussio_data, zproj, S2, Y, YrA
 
 
 def contour(A, d1, d2, thr=None):
