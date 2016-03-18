@@ -502,7 +502,7 @@ def norm(sig):
 
 def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
-              lopass=1.0, plot_events=False, minimaps=None, dpi=4800):
+              lopass=1.0, plot_events=False, minimaps=None, dpi=1200):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -708,7 +708,10 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
                 mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
             ax_maps_infer.set_xlabel("VR position (m)")
 
+    sys.stdout.write("Saving figure...")
+    sys.stdout.flush()
     plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf", dpi=dpi)
+    sys.stdout.write("done\n")
 
     if minimaps is None:
         return
