@@ -38,6 +38,9 @@ def parse_arguments():
     parser.add_argument(
         "--mp", help="Convert to multipage tiff", action="store_true",
         default=True)
+    parser.add_argument(
+        "--compress", help="Compress raw file", action="store_true",
+        default=True)
     return parser.parse_args()
 
 
@@ -64,9 +67,8 @@ def raw2tiff(rawfile, mp):
     sys.stdout.write("done\n")
 
 
-def tiff2raw(dirname):
-    xml_file = os.path.join(
-        os.path.abspath(dirname), "Experiment.xml")
+def tiff2raw(dirname, compress):
+    xml_file = os.path.join(dirname, "Experiment.xml")
     if not os.path.exists(xml_file):
         sys.stderr.write("Could not find {0}\n".format(
             xml_file))
@@ -82,28 +84,52 @@ def gui():
     master = Tk()
 
     rawfile = askopenfilename(
-        title="Select raw file", filetypes=[("Raw files", "*.raw")])
+        title="Select raw file or first tiff in series",
+        filetypes=[("Raw files", "*.raw"), ("Tiff files", "*.tif")])
 
-    Label(master, text="Multipage TIFF").grid(row=0, sticky=W)
-    var = IntVar()
-    Checkbutton(master, text="Generate multipage TIFF", variable=var).grid(
-        row=1, sticky=W)
-    Button(master, text='Cancel', command=quit).grid(
-        row=2, sticky=W, pady=4)
-    Button(master, text='Convert', command=master.quit).grid(
-        row=3, sticky=W, pady=4)
-    mainloop()
-    mp = var.get() != 0
+    rawtrunk, rawext = os.path.splitext(rawfile)
 
-    return rawfile, mp
+    if rawext == ".raw":
+        Label(master, text="Raw conversion").grid(row=0, sticky=W)
+        var = IntVar()
+        Checkbutton(
+            master, text="LMZA lossless compression", variable=var).grid(
+                row=1, sticky=W)
+        Button(master, text='Cancel', command=quit).grid(
+            row=2, sticky=W, pady=4)
+        Button(master, text='Convert', command=master.quit).grid(
+            row=3, sticky=W, pady=4)
+        mainloop()
+        compress = var.get() != 0
+        mp = False
+    elif rawext == ".tif":
+        Label(master, text="Multipage TIFF").grid(row=0, sticky=W)
+        var = IntVar()
+        Checkbutton(master, text="Generate multipage TIFF", variable=var).grid(
+            row=1, sticky=W)
+        Button(master, text='Cancel', command=quit).grid(
+            row=2, sticky=W, pady=4)
+        Button(master, text='Convert', command=master.quit).grid(
+            row=3, sticky=W, pady=4)
+        mainloop()
+        compress = False
+        mp = var.get() != 0
+
+    return rawfile, mp, compress
 
 
 if __name__ == "__main__":
     args = parse_arguments()
     if args.rawfile is None:
-        rawfile, mp = gui()
+        rawfile, mp, compress = gui()
     else:
         rawfile = os.path.abspath(args.rawfile)
         mp = args.mp
+        compress = args.compress
 
-    raw2tiff(rawfile, mp)
+    rawtrunk, rawext = os.path.splitext(rawfile)
+
+    if rawext == ".tif":
+        raw2tiff(rawfile, mp)
+    elif rawext == ".raw":
+        tiff2raw(os.path.abspath(os.path.dirname(rawfile)), compress=compress)
