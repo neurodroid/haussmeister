@@ -147,7 +147,7 @@ class ThorExperiment(object):
             self.mc_suffix = "_mc"  # special case
             self.mc_approach = sima.motion.HiddenMarkov2D(
                 granularity='row', max_displacement=[20, 30],
-                verbose=True)
+                n_processes=NCPUS, verbose=True)
         elif self.mc_method == "dft":
             self.mc_approach = sima.motion.DiscreteFourier2D(
                 max_displacement=[20, 30], n_processes=4, verbose=True)
