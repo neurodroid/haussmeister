@@ -737,12 +737,15 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
         ax_spikes.set_title(r"{0}".format(iroi))
         for minimap in minimaps_roi:
             minimap_fluo, minimap_spikes = minimap
-            ax_fluo.plot(
-                minimap_fluo[0][0],
-                minimap_fluo[0][1]-minimap_fluo[0][1].min(), alpha=0.5)
-            ax_spikes.plot(
-                minimap_spikes[0][0],
-                minimap_spikes[0][1]-minimap_spikes[0][1].min(), alpha=0.5)
+            try:
+                ax_fluo.plot(
+                    minimap_fluo[0][0],
+                    minimap_fluo[0][1]-minimap_fluo[0][1].min(), alpha=0.5)
+                ax_spikes.plot(
+                    minimap_spikes[0][0],
+                    minimap_spikes[0][1]-minimap_spikes[0][1].min(), alpha=0.5)
+            except:
+                pass
         ax_fluo.plot(
             mapdict['fluomap'][iroi][0],
             mapdict['fluomap'][iroi][1]-mapdict['fluomap'][iroi][1].min(),
@@ -1010,14 +1013,22 @@ def get_rois_thunder(data, tsc, infer=True, speed=None, nrois_init=100):
     dataset_mc = data.to_sima(mc=True)
 
     thunder_roiraw_fn = data.data_path_comp + "_thunder_rois.npy"
+
+    maxframes_ica = int(MAXFRAMES_ICA/(
+        experiment.xpx*experiment.ypx/(512.0*512.0)))
     if not os.path.exists(thunder_roiraw_fn):
         # Find longest contiguous running region:
         if speed is not None:
-            assert(experiment.nframes == len(speed))
-            # find startIdx that maximizes the median speed over MAXFRAMES_ICA
+            try:
+                assert(experiment.nframes == len(speed))
+            except AssertionError as err:
+                print("nframes, nspeed: ", experiment.nframes, len(speed))
+                raise err
+
+            # find startIdx that maximizes the median speed over maxframes_ica
             maxstart = np.argmax(
-                [np.median(speed[start:start+MAXFRAMES_ICA])
-                 for start in range(len(speed)-MAXFRAMES_ICA)])
+                [np.median(speed[start:start+maxframes_ica])
+                 for start in range(len(speed)-maxframes_ica)])
         else:
             maxstart = 0
 
@@ -1027,7 +1038,8 @@ def get_rois_thunder(data, tsc, infer=True, speed=None, nrois_init=100):
 
         data_thunder = tsc.loadImages(
             data.mc_tiff_dir, inputFormat='tif',
-            startIdx=maxstart, stopIdx=maxstart+MAXFRAMES_ICA)
+            startIdx=maxstart, stopIdx=maxstart+maxframes_ica,
+            npartitions=1)
         data_thunder.cache()
         data_thunder.count()
 
@@ -1196,9 +1208,12 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
 
         fnmini = data.vr_path_comp + "_" + data.seg_method + "_minimaps.pck"
         if not os.path.exists(fnmini):
+            sys.stdout.write("Computing spatial maps...")
+            sys.stdout.flush()
             minimaps = create_mini_maps(measured, spikes, mapdict, vrdict)
             with open(fnmini, 'wb') as pckf:
                 pickle.dump(minimaps, pckf)
+            sys.stdout.write(" done\n")
         else:
             sys.stdout.write("Loading from " + fnmini + "...")
             sys.stdout.flush()
@@ -1264,6 +1279,7 @@ def create_mini_maps(measured, spikes, mapdict, vrdict):
         create_roi_map, teleport_times=teleport_times, measured=measured,
         spikes=spikes, vrdict=vrdict)
     minimaps = pool.map(map_function, iroi_with_peaks)
+
     pool.close()
     print("")
 
