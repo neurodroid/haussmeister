@@ -11,6 +11,7 @@ import os
 import sys
 import abc
 import glob
+import lzma
 import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
@@ -130,6 +131,25 @@ class HaussIO(object):
         else:
             tifffile.imsave(os.path.join(
                 self.dirname_comp, self.basefile + "mp.tif"), arr)
+
+    def tiff2raw(self, path=None, compress=True):
+        arr = self.asarray()
+        assert(arr.dtype == np.uint16)
+        if path is None:
+            path_f = self.dirname_comp
+        else:
+            path_f = path
+        rawfn = os.path.join(path_f, "Image_0001_0001.raw")
+        assert(not os.path.exists(rawfn))
+        if compress:
+            rawfn += ".xz"
+            assert(not os.path.exists(rawfn))
+        if not os.path.exists(rawfn):
+            if not compress:
+                arr.tofile(rawfn)
+            else:
+                with lzma.open(rawfn, 'w') as flzma:
+                    flzma.write(arr.tostring())
 
     def _get_filenames(self, xml_path, sync_path):
         self.dirname_comp = self.dirname.replace("?", "n")
@@ -637,7 +657,8 @@ class MovieHaussIO(HaussIO):
         return self.movie
 
 
-def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
+def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
+                       ftype="tiff"):
     """
     Export a sima.ImagingDataset to individual tiffs.
     Works around sima only producing multipage tiffs.
@@ -652,15 +673,24 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
         Filenames to be used for the export. While these can be
         full paths, only the file name part will be used.
     startIdx : int, optional
-        Index of first frame to be exported (inclusive)
+        Index of first frame to be exported (inclusive). Default: 0
     stopIdx : int, optional
-        Index of last frame to be exported (exclusive)
+        Index of last frame to be exported (exclusive). Default: None
+    ftype : stf, optional
+        file type, one of "tiff" or "raw". Default: "tiff"
     """
     try:
         assert(len(filenames) == dataset.sequences[0].shape[0])
     except AssertionError as err:
         print(len(filenames), dataset.sequences[0].shape[0])
         raise err
+    assert(ftype in ["tiff", "raw"])
+
+    if ftype == "raw":
+        if startIdx != 0 or stopIdx is not None:
+            raise RuntimeError(
+                "Can only export complete dataset in raw format")
+
     if not os.path.exists(path):
         os.makedirs(path)
 
@@ -669,9 +699,12 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None):
     print(startIdx, stopIdx)
     save_frames = sima.sequence._fill_gaps(
         iter(dataset.sequences[0]), iter(dataset.sequences[0]))
-    for nf, frame in enumerate(save_frames):
-        if nf >= startIdx and nf < stopIdx:
-            tifffile.imsave(
-                os.path.join(path, os.path.basename(filenames[nf])),
-                np.array(frame[0]).squeeze().astype(
-                    np.uint16))
+    if ftype == "tiff":
+        for nf, frame in enumerate(save_frames):
+            if nf >= startIdx and nf < stopIdx:
+                tifffile.imsave(
+                    os.path.join(path, os.path.basename(filenames[nf])),
+                    np.array(frame[0]).squeeze().astype(
+                        np.uint16))
+    elif ftype == "raw":
+        dataset.tiff2raw(path, compress=True)

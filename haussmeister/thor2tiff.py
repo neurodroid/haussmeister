@@ -56,11 +56,25 @@ def raw2tiff(rawfile, mp):
             xml_file))
         quit(1)
 
-    sys.stdout.write("Converting...\n")
+    sys.stdout.write("Converting... \n")
 
     data_haussio = haussio.ThorHaussIO(
         os.path.abspath(os.path.dirname(rawfile)), width_idx=5)
     data_haussio.raw2tiff(mp=mp)
+    sys.stdout.write("done\n")
+
+
+def tiff2raw(dirname):
+    xml_file = os.path.join(
+        os.path.abspath(dirname), "Experiment.xml")
+    if not os.path.exists(xml_file):
+        sys.stderr.write("Could not find {0}\n".format(
+            xml_file))
+        quit(1)
+
+    sys.stdout.write("Converting...\n")
+    data_haussio = haussio.ThorHaussIO(dirname)
+    data_haussio.tiff2raw(dirname, compress=True)
     sys.stdout.write("done\n")
 
 
