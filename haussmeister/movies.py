@@ -102,9 +102,10 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
 
     Parameters
     ----------
-    tiff_trunk : str
+    tiff_trunk : str or np.ndarray
         File name filter (full path) used as input to ffmpeg
-        (e.g. ``/home/cs/data/ChanA_0001_%04d.tif``)
+        (e.g. ``/home/cs/data/ChanA_0001_%04d.tif``);
+        or movie as np.ndarray of shape (nframes, nx, ny).
     out_file : str
         Full path to movie file name
     fps : float
@@ -139,8 +140,12 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
         prev = "[scale];[scale]"
 
     if normbright is not None:
+        if normbright[0] == normbright[1]:
+            normbright1 = normbright[2]/2.0
+        else:
+            normbright1 = normbright[1]
         sfilter += prev + "curves=all='{0}/0 {1}/0.5 {2}/1'".format(
-            normbright[0], normbright[1], normbright[2])
+            normbright[0], normbright1, normbright[2])
         prev = "[bright];[bright]"
 
     if scalebarframe is not None:
@@ -149,16 +154,26 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
 
     tiff_input = tiff_trunk
 
-    cmd = "{0} -y -r {1} ".format(
-        FFMPEG, fps)
-    if "?" in tiff_input:
-        cmd += "-pattern_type glob "
-    cmd += "-i {0} {1} {2} ".format(
-        tiff_input, addin, sfilter)
+    cmd = "{0} -y -r {1} ".format(FFMPEG, fps)
+
+    if isinstance(tiff_input, str):
+        if "?" in tiff_input:
+            cmd += "-pattern_type glob "
+        cmd += "-i {0} ".format(tiff_input)
+        stdin = None
+    else:
+        assert(isinstance(tiff_input, np.ndarray))
+        assert(tiff_input.dtype == np.uint16)
+        cmd += "-f image2pipe -i - "
+        stdin = sp.PIPE
+
+    cmd += "{0} {1} ".format(
+        addin, sfilter)
+
     cmd += \
         "-an -vcodec libx264 -preset slow -crf {0} -pix_fmt yuv420p ".format(
             crf)
-    cmd += "-metadata author=\"(c) 2015 Christoph Schmidt-Hieber\" {0}".format(
+    cmd += "-metadata author=\"(c) 2016 Christoph Schmidt-Hieber\" {0}".format(
         out_file)
 
     sys.stdout.write(cmd)
@@ -170,7 +185,14 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
     else:
         stdout = None
 
-    P = sp.Popen(cmd_split, stdout=stdout, stderr=stdout, bufsize=4094*4094*16)
+    P = sp.Popen(cmd_split, stdout=stdout, stderr=sp.STDOUT, stdin=stdin)
+
+    if isinstance(tiff_input, np.ndarray):
+        for frame in tiff_input.squeeze():
+            im = Image.fromarray(frame.astype(np.int32))
+            im.save(P.stdin, 'PNG')
+
+        P.stdin.close()
 
     if verbose:
         for line in iter(P.stdout.readline, b''):

@@ -290,14 +290,13 @@ def thor_preprocess(data):
     """
     experiment = data.to_haussio(mc=False)
 
-    if not os.path.exists(experiment.rawfile):
-        if os.path.exists(experiment.movie_fn):
-            raw_movie = movies.html_movie(experiment.movie_fn)
-        else:
-            try:
-                raw_movie = experiment.make_movie(norm=14.0, crf=28)
-            except IOError:
-                raw_movie = experiment.make_movie(norm=False, crf=28)
+    if os.path.exists(experiment.movie_fn):
+        raw_movie = movies.html_movie(experiment.movie_fn)
+    else:
+        try:
+            raw_movie = experiment.make_movie(norm=14.0, crf=28)
+        except IOError:
+            raw_movie = experiment.make_movie(norm=False, crf=28)
 
     if not os.path.exists(experiment.sima_dir):
         dataset = experiment.tosima(stopIdx=None)
@@ -322,11 +321,12 @@ def thor_preprocess(data):
     except AssertionError as err:
         print(len(filenames_mc), dataset_mc.sequences[0].shape[0])
         raise err
-    if not os.path.exists(data.mc_tiff_dir + "/" + os.path.basename(
-            filenames_mc[-1])):
+    if not os.path.exists(os.path.join(data.mc_tiff_dir, os.path.basename(
+            filenames_mc[-1]))) and not os.path.exists(os.path.join(
+                data.mc_tiff_dir, "Image_0001_0001.raw.xz")):
         print("Exporting frames...")
-        haussio.sima_export_frames(dataset_mc, data.mc_tiff_dir,
-                                   filenames_mc)
+        haussio.sima_export_frames(
+            dataset_mc, data.mc_tiff_dir, filenames_mc, ftype="raw")
 
     if os.path.exists(data.movie_mc_fn):
         corr_movie = movies.html_movie(data.movie_mc_fn)

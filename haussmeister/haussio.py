@@ -11,19 +11,31 @@ import os
 import sys
 import abc
 import glob
-import lzma
+import time
+try:
+    import lzma
+except ImportError:
+    import backports.lzma as lzma
+try:
+    import subprocess32 as sp
+except ImportError:
+    sys.stdout.write("Couldn't find subprocess32; using subprocess instead\n")
+    import subprocess as sp
+import shlex
 import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
 import tables
 
 import sima
-from sima.misc import tifffile
+import tifffile
 
 try:
     from . import movies
 except (SystemError, ValueError):
     import movies
+
+THOR_RAW = "Image_0001_0001.raw"
 
 
 class HaussIO(object):
@@ -68,6 +80,8 @@ class HaussIO(object):
     """
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
                  width_idx=4):
+
+        self.raw_array = None
 
         self.dirname = os.path.abspath(dirname)
         self.chan = chan
@@ -133,23 +147,23 @@ class HaussIO(object):
                 self.dirname_comp, self.basefile + "mp.tif"), arr)
 
     def tiff2raw(self, path=None, compress=True):
-        arr = self.asarray()
-        assert(arr.dtype == np.uint16)
         if path is None:
             path_f = self.dirname_comp
         else:
             path_f = path
-        rawfn = os.path.join(path_f, "Image_0001_0001.raw")
+        rawfn = os.path.join(path_f, THOR_RAW)
         assert(not os.path.exists(rawfn))
-        if compress:
-            rawfn += ".xz"
-            assert(not os.path.exists(rawfn))
+        compressfn = rawfn + ".xz"
+        assert(not os.path.exists(compressfn))
+
         if not os.path.exists(rawfn):
-            if not compress:
-                arr.tofile(rawfn)
-            else:
-                with lzma.open(rawfn, 'w') as flzma:
-                    flzma.write(arr.tostring())
+            sys.stdout.write("Reading files...")
+            sys.stdout.flush()
+            t0 = time.time()
+            arr = self.asarray_uint16()
+            sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
+            compress_np(arr, path_f, THOR_RAW, (
+                self.nframes, self.xpx, self.ypx), compress=compress)
 
     def _get_filenames(self, xml_path, sync_path):
         self.dirname_comp = self.dirname.replace("?", "n")
@@ -178,18 +192,22 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        if "?" in self.dirname:
-            normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
-            normtrunk = self.filetrunk.replace(
-                self.dirname, normdir)
-            nframes = len(
-                glob.glob(os.path.join(normdir, self.basefile + "*.tif")))
-            normframe = normtrunk + self.format_index(int(nframes/2)) + ".tif"
+        if not os.path.exists(self.rawfile):
+            if "?" in self.dirname:
+                normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
+                normtrunk = self.filetrunk.replace(
+                    self.dirname, normdir)
+                nframes = len(
+                    glob.glob(os.path.join(normdir, self.basefile + "*.tif")))
+                normframe = normtrunk + self.format_index(int(nframes/2)) + ".tif"
+            else:
+                normframe = self.filetrunk + self.format_index(
+                    int(len(self.filenames)/2)) + ".tif"
+            sample = Image.open(normframe)
+            arr = np.asarray(sample, dtype=np.float)
         else:
-            normframe = self.filetrunk + self.format_index(
-                int(len(self.filenames)/2)) + ".tif"
-        sample = Image.open(normframe)
-        arr = np.asarray(sample, dtype=np.float)
+            arr = self.read_raw()[int(len(self.filenames)/2)]
+
         return arr
 
     def tosima(self, startIdx=0, stopIdx=None):
@@ -239,6 +257,22 @@ class HaussIO(object):
     def asarray(self):
         return np.array(self.tosima().sequences[0]).squeeze()
 
+    def asarray_uint16(self):
+        arr = np.array([
+            np.array(Image.open(fn, 'r'), dtype=np.uint16)
+            for fn in self.filenames])
+        try:
+            assert(arr.dtype == np.uint16)
+            assert((arr.shape[0], arr.shape[1], arr.shape[2]) ==
+                   (self.nframes, self.xpx, self.ypx))
+        except AssertionError as err:
+            print(arr.dtype)
+            print(arr.shape)
+            print(self.nframes, self.xpx, self.ypx)
+            raise err
+
+        return arr
+
     def make_movie(self, norm=16.0, scalebar=True, crf=28.0):
         """
         Produce a movie of the experiment
@@ -271,8 +305,14 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        return movies.make_movie(self.ffmpeg_fn, self.movie_fn, self.fps,
-                                 normbright, scalebarframe, crf=crf)
+        if os.path.exists(self.rawfile):
+            movie_input = self.read_raw()
+        else:
+            movie_input = self.ffmpeg_fn
+
+        return movies.make_movie(
+            movie_input, self.movie_fn, self.fps, normbright, scalebarframe,
+            crf=crf)
 
     def make_movie_extern(self, path_extern, norm=16.0, scalebar=True,
                           crf=28, width_idx=None):
@@ -299,10 +339,31 @@ class HaussIO(object):
         html_movie : str
             An html tag containing the complete movie
         """
+        rawfile = os.path.join(path_extern, THOR_RAW)
+        if not os.path.exists(rawfile):
+            rawfile += ".xz"
+            if not os.path.exists(rawfile):
+                rawfile = None
+
+        if rawfile is not None:
+            shapefn = os.path.join(path_extern, THOR_RAW[:-3] + "shape.npy")
+            shape = np.load(shapefn)
+            movie_input = raw2np(rawfile, (shape[0], shape[2], shape[3]))
+        else:
+            movie_input = os.path.join(
+                path_extern, self.basefile + self.format_index(
+                    "%", width_idx=width_idx) + ".tif"),
+
         if norm:
-            normbright = movies.get_normbright(np.asarray(Image.open(
-                os.path.join(path_extern, self.basefile + self.format_index(
-                    int(self.nframes/2), width_idx=width_idx) + ".tif"))))
+            if rawfile is not None:
+                normbright = movies.get_normbright(
+                    movie_input[int(self.nframes/2), :, :])
+            else:
+                normbright = movies.get_normbright(np.asarray(Image.open(
+                    os.path.join(
+                        path_extern, self.basefile + self.format_index(
+                            int(self.nframes/2), width_idx=width_idx) +
+                        ".tif"))))
         else:
             normbright = None
 
@@ -313,8 +374,7 @@ class HaussIO(object):
             scalebarframe = None
 
         return movies.make_movie(
-            os.path.join(path_extern, self.basefile + self.format_index(
-                "%", width_idx=width_idx) + ".tif"),
+            movie_input,
             path_extern + ".mp4",
             self.fps,
             normbright,
@@ -450,7 +510,9 @@ class ThorHaussIO(HaussIO):
         else:
             self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
-        self.rawfile = os.path.join(self.dirname_comp, "Image_0001_0001.raw")
+        self.rawfile = os.path.join(self.dirname_comp, THOR_RAW)
+        if os.path.exists(self.rawfile + ".xz"):
+            self.rawfile = self.rawfile + ".xz"
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
@@ -531,8 +593,11 @@ class ThorHaussIO(HaussIO):
         return sync_data, sync_dt
 
     def read_raw(self):
-        return np.fromfile(self.rawfile, dtype=np.uint16).reshape(
-            self.nframes, self.xpx, self.ypx)
+        if self.raw_array is None:
+            self.raw_array = raw2np(
+                self.rawfile, (self.nframes, self.xpx, self.ypx))
+
+        return self.raw_array
 
 
 class PrairieHaussIO(HaussIO):
@@ -696,7 +761,6 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
 
     if stopIdx is None or stopIdx > len(filenames):
         stopIdx = len(filenames)
-    print(startIdx, stopIdx)
     save_frames = sima.sequence._fill_gaps(
         iter(dataset.sequences[0]), iter(dataset.sequences[0]))
     if ftype == "tiff":
@@ -707,4 +771,47 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
                     np.array(frame[0]).squeeze().astype(
                         np.uint16))
     elif ftype == "raw":
-        dataset.tiff2raw(path, compress=True)
+        sys.stdout.write("Reading files...")
+        sys.stdout.flush()
+        t0 = time.time()
+        arr = np.array(
+            [frame for frame in save_frames]).squeeze().astype(
+                np.uint16)
+        sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
+        compress_np(
+            arr, path, THOR_RAW, dataset.sequences[0].shape,
+            compress=True)
+
+
+def compress_np(arr, path, rawfn, shape, compress=True):
+    rawfn = os.path.join(path, rawfn)
+
+    sys.stdout.write("Writing raw file...")
+    sys.stdout.flush()
+    t0 = time.time()
+    arr.tofile(rawfn)
+    sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
+
+    if compress:
+        cmd = shlex.split("/usr/local/bin/xz -T 0")
+        cmd.append(rawfn)
+        sys.stdout.write("Compressing file...")
+        sys.stdout.flush()
+        t0 = time.time()
+        P = sp.Popen(cmd)
+        P.wait()
+        sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
+
+    shapefn = os.path.join(path,  THOR_RAW[:-3] + "shape.npy")
+    np.save(shapefn, shape)
+
+
+def raw2np(filename, shape):
+    if filename[-3:] == ".xz":
+        sys.stdout.write("Decompressing data...\n")
+        sys.stdout.flush()
+        with lzma.open(filename) as decompf:
+            return np.fromstring(
+                decompf.read(), dtype=np.uint16).reshape(shape)
+    else:
+        return np.fromfile(filename, dtype=np.uint16).reshape(shape)

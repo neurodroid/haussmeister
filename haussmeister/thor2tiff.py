@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys
 import os
 import argparse
@@ -24,7 +26,10 @@ except ImportError:
 try:
     from . import haussio
 except (ValueError, SystemError):
-    import haussio
+    try:
+        import haussio
+    except ImportError:
+        from haussmeister import haussio
 
 
 THOR_RAW = "Image_0001_0001.raw"
@@ -40,7 +45,7 @@ def parse_arguments():
         default=True)
     parser.add_argument(
         "--compress", help="Compress raw file", action="store_true",
-        default=True)
+        default=False)
     return parser.parse_args()
 
 
@@ -67,16 +72,19 @@ def raw2tiff(rawfile, mp):
     sys.stdout.write("done\n")
 
 
-def tiff2raw(dirname, compress):
+def tiff2raw(tiffname, compress):
+    dirname = os.path.dirname(tiffname)
     xml_file = os.path.join(dirname, "Experiment.xml")
     if not os.path.exists(xml_file):
         sys.stderr.write("Could not find {0}\n".format(
             xml_file))
         quit(1)
 
-    sys.stdout.write("Converting...\n")
-    data_haussio = haussio.ThorHaussIO(dirname)
-    data_haussio.tiff2raw(dirname, compress=True)
+    chan = tiffname[tiffname.rfind("Chan")+len("Chan")]
+    sys.stdout.write("Converting files from " + dirname + "...")
+    sys.stdout.flush()
+    data_haussio = haussio.ThorHaussIO(dirname, chan=chan)
+    data_haussio.tiff2raw(dirname, compress=compress)
     sys.stdout.write("done\n")
 
 
@@ -86,6 +94,9 @@ def gui():
     rawfile = askopenfilename(
         title="Select raw file or first tiff in series",
         filetypes=[("Raw files", "*.raw"), ("Tiff files", "*.tif")])
+
+    if len(rawfile) == 0:
+        quit(0)
 
     rawtrunk, rawext = os.path.splitext(rawfile)
 
@@ -123,13 +134,13 @@ if __name__ == "__main__":
     if args.rawfile is None:
         rawfile, mp, compress = gui()
     else:
-        rawfile = os.path.abspath(args.rawfile)
+        rawfile = os.path.abspath(args.rawfile.name)
         mp = args.mp
         compress = args.compress
 
     rawtrunk, rawext = os.path.splitext(rawfile)
 
     if rawext == ".tif":
-        raw2tiff(rawfile, mp)
+        tiff2raw(rawfile, compress=compress)
     elif rawext == ".raw":
-        tiff2raw(os.path.abspath(os.path.dirname(rawfile)), compress=compress)
+        raw2tiff(rawfile, mp)
