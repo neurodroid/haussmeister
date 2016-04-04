@@ -190,7 +190,7 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
     if isinstance(tiff_input, np.ndarray):
         for frame in tiff_input.squeeze():
             im = Image.fromarray(frame.astype(np.int32))
-            im.save(P.stdin, 'PNG')
+            im.save(P.stdin, 'PNG', compress_level=0, bits=32)
 
         P.stdin.close()
 
