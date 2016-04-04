@@ -35,7 +35,8 @@ try:
 except (SystemError, ValueError):
     import movies
 
-THOR_RAW = "Image_0001_0001.raw"
+THOR_RAW_FN = "Image_0001_0001.raw"
+XZ_BIN = "/usr/local/bin/xz"
 
 
 class HaussIO(object):
@@ -151,7 +152,7 @@ class HaussIO(object):
             path_f = self.dirname_comp
         else:
             path_f = path
-        rawfn = os.path.join(path_f, THOR_RAW)
+        rawfn = os.path.join(path_f, THOR_RAW_FN)
         assert(not os.path.exists(rawfn))
         compressfn = rawfn + ".xz"
         assert(not os.path.exists(compressfn))
@@ -162,7 +163,7 @@ class HaussIO(object):
             t0 = time.time()
             arr = self.asarray_uint16()
             sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
-            compress_np(arr, path_f, THOR_RAW, (
+            compress_np(arr, path_f, THOR_RAW_FN, (
                 self.nframes, self.xpx, self.ypx), compress=compress)
 
     def _get_filenames(self, xml_path, sync_path):
@@ -343,14 +344,14 @@ class HaussIO(object):
         html_movie : str
             An html tag containing the complete movie
         """
-        rawfile = os.path.join(path_extern, THOR_RAW)
+        rawfile = os.path.join(path_extern, THOR_RAW_FN)
         if not os.path.exists(rawfile):
             rawfile += ".xz"
             if not os.path.exists(rawfile):
                 rawfile = None
 
         if rawfile is not None:
-            shapefn = os.path.join(path_extern, THOR_RAW[:-3] + "shape.npy")
+            shapefn = os.path.join(path_extern, THOR_RAW_FN[:-3] + "shape.npy")
             shape = np.load(shapefn)
             movie_input = raw2np(rawfile, (shape[0], shape[2], shape[3]))
         else:
@@ -513,7 +514,7 @@ class ThorHaussIO(HaussIO):
         else:
             self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
-        self.rawfile = os.path.join(self.dirname_comp, THOR_RAW)
+        self.rawfile = os.path.join(self.dirname_comp, THOR_RAW_FN)
         if os.path.exists(self.rawfile + ".xz"):
             self.rawfile = self.rawfile + ".xz"
 
@@ -782,7 +783,7 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
                 np.uint16)
         sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
         compress_np(
-            arr, path, THOR_RAW, dataset.sequences[0].shape,
+            arr, path, THOR_RAW_FN, dataset.sequences[0].shape,
             compress=True)
 
 
@@ -796,7 +797,7 @@ def compress_np(arr, path, rawfn, shape, compress=True):
     sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
 
     if compress:
-        cmd = shlex.split("/usr/local/bin/xz -T 0")
+        cmd = shlex.split(XZ_BIN + " -T 0")
         cmd.append(rawfn)
         sys.stdout.write("Compressing file...")
         sys.stdout.flush()
@@ -805,7 +806,7 @@ def compress_np(arr, path, rawfn, shape, compress=True):
         P.wait()
         sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
 
-    shapefn = os.path.join(path,  THOR_RAW[:-3] + "shape.npy")
+    shapefn = os.path.join(path, THOR_RAW_FN[:-3] + "shape.npy")
     np.save(shapefn, shape)
 
 
