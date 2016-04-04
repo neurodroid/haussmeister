@@ -294,8 +294,12 @@ class HaussIO(object):
         """
 
         if norm is not None:
-            normbright = movies.get_normbright(
-                self.get_normframe(), mid=norm)
+            if self.rawfile is not None and os.path.exists(self.rawfile):
+                normbright = movies.get_normbright(
+                    self.read_raw(), mid=norm)
+            else:
+                normbright = movies.get_normbright(
+                    self.get_normframe(), mid=norm)
         else:
             normbright = None
 
@@ -356,8 +360,7 @@ class HaussIO(object):
 
         if norm:
             if rawfile is not None:
-                normbright = movies.get_normbright(
-                    movie_input[int(self.nframes/2), :, :])
+                normbright = movies.get_normbright(movie_input)
             else:
                 normbright = movies.get_normbright(np.asarray(Image.open(
                     os.path.join(
