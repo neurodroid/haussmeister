@@ -611,8 +611,13 @@ class ThorHaussIO(HaussIO):
 
     def read_raw(self):
         if self.raw_array is None:
-            self.raw_array = raw2np(
-                self.rawfile, (self.nframes, self.xpx, self.ypx))[:self.iend]
+            shapefn = os.path.join(
+                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+            if os.path.exists(shapefn):
+                shape = np.load(shapefn)
+            else:
+                shape = (self.nframes, self.xpx, self.ypx)
+            self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
 
         return self.raw_array
 

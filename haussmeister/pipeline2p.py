@@ -213,12 +213,14 @@ class ThorExperiment(object):
             if not mc:
                 return haussio.ThorHaussIO(
                     self.data_path, chan=self.ch2p,
-                    sync_path=self.sync_path, width_idx=4, maxtime=self.maxtime)
+                    sync_path=self.sync_path, width_idx=4,
+                    maxtime=self.maxtime)
             else:
                 return haussio.ThorHaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p, xml_path=self.data_path+"/Experiment.xml",
-                    sync_path=self.sync_path, width_idx=5, maxtime=self.maxtime)
+                    sync_path=self.sync_path, width_idx=5,
+                    maxtime=self.maxtime)
         elif self.ftype == "movie":
             if not mc:
                 return haussio.MovieHaussIO(
