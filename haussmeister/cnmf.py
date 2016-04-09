@@ -15,6 +15,7 @@ import os
 import time
 import subprocess
 import multiprocessing as mp
+import tempfile
 
 import ipyparallel
 
@@ -43,22 +44,28 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         sys.stdout.write('Converting to {0}... '.format(
             haussio_data.dirname_comp + '_Y*.npy'))
         sys.stdout.flush()
-
-        if mask is None:
-            filenames = haussio_data.filenames
-        else:
-            if len(haussio_data.filenames) > mask.shape[0]:
-                mask_full = np.concatenate([
-                    mask, np.ones((
-                        len(haussio_data.filenames)-mask.shape[0])).astype(
-                            np.bool)])
-            else:
-                mask_full = mask
-            filenames = [fn for fn, masked in zip(
-                haussio_data.filenames, mask_full) if not masked]
         t0 = time.time()
-        tiff_sequence = tifffile.TiffSequence(filenames, pattern=None)
-        tiff_data = tiff_sequence.asarray(memmap=True).astype(dtype=np.float32)
+        if haussio_data.rawfile is None or not os.path.exists(
+                haussio_data.rawfile):
+            if mask is None:
+                filenames = haussio_data.filenames
+            else:
+                if len(haussio_data.filenames) > mask.shape[0]:
+                    mask_full = np.concatenate([
+                        mask, np.ones((
+                            len(haussio_data.filenames)-mask.shape[0])).astype(
+                                np.bool)])
+                else:
+                    mask_full = mask
+                filenames = [fn for fn, masked in zip(
+                    haussio_data.filenames, mask_full) if not masked]
+            tiff_sequence = tifffile.TiffSequence(filenames, pattern=None)
+            tiff_data = tiff_sequence.asarray(memmap=True).astype(
+                dtype=np.float32)
+        else:
+            tiff_data = haussio_data.read_raw().squeeze().astype(np.float32)[
+                np.invert(mask), :, :]
+
         tiff_data = np.transpose(tiff_data, (1, 2, 0))
         d1, d2, T = tiff_data.shape
         tiff_data_r = np.reshape(tiff_data, (d1*d2, T), order='F')
