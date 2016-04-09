@@ -108,18 +108,23 @@ class HaussIO(object):
         self.nframes = len(self.timing)
         sys.stdout.write("done\n")
 
-        if self.rawfile is None or not os.path.exists(self.rawfile):
-            try:
-                assert(len(self.filenames) <= self.nframes)
-            except AssertionError as err:
-                print(len(self.filenames), self.nframes)
-                raise err
         if self.maxtime is not None:
             self.iend = np.where(self.timing >= self.maxtime)[0][0]
             self.filenames = self.filenames[:self.iend]
         else:
             self.iend = None
 
+        if xml_path is None:
+            if self.rawfile is None or not os.path.exists(self.rawfile):
+                try:
+                    assert(len(self.filenames) <= self.nframes)
+                except AssertionError as err:
+                    print(len(self.filenames), self.nframes)
+                    raise err
+        else:
+            if self.rawfile is None or not os.path.exists(self.rawfile):
+                if len(self.filenames) != self.nframes:
+                    self.nframes = len(self.filenames)
 
     @abc.abstractmethod
     def _get_dimensions(self):
@@ -171,9 +176,9 @@ class HaussIO(object):
             sys.stdout.flush()
             t0 = time.time()
             arr = self.asarray_uint16()
+            assert(len(arr.shape) == 3)
             sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
-            compress_np(arr, path_f, THOR_RAW_FN, (
-                self.nframes, self.xpx, self.ypx), compress=compress)
+            compress_np(arr, path_f, THOR_RAW_FN, compress=compress)
 
     def _get_filenames(self, xml_path, sync_path):
         self.dirname_comp = self.dirname.replace("?", "n")
@@ -273,8 +278,7 @@ class HaussIO(object):
             for fn in self.filenames])
         try:
             assert(arr.dtype == np.uint16)
-            assert((arr.shape[0], arr.shape[1], arr.shape[2]) ==
-                   (self.nframes, self.xpx, self.ypx))
+            assert(arr.shape[0] == self.nframes)
         except AssertionError as err:
             print(arr.dtype)
             print(arr.shape)
@@ -796,7 +800,13 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
             compress=True)
 
 
-def compress_np(arr, path, rawfn, shape, compress=True):
+def compress_np(arr, path, rawfn, shape=None, compress=True):
+    if shape is None:
+        shape = arr.shape
+
+    shapefn = os.path.join(path, THOR_RAW_FN[:-3] + "shape.npy")
+    np.save(shapefn, shape)
+
     rawfn = os.path.join(path, rawfn)
 
     sys.stdout.write("Writing raw file...")
@@ -814,9 +824,6 @@ def compress_np(arr, path, rawfn, shape, compress=True):
         P = sp.Popen(cmd)
         P.wait()
         sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
-
-    shapefn = os.path.join(path, THOR_RAW_FN[:-3] + "shape.npy")
-    np.save(shapefn, shape)
 
 
 def raw2np(filename, shape):
