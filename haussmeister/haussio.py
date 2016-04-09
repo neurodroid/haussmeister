@@ -151,7 +151,7 @@ class HaussIO(object):
         if not mp:
             for ni, img in enumerate(arr):
                 sys.stdout.write(
-                    "\r{0:6.2f}%".format(float(ni)/arr.shape[0] * 100.0))
+                    "\r{0:6.2%}".format(float(ni)/arr.shape[0]))
                 sys.stdout.flush()
                 tifffile.imsave(os.path.join(
                     self.dirname_comp,
