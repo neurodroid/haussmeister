@@ -761,11 +761,12 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
     ftype : stf, optional
         file type, one of "tiff" or "raw". Default: "tiff"
     """
-    try:
-        assert(len(filenames) == dataset.sequences[0].shape[0])
-    except AssertionError as err:
-        print(len(filenames), dataset.sequences[0].shape[0])
-        raise err
+    if ftype == "tiff":
+        try:
+            assert(len(filenames) == dataset.sequences[0].shape[0])
+        except AssertionError as err:
+            print(len(filenames), dataset.sequences[0].shape[0])
+            raise err
     assert(ftype in ["tiff", "raw"])
 
     if ftype == "raw":

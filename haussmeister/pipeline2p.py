@@ -319,11 +319,13 @@ def thor_preprocess(data):
 
     filenames_mc = ["{0}{1:05d}.tif".format(experiment.filetrunk, nf+1)
                     for nf in range(experiment.nframes)]
-    try:
-        assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
-    except AssertionError as err:
-        print(len(filenames_mc), dataset_mc.sequences[0].shape[0])
-        raise err
+    if data.maxtime is None:
+        try:
+            assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
+        except AssertionError as err:
+            print(len(filenames_mc), dataset_mc.sequences[0].shape[0])
+            raise err
+
     if not os.path.exists(os.path.join(data.mc_tiff_dir, os.path.basename(
             filenames_mc[-1]))) and not os.path.exists(os.path.join(
                 data.mc_tiff_dir, "Image_0001_0001.raw.xz")):
