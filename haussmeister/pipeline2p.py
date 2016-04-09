@@ -104,11 +104,13 @@ class ThorExperiment(object):
         are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used), 
         "cnmf" (constrained non-negative matrix factorization).
         Default: "cnmf"
+    maxtime : float, optional
+        Limit data to maxtime. Default: None
     """
     def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
                  roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
                  roi_translate=None, root_path="", ftype="thor",
-                 dx=None, dt=None, seg_method="cnmf"):
+                 dx=None, dt=None, seg_method="cnmf", maxtime=None):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -123,6 +125,7 @@ class ThorExperiment(object):
         self.dx = dx
         self.dt = dt
         self.nrois_init = nrois_init
+        self.maxtime = maxtime
 
         assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
         self.seg_method = seg_method
@@ -210,12 +213,12 @@ class ThorExperiment(object):
             if not mc:
                 return haussio.ThorHaussIO(
                     self.data_path, chan=self.ch2p,
-                    sync_path=self.sync_path, width_idx=4)
+                    sync_path=self.sync_path, width_idx=4, maxtime=self.maxtime)
             else:
                 return haussio.ThorHaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p, xml_path=self.data_path+"/Experiment.xml",
-                    sync_path=self.sync_path, width_idx=5)
+                    sync_path=self.sync_path, width_idx=5, maxtime=self.maxtime)
         elif self.ftype == "movie":
             if not mc:
                 return haussio.MovieHaussIO(

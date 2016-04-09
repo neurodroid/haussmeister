@@ -78,11 +78,14 @@ class HaussIO(object):
         List of file paths (full paths) of individual tiffs
     width_idx : str
         Width of index string in file names
+    maxtime : float
+        Limit data to maxtime
     """
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
-                 width_idx=4):
+                 width_idx=4, maxtime=None):
 
         self.raw_array = None
+        self.maxtime = maxtime
 
         self.dirname = os.path.abspath(dirname)
         self.chan = chan
@@ -111,6 +114,12 @@ class HaussIO(object):
             except AssertionError as err:
                 print(len(self.filenames), self.nframes)
                 raise err
+        if self.maxtime is not None:
+            self.iend = np.where(self.timing >= self.maxtime)[0][0]
+            self.filenames = self.filenames[:self.iend]
+        else:
+            self.iend = None
+
 
     @abc.abstractmethod
     def _get_dimensions(self):
@@ -599,7 +608,7 @@ class ThorHaussIO(HaussIO):
     def read_raw(self):
         if self.raw_array is None:
             self.raw_array = raw2np(
-                self.rawfile, (self.nframes, self.xpx, self.ypx))
+                self.rawfile, (self.nframes, self.xpx, self.ypx))[:self.iend]
 
         return self.raw_array
 
