@@ -34,7 +34,10 @@ except ValueError:
     import utils
 
 sys.path.append('../SPGL1_python_port')
-import ca_source_extraction as cse
+try:
+    import ca_source_extraction as cse
+except ImportError:
+    sys.stderr.write("Could not find cse module")
 
 NCPUS = int(mp.cpu_count()/2)
 
