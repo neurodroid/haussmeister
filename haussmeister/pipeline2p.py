@@ -1616,6 +1616,7 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
             vrdict["speed2p"], vrdict["framet2p"], speed_thr, time_thr)
         print("{0:.2f} %% stationary".format(
             np.sum(mask2p)/float(mask2p.shape[0])*100.0))
+        print("{0} frames".format(np.sum(np.invert(mask2p))))
     else:
         mask2p = None
 

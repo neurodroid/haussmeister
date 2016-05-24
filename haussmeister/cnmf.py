@@ -103,13 +103,14 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
         # how to subdivide the work among processes
         n_pixels_per_process = d1*d2/NCPUS
 
-        options = cse.utilities.CNMFSetParms(Y, K=nrois_init, p=p, gSig=[9, 9])
+        options = cse.utilities.CNMFSetParms(
+            Y, NCPUS, K=nrois_init, p=p, gSig=[9, 9], ssub=2, tsub=10)
         options['preprocess_params']['n_processes'] = NCPUS
         options['preprocess_params'][
             'n_pixels_per_process'] =  n_pixels_per_process
         options['init_params']['nIter'] = 10
         options['init_params']['maxIter'] = 10
-        options['init_params']['use_hals'] = False
+        options['init_params']['use_hals'] = True
         options['spatial_params']['n_processes'] = NCPUS
         options['spatial_params'][
             'n_pixels_per_process'] = n_pixels_per_process
@@ -122,9 +123,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
         t0 = time.time()
         sys.stdout.write("Preprocessing... ")
         sys.stdout.flush()
-        Yr, sn, g = cse.preprocess_data(Yr, **options['preprocess_params'])
+        Yr, sn, g, psx = cse.preprocess_data(Yr, **options['preprocess_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 224.94s
+        # 2016-05-24: 146.30s
 
         t0 = time.time()
         sys.stdout.write("Initializing components... ")
@@ -133,6 +135,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
             Y, **options['init_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 2281.37s
+        # 2016-05-24: 1054.72s
 
         t0 = time.time()
         sys.stdout.write("Updating spatial components... ")
@@ -141,6 +144,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
             Yr, Cin, f_in, Ain, sn=sn, **options['spatial_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 252.57s
+        # 2016-05-24: 445.95s
 
         t0 = time.time()
         sys.stdout.write("Updating temporal components... ")
@@ -151,6 +155,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
                 **options['temporal_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 455.14s
+        # 2016-05-24: 86.10s
 
         t0 = time.time()
         sys.stdout.write("Merging ROIs... ")
@@ -162,6 +167,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
                 thr=0.7, mx=100, fast_merge=True)
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 702.55s
+        # 2016-05-24: 11.75s
 
         t0 = time.time()
         sys.stdout.write("Updating spatial components... ")
@@ -170,6 +176,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
             Yr, C_m, f, A_m, sn=sn, **options['spatial_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 77.16s
+        # 2016-05-24: 99.22s
 
         t0 = time.time()
         sys.stdout.write("Updating temporal components... ")
@@ -180,6 +187,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=200):
                 **options['temporal_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 483.41s
+        # 2016-05-24: 74.81s
 
         # A: spatial components (ROIs)
         # C: denoised [Ca2+]
