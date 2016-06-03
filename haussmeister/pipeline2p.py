@@ -153,7 +153,7 @@ class ThorExperiment(object):
                 n_processes=NCPUS, verbose=True)
         elif self.mc_method == "dft":
             self.mc_approach = sima.motion.DiscreteFourier2D(
-                max_displacement=[20, 30], n_processes=4, verbose=True)
+                max_displacement=[20, 30], n_processes=NCPUS, verbose=True)
         elif self.mc_method == "hmmcres":
             self.mc_approach = sima.motion.ResonantCorrection(
                 sima.motion.HiddenMarkov2D(
@@ -309,7 +309,9 @@ def thor_preprocess(data):
         dataset = data.to_sima(mc=False)
 
     if not os.path.exists(data.sima_mc_dir):
+        t0 = time.time()
         dataset_mc = data.mc_approach.correct(dataset, data.sima_mc_dir)
+        print("Motion correction took {0:%.2f} s".format(time.time()-t0))
         dataset_mc.save(data.sima_mc_dir)
     else:
         try:
