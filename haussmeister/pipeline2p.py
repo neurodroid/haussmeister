@@ -311,7 +311,7 @@ def thor_preprocess(data):
     if not os.path.exists(data.sima_mc_dir):
         t0 = time.time()
         dataset_mc = data.mc_approach.correct(dataset, data.sima_mc_dir)
-        print("Motion correction took {0:%.2f} s".format(time.time()-t0))
+        print("Motion correction took {0:.2f} s".format(time.time()-t0))
         dataset_mc.save(data.sima_mc_dir)
     else:
         try:
