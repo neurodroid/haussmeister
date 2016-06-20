@@ -8,7 +8,10 @@ try:
 except ImportError:
     sys.stderr.write("pyfftw unavailable\n")
 
-from stfio import plot as stfio_plot
+try:
+    from stfio import plot as stfio_plot
+except ImportError:
+    sys.stderr.write("stfio unavailable\n")
 
 
 def fgaussColqu(x, f_c):

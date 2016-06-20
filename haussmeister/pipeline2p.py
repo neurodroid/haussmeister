@@ -39,6 +39,7 @@ try:
     from . import scalebars
     from . import spectral
     from . import cnmf
+    from . import motion
 except ValueError:
     import utils
     import haussio
@@ -46,6 +47,7 @@ except ValueError:
     import scalebars
     import spectral
     import cnmf
+    import motion
 
 import stfio
 from stfio import plot as stfio_plot
@@ -92,7 +94,7 @@ class ThorExperiment(object):
         Default: ""
     mc_method : str
         Motion correction method. One of "hmmc", "dft", "hmmcres", "hmmcframe",
-        "hmmcpx". Default: "hmmc"
+        "hmmcpx", "calblitz". Default: "hmmc"
     detrend : bool
         Whether to detrend fluorescence traces. Default: False
     roi_translate : 2-tuple of ints
@@ -162,11 +164,15 @@ class ThorExperiment(object):
         elif self.mc_method == "hmmcframe":
             self.mc_approach = sima.motion.HiddenMarkov2D(
                 granularity='frame', max_displacement=[20, 30],
-                n_processes=4, verbose=True)
+                n_processes=NCPUS, verbose=True)
         elif self.mc_method == "hmmcpx":
             self.mc_approach = sima.motion.HiddenMarkov2D(
                 granularity='column', max_displacement=[20, 30],
                 n_processes=4, verbose=True)
+        elif self.mc_method == "calblitz":
+            self.mc_approach = motion.CalBlitz(
+                max_displacement=[20, 30], fr=self.to_haussio().fps,
+                verbose=True)
         elif self.mc_method == "none":
             self.mc_suffix = ""
             self.mc_approach = None
@@ -985,7 +991,7 @@ def get_rois_sima(data, infer=True):
     return rois, measured, experiment, zproj, spikes
 
 
-def get_rois_thunder(data, tsc, infer=True, speed=None, nrois_init=100):
+def get_rois_thunder(data, sc, infer=True, speed=None, nrois_init=100):
     """
     Extract fluorescence data from ROIs that are identified
     by thunder's ICA. If running speed is available, ROIs will
@@ -996,7 +1002,7 @@ def get_rois_thunder(data, tsc, infer=True, speed=None, nrois_init=100):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
-    tsc : thunder.ThunderContext
+    sc : SparkContext
         Thunder wrapper for a Spark context
     infer : bool, optional
         Perform spike inference. Default: True
@@ -1041,14 +1047,15 @@ def get_rois_thunder(data, tsc, infer=True, speed=None, nrois_init=100):
         else:
             maxstart = 0
 
-        from thunder import ICA
+        from thunder import images
+        from factorization import ICA
 
         print("Reading files into thunder... ")
 
-        data_thunder = tsc.loadImages(
+        data_thunder = images.loadImages(
             data.mc_tiff_dir, inputFormat='tif',
             startIdx=maxstart, stopIdx=maxstart+maxframes_ica,
-            npartitions=1)
+            npartitions=1, engine=sc)
         data_thunder.cache()
         data_thunder.count()
 
