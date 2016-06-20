@@ -49,8 +49,11 @@ except ValueError:
     import cnmf
     import motion
 
-import stfio
-from stfio import plot as stfio_plot
+try:
+    import stfio
+    from stfio import plot as stfio_plot
+except ImportError:
+    sys.stderr.write("stfio module missing\n")
 
 import haussmeister
 
