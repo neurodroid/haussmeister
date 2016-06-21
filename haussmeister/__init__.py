@@ -11,5 +11,6 @@ from . import pipeline2p
 from . import spectral
 from . import cnmf
 from . import thor2tiff
+from . import motion
 
 __version__ = '0.2.0'
