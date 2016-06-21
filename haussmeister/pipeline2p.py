@@ -292,7 +292,7 @@ class ThorExperiment(object):
         return dataset
 
 
-def thor_preprocess(data):
+def thor_preprocess(data, ffmpeg=movies.FFMPEG):
     """
     Read in ThorImage dataset, apply motion correction, export motion-corrected
     tiffs, produce movie of corrected and uncorrected data
@@ -301,6 +301,8 @@ def thor_preprocess(data):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    ffmpeg : str, optional
+        Path to ffmpeg binary. Default: movies.FFMPEG global variable
     """
     experiment = data.to_haussio(mc=False)
 

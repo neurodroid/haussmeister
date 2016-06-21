@@ -95,7 +95,7 @@ def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
 
 
 def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
-               verbose=False, scale=None, crf=30):
+               verbose=False, scale=None, crf=30, ffmpeg=FFMPEG):
     """
     Produce a movie from a directory with individual tiffs
     at given frame rate
@@ -120,6 +120,8 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
         Rescale movie to given width and height in pixels. Default: None
     crf : int, optional
         crf value to be passed to ffmpeg. Default: 30
+    ffmpeg : str, optional
+        Path to ffmpeg binary. Default: FFMPEG global variable
 
     Returns
     -------
@@ -154,7 +156,7 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
 
     tiff_input = tiff_trunk
 
-    cmd = "{0} -y -r {1} ".format(FFMPEG, fps)
+    cmd = "{0} -y -r {1} ".format(ffmpeg, fps)
 
     if isinstance(tiff_input, str):
         if "?" in tiff_input:
@@ -175,6 +177,10 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
             crf)
     cmd += "-metadata author=\"(c) 2016 Christoph Schmidt-Hieber\" {0}".format(
         out_file)
+
+    if os.name == 'nt':
+        # Need to double-escape path separators on windows
+        cmd = cmd.replace("\\", "\\\\")
 
     sys.stdout.write(cmd)
     cmd_split = shlex.split(cmd)
