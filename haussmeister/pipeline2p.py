@@ -292,7 +292,7 @@ class ThorExperiment(object):
         return dataset
 
 
-def thor_preprocess(data, ffmpeg=movies.FFMPEG):
+def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
     """
     Read in ThorImage dataset, apply motion correction, export motion-corrected
     tiffs, produce movie of corrected and uncorrected data
@@ -303,6 +303,8 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG):
         The ThorExperiment to be processed
     ffmpeg : str, optional
         Path to ffmpeg binary. Default: movies.FFMPEG global variable
+    compress : boolean, optional
+        Compress resulting raw file with xz. Default: False
     """
     experiment = data.to_haussio(mc=False)
 
@@ -341,12 +343,17 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG):
             print(len(filenames_mc), dataset_mc.sequences[0].shape[0])
             raise err
 
+    raw_fn = "Image_0001_0001.raw"
+    if compress and os.name != 'nt':
+        raw_fn += ".xz"
+
     if not os.path.exists(os.path.join(data.mc_tiff_dir, os.path.basename(
             filenames_mc[-1]))) and not os.path.exists(os.path.join(
-                data.mc_tiff_dir, "Image_0001_0001.raw.xz")):
+                data.mc_tiff_dir, raw_fn)):
         print("Exporting frames...")
         haussio.sima_export_frames(
-            dataset_mc, data.mc_tiff_dir, filenames_mc, ftype="raw")
+            dataset_mc, data.mc_tiff_dir, filenames_mc, ftype="raw",
+            compress = (compress and os.name != 'nt'))
 
     if os.path.exists(data.movie_mc_fn):
         corr_movie = movies.html_movie(data.movie_mc_fn)

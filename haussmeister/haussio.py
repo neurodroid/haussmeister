@@ -745,7 +745,7 @@ class MovieHaussIO(HaussIO):
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
-                       ftype="tiff"):
+                       ftype="tiff", compress=False):
     """
     Export a sima.ImagingDataset to individual tiffs.
     Works around sima only producing multipage tiffs.
@@ -765,6 +765,8 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
         Index of last frame to be exported (exclusive). Default: None
     ftype : stf, optional
         file type, one of "tiff" or "raw". Default: "tiff"
+    compress : boolean, optional
+        Compress raw file with xz. Default: False
     """
     if ftype == "tiff":
         try:
@@ -803,7 +805,7 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
         sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
         compress_np(
             arr, path, THOR_RAW_FN, dataset.sequences[0].shape,
-            compress=True)
+            compress=compress)
 
 
 def compress_np(arr, path, rawfn, shape=None, compress=True):
