@@ -1,0 +1,754 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>haussio module &mdash; haussmeister 0.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
+    <link rel="up" title="haussmeister" href="index.html" />
+    <link rel="next" title="movies module" href="movies.html" />
+    <link rel="prev" title="haussmeister" href="index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          haussmeister</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">haussmeister</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">haussio module</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="index.html" title="Previous Chapter: haussmeister"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; haussmeister</span>
+    </a>
+  </li>
+  <li>
+    <a href="movies.html" title="Next Chapter: movies module"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">movies module &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/usage/haussio.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="module-haussio">
+<span id="haussio-module"></span><h1>haussio module<a class="headerlink" href="#module-haussio" title="Permalink to this headline">¶</a></h1>
+<p>Module for importing and exporting 2p imaging datasets</p>
+<p>(c) 2015 C. Schmidt-Hieber
+GPLv3</p>
+<dl class="class">
+<dt id="haussio.HaussIO">
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">HaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Base class for objects representing 2p imaging data.</p>
+<dl class="attribute">
+<dt id="haussio.HaussIO.xsize">
+<code class="descname">xsize</code><a class="headerlink" href="#haussio.HaussIO.xsize" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>float</em> &#8211; Width of frames in specimen dimensions (e.g. um)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.ysize">
+<code class="descname">ysize</code><a class="headerlink" href="#haussio.HaussIO.ysize" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>float</em> &#8211; Height of frames in specimen dimensions (e.g. um)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.xpx">
+<code class="descname">xpx</code><a class="headerlink" href="#haussio.HaussIO.xpx" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> &#8211; Width of frames in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.ypx">
+<code class="descname">ypx</code><a class="headerlink" href="#haussio.HaussIO.ypx" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int</em> &#8211; Height of frames in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.timing">
+<code class="descname">timing</code><a class="headerlink" href="#haussio.HaussIO.timing" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>numpy.ndarray</em> &#8211; Time points of frame acquisitions</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.fps">
+<code class="descname">fps</code><a class="headerlink" href="#haussio.HaussIO.fps" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>float</em> &#8211; Acquisition rate in frames per seconds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">fps</code></dt>
+<dd><p><em>float</em> &#8211; Acquisition interval in seconds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.movie_fn">
+<code class="descname">movie_fn</code><a class="headerlink" href="#haussio.HaussIO.movie_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; File path (full path) for exported movie</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.scale_png">
+<code class="descname">scale_png</code><a class="headerlink" href="#haussio.HaussIO.scale_png" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; File path (full path) for png showing scale bar</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.sima_dir">
+<code class="descname">sima_dir</code><a class="headerlink" href="#haussio.HaussIO.sima_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Full path to directory for sima exports</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.basefile">
+<code class="descname">basefile</code><a class="headerlink" href="#haussio.HaussIO.basefile" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; File name trunk for individual tiffs (without path)
+(e.g. <code class="docutils literal"><span class="pre">ChanA_0001_</span></code>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.filetrunk">
+<code class="descname">filetrunk</code><a class="headerlink" href="#haussio.HaussIO.filetrunk" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Full path and file name trunk for individual tiffs
+(e.g. <code class="docutils literal"><span class="pre">/home/cs/data/ChanA_0001_</span></code>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.ffmpeg_fn">
+<code class="descname">ffmpeg_fn</code><a class="headerlink" href="#haussio.HaussIO.ffmpeg_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; File name filter (full path) used as input to ffmpeg
+(e.g. <code class="docutils literal"><span class="pre">/home/cs/data/ChanA_0001_%04d.tif</span></code>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.filenames">
+<code class="descname">filenames</code><a class="headerlink" href="#haussio.HaussIO.filenames" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>list of str</em> &#8211; List of file paths (full paths) of individual tiffs</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.width_idx">
+<code class="descname">width_idx</code><a class="headerlink" href="#haussio.HaussIO.width_idx" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Width of index string in file names</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="haussio.HaussIO.maxtime">
+<code class="descname">maxtime</code><a class="headerlink" href="#haussio.HaussIO.maxtime" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>float</em> &#8211; Limit data to maxtime</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.format_index">
+<code class="descname">format_index</code><span class="sig-paren">(</span><em>n</em>, <em>width_idx=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.format_index"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.format_index" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return formatted index string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n</strong> (<em>int or str</em>) &#8211; Index as int, or &#8221;?&#8221; (returns series of &#8221;?&#8221;), or &#8220;%&#8221; (returns
+old-school formatter)</li>
+<li><strong>width_idx</strong> (<em>int, optional</em>) &#8211; Override default width of index string. Default: None</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>format</strong> &#8211; Formatted index string, or series of &#8221;?&#8221;, or old-school formatter</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.get_normframe">
+<code class="descname">get_normframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.get_normframe"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.get_normframe" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return a representative frame that will be used to normalize
+the brightness in movies</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>arr</strong> &#8211; Frame converted to numpy.ndarray</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.get_scale_bar">
+<code class="descname">get_scale_bar</code><span class="sig-paren">(</span><em>prop=0.125</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.get_scale_bar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.get_scale_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns lengths in specimen dimensions (e.g. um) and in pixels
+of a scale bar that fills the given fraction of the width of the
+image</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>prop</strong> (<em>float, optional</em>) &#8211; Length of scale bar expressed as fraction of image width</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>scale_length_int</strong> (<em>int</em>) &#8211; Scale bar length in specimen dimensions (e.g. um)</li>
+<li><strong>scale_length_px</strong> (<em>int</em>) &#8211; Scale bar length in pixels</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.make_movie">
+<code class="descname">make_movie</code><span class="sig-paren">(</span><em>norm=16.0</em>, <em>scalebar=True</em>, <em>crf=28.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.make_movie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.make_movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a movie of the experiment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>norm</strong> (<em>float, optional</em>) &#8211; Normalize min, norm*median and max brightness to 0, 0.5 and 1.0
+None for no normalization. Default: 16.0</li>
+<li><strong>scalebar</strong> (<em>bool, optional</em>) &#8211; Show a scale bar in the movie.</li>
+<li><strong>crf</strong> (<em>int, optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 28</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>html_movie</strong> &#8211; An html tag containing the complete movie</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.make_movie_extern">
+<code class="descname">make_movie_extern</code><span class="sig-paren">(</span><em>path_extern</em>, <em>norm=16.0</em>, <em>scalebar=True</em>, <em>crf=28</em>, <em>width_idx=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.make_movie_extern"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.make_movie_extern" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a movie from a directory with individual tiffs, using
+the present experimental settings for scale bar and frame rate</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path_extern</strong> (<em>str</em>) &#8211; Full path to the directory that contains the individual tiffs</li>
+<li><strong>norm</strong> (<em>float, optional</em>) &#8211; Normalize min, norm*median and max brightness to 0, 0.5 and 1.0
+None for no normalization. Default: 16.0</li>
+<li><strong>scalebar</strong> (<em>bool, optional</em>) &#8211; Show a scale bar in the movie.</li>
+<li><strong>crf</strong> (<em>int, optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 28</li>
+<li><strong>width_idx</strong> (<em>int, optional</em>) &#8211; Override default index string width. Default: None</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>html_movie</strong> &#8211; An html tag containing the complete movie</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.plot_scale_bar">
+<code class="descname">plot_scale_bar</code><span class="sig-paren">(</span><em>ax</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.plot_scale_bar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.plot_scale_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add scale bar to a matplotlib axis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) &#8211; matplotlib axes on which to plot the scale bar, as
+e.g. returned by &#8216;fig.add_suplot(1,1,1)&#8217;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.save_scale_bar">
+<code class="descname">save_scale_bar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.save_scale_bar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.save_scale_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save scale bar as png (using file name stored in self.scale_png)
+so that it can be used in a movie</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="haussio.HaussIO.tosima">
+<code class="descname">tosima</code><span class="sig-paren">(</span><em>startIdx=0</em>, <em>stopIdx=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.tosima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.HaussIO.tosima" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert the experiment to a sima.ImagingDataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>startIdx</strong> (<em>int, optional</em>) &#8211; Starting index (inclusive) for conversion.</li>
+<li><strong>stopIdx</strong> (<em>int</em>) &#8211; Last index (exclusive) for conversion.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dataset</strong> &#8211; A sima.ImagingDataset</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sima.ImagingDataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="haussio.MovieHaussIO">
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">MovieHaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>dx</em>, <em>dt</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#MovieHaussIO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.MovieHaussIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object representing 2p imaging data for which only a movie is available</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="haussio.PrairieHaussIO">
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">PrairieHaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#PrairieHaussIO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.PrairieHaussIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object representing 2p imaging data acquired with Prairie scopes</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="haussio.ThorHaussIO">
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">ThorHaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#ThorHaussIO"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.ThorHaussIO" title="Permalink to this definition">¶</a></dt>
+<dd><p>Object representing 2p imaging data acquired with ThorImageLS</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="haussio.sima_export_frames">
+<code class="descclassname">haussio.</code><code class="descname">sima_export_frames</code><span class="sig-paren">(</span><em>dataset</em>, <em>path</em>, <em>filenames</em>, <em>startIdx=0</em>, <em>stopIdx=None</em>, <em>ftype='tiff'</em>, <em>compress=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#sima_export_frames"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#haussio.sima_export_frames" title="Permalink to this definition">¶</a></dt>
+<dd><p>Export a sima.ImagingDataset to individual tiffs.
+Works around sima only producing multipage tiffs.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dataset</strong> (<em>sima.ImagingDataset</em>) &#8211; The sima.ImagingDataset to be exported</li>
+<li><strong>path</strong> (<em>string</em>) &#8211; Full path to target directory for exported tiffs</li>
+<li><strong>filenames</strong> (<em>list of strings</em>) &#8211; Filenames to be used for the export. While these can be
+full paths, only the file name part will be used.</li>
+<li><strong>startIdx</strong> (<em>int, optional</em>) &#8211; Index of first frame to be exported (inclusive). Default: 0</li>
+<li><strong>stopIdx</strong> (<em>int, optional</em>) &#8211; Index of last frame to be exported (exclusive). Default: None</li>
+<li><strong>ftype</strong> (<em>stf, optional</em>) &#8211; file type, one of &#8220;tiff&#8221; or &#8220;raw&#8221;. Default: &#8220;tiff&#8221;</li>
+<li><strong>compress</strong> (<em>boolean, optional</em>) &#8211; Compress raw file with xz. Default: False</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">HaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Base class for objects representing 2p imaging data.</p>
+<dl class="attribute">
+<dt>
+<code class="descname">xsize</code></dt>
+<dd><p><em>float</em> &#8211; Width of frames in specimen dimensions (e.g. um)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">ysize</code></dt>
+<dd><p><em>float</em> &#8211; Height of frames in specimen dimensions (e.g. um)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">xpx</code></dt>
+<dd><p><em>int</em> &#8211; Width of frames in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">ypx</code></dt>
+<dd><p><em>int</em> &#8211; Height of frames in pixels</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">timing</code></dt>
+<dd><p><em>numpy.ndarray</em> &#8211; Time points of frame acquisitions</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">fps</code></dt>
+<dd><p><em>float</em> &#8211; Acquisition rate in frames per seconds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">fps</code></dt>
+<dd><p><em>float</em> &#8211; Acquisition interval in seconds</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">movie_fn</code></dt>
+<dd><p><em>str</em> &#8211; File path (full path) for exported movie</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">scale_png</code></dt>
+<dd><p><em>str</em> &#8211; File path (full path) for png showing scale bar</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">sima_dir</code></dt>
+<dd><p><em>str</em> &#8211; Full path to directory for sima exports</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">basefile</code></dt>
+<dd><p><em>str</em> &#8211; File name trunk for individual tiffs (without path)
+(e.g. <code class="docutils literal"><span class="pre">ChanA_0001_</span></code>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">filetrunk</code></dt>
+<dd><p><em>str</em> &#8211; Full path and file name trunk for individual tiffs
+(e.g. <code class="docutils literal"><span class="pre">/home/cs/data/ChanA_0001_</span></code>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">ffmpeg_fn</code></dt>
+<dd><p><em>str</em> &#8211; File name filter (full path) used as input to ffmpeg
+(e.g. <code class="docutils literal"><span class="pre">/home/cs/data/ChanA_0001_%04d.tif</span></code>)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">filenames</code></dt>
+<dd><p><em>list of str</em> &#8211; List of file paths (full paths) of individual tiffs</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">width_idx</code></dt>
+<dd><p><em>str</em> &#8211; Width of index string in file names</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">maxtime</code></dt>
+<dd><p><em>float</em> &#8211; Limit data to maxtime</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">format_index</code><span class="sig-paren">(</span><em>n</em>, <em>width_idx=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.format_index"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Return formatted index string</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>n</strong> (<em>int or str</em>) &#8211; Index as int, or &#8221;?&#8221; (returns series of &#8221;?&#8221;), or &#8220;%&#8221; (returns
+old-school formatter)</li>
+<li><strong>width_idx</strong> (<em>int, optional</em>) &#8211; Override default width of index string. Default: None</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>format</strong> &#8211; Formatted index string, or series of &#8221;?&#8221;, or old-school formatter</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">string</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">get_normframe</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.get_normframe"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Return a representative frame that will be used to normalize
+the brightness in movies</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><strong>arr</strong> &#8211; Frame converted to numpy.ndarray</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">get_scale_bar</code><span class="sig-paren">(</span><em>prop=0.125</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.get_scale_bar"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Returns lengths in specimen dimensions (e.g. um) and in pixels
+of a scale bar that fills the given fraction of the width of the
+image</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>prop</strong> (<em>float, optional</em>) &#8211; Length of scale bar expressed as fraction of image width</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><ul class="simple">
+<li><strong>scale_length_int</strong> (<em>int</em>) &#8211; Scale bar length in specimen dimensions (e.g. um)</li>
+<li><strong>scale_length_px</strong> (<em>int</em>) &#8211; Scale bar length in pixels</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">make_movie</code><span class="sig-paren">(</span><em>norm=16.0</em>, <em>scalebar=True</em>, <em>crf=28.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.make_movie"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Produce a movie of the experiment</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>norm</strong> (<em>float, optional</em>) &#8211; Normalize min, norm*median and max brightness to 0, 0.5 and 1.0
+None for no normalization. Default: 16.0</li>
+<li><strong>scalebar</strong> (<em>bool, optional</em>) &#8211; Show a scale bar in the movie.</li>
+<li><strong>crf</strong> (<em>int, optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 28</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>html_movie</strong> &#8211; An html tag containing the complete movie</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">make_movie_extern</code><span class="sig-paren">(</span><em>path_extern</em>, <em>norm=16.0</em>, <em>scalebar=True</em>, <em>crf=28</em>, <em>width_idx=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.make_movie_extern"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Produce a movie from a directory with individual tiffs, using
+the present experimental settings for scale bar and frame rate</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>path_extern</strong> (<em>str</em>) &#8211; Full path to the directory that contains the individual tiffs</li>
+<li><strong>norm</strong> (<em>float, optional</em>) &#8211; Normalize min, norm*median and max brightness to 0, 0.5 and 1.0
+None for no normalization. Default: 16.0</li>
+<li><strong>scalebar</strong> (<em>bool, optional</em>) &#8211; Show a scale bar in the movie.</li>
+<li><strong>crf</strong> (<em>int, optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 28</li>
+<li><strong>width_idx</strong> (<em>int, optional</em>) &#8211; Override default index string width. Default: None</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>html_movie</strong> &#8211; An html tag containing the complete movie</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">plot_scale_bar</code><span class="sig-paren">(</span><em>ax</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.plot_scale_bar"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Add scale bar to a matplotlib axis</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>ax</strong> (<em>matplotlib.axes.Axes</em>) &#8211; matplotlib axes on which to plot the scale bar, as
+e.g. returned by &#8216;fig.add_suplot(1,1,1)&#8217;</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">save_scale_bar</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.save_scale_bar"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Save scale bar as png (using file name stored in self.scale_png)
+so that it can be used in a movie</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">tosima</code><span class="sig-paren">(</span><em>startIdx=0</em>, <em>stopIdx=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#HaussIO.tosima"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Convert the experiment to a sima.ImagingDataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>startIdx</strong> (<em>int, optional</em>) &#8211; Starting index (inclusive) for conversion.</li>
+<li><strong>stopIdx</strong> (<em>int</em>) &#8211; Last index (exclusive) for conversion.</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dataset</strong> &#8211; A sima.ImagingDataset</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sima.ImagingDataset</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">ThorHaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#ThorHaussIO"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Object representing 2p imaging data acquired with ThorImageLS</p>
+</dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">haussio.</code><code class="descname">PrairieHaussIO</code><span class="sig-paren">(</span><em>dirname</em>, <em>chan='A'</em>, <em>xml_path=None</em>, <em>sync_path=None</em>, <em>width_idx=4</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/haussio.html#PrairieHaussIO"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Object representing 2p imaging data acquired with Prairie scopes</p>
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

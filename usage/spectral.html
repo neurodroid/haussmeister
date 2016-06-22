@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>spectral module &mdash; haussmeister 0.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
+    <link rel="up" title="haussmeister" href="index.html" />
+    <link rel="prev" title="pipeline2p module" href="pipeline2p.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          haussmeister</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">haussmeister</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">spectral module</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="pipeline2p.html" title="Previous Chapter: pipeline2p module"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; pipeline2p mo...</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/usage/spectral.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="module-spectral">
+<span id="spectral-module"></span><h1>spectral module<a class="headerlink" href="#module-spectral" title="Permalink to this headline">¶</a></h1>
+<dl class="function">
+<dt id="spectral.convolve">
+<code class="descclassname">spectral.</code><code class="descname">convolve</code><span class="sig-paren">(</span><em>x</em>, <em>transfer</em>, <em>arglist</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/spectral.html#convolve"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectral.convolve" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convolves an array with a transfer function in the frequency domain</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
+<li><strong>transfer</strong> (<em>function</em>) &#8211; Transfer function</li>
+<li><strong>arglist</strong> (<em>list</em>) &#8211; Additional arguments to transfer</li>
+<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>filtered</strong> &#8211; Filtered data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">stfio_plot.Timeseries</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spectral.fgaussColqu">
+<code class="descclassname">spectral.</code><code class="descname">fgaussColqu</code><span class="sig-paren">(</span><em>x</em>, <em>f_c</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/spectral.html#fgaussColqu"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectral.fgaussColqu" title="Permalink to this definition">¶</a></dt>
+<dd><p>Eq. 5 from Colquhoun &amp; Sigworth, p. 486 of the blue book
+np.log(2.0)/2.0 = 0.34657359028</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>numpy.ndarray</em>) &#8211; Frequencies</li>
+<li><strong>f_c</strong> (<em>Cutoff frequency (-3dB)</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>gauss</strong> &#8211; Transfer function to achieve -3dB at f_c</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spectral.gaussian_filter">
+<code class="descclassname">spectral.</code><code class="descname">gaussian_filter</code><span class="sig-paren">(</span><em>x</em>, <em>f_c</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/spectral.html#gaussian_filter"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectral.gaussian_filter" title="Permalink to this definition">¶</a></dt>
+<dd><p>Gaussian filter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
+<li><strong>f_c</strong> (<em>float</em>) &#8211; Cutoff frequency in kHz (-3 dB)</li>
+<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">x convolved with a Gaussian filter kernel.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spectral.highpass">
+<code class="descclassname">spectral.</code><code class="descname">highpass</code><span class="sig-paren">(</span><em>x</em>, <em>f_c</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/spectral.html#highpass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectral.highpass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Highpass filter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
+<li><strong>f_c</strong> (<em>float</em>) &#8211; Cutoff frequency in kHz (-3 dB)</li>
+<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">x convolved with a Gaussian filter kernel.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="spectral.lowpass">
+<code class="descclassname">spectral.</code><code class="descname">lowpass</code><span class="sig-paren">(</span><em>x</em>, <em>f_c</em>, <em>verbose=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/spectral.html#lowpass"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#spectral.lowpass" title="Permalink to this definition">¶</a></dt>
+<dd><p>Lowpass filter</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
+<li><strong>f_c</strong> (<em>float</em>) &#8211; Cutoff frequency in kHz (-3 dB)</li>
+<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"></p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">x convolved with a Gaussian filter kernel.</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

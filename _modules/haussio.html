@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>haussio &mdash; haussmeister 0.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
+    <link rel="up" title="Module code" href="index.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          haussmeister</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul>
+<li class="toctree-l1"><a class="reference internal" href="../usage/index.html">haussmeister</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"></ul>
+</li>
+              
+            
+            
+              
+                
+              
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <h1>Source code for haussio</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module for importing and exporting 2p imaging datasets</span>
+
+<span class="sd">(c) 2015 C. Schmidt-Hieber</span>
+<span class="sd">GPLv3</span>
+<span class="sd">&quot;&quot;&quot;</span>
+
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">absolute_import</span>
+
+<span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">sys</span>
+<span class="kn">import</span> <span class="nn">abc</span>
+<span class="kn">import</span> <span class="nn">glob</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">lzma</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">backports.lzma</span> <span class="kn">as</span> <span class="nn">lzma</span>
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">subprocess32</span> <span class="kn">as</span> <span class="nn">sp</span>
+<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t find subprocess32; using subprocess instead</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span> <span class="kn">as</span> <span class="nn">sp</span>
+<span class="kn">import</span> <span class="nn">shlex</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">xml.etree.ElementTree</span> <span class="kn">as</span> <span class="nn">ET</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span>
+<span class="kn">import</span> <span class="nn">tables</span>
+
+<span class="kn">import</span> <span class="nn">sima</span>
+<span class="kn">import</span> <span class="nn">tifffile</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="kn">from</span> <span class="nn">.</span> <span class="kn">import</span> <span class="n">movies</span>
+<span class="k">except</span> <span class="p">(</span><span class="ne">SystemError</span><span class="p">,</span> <span class="ne">ValueError</span><span class="p">):</span>
+    <span class="kn">import</span> <span class="nn">movies</span>
+
+<span class="n">THOR_RAW_FN</span> <span class="o">=</span> <span class="s2">&quot;Image_0001_0001.raw&quot;</span>
+<span class="n">XZ_BIN</span> <span class="o">=</span> <span class="s2">&quot;/usr/local/bin/xz&quot;</span>
+
+
+<div class="viewcode-block" id="HaussIO"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO">[docs]</a><span class="k">class</span> <span class="nc">HaussIO</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Base class for objects representing 2p imaging data.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    xsize : float</span>
+<span class="sd">        Width of frames in specimen dimensions (e.g. um)</span>
+<span class="sd">    ysize : float</span>
+<span class="sd">        Height of frames in specimen dimensions (e.g. um)</span>
+<span class="sd">    xpx : int</span>
+<span class="sd">        Width of frames in pixels</span>
+<span class="sd">    ypx : int</span>
+<span class="sd">        Height of frames in pixels</span>
+<span class="sd">    timing : numpy.ndarray</span>
+<span class="sd">        Time points of frame acquisitions</span>
+<span class="sd">    fps : float</span>
+<span class="sd">        Acquisition rate in frames per seconds</span>
+<span class="sd">    fps : float</span>
+<span class="sd">        Acquisition interval in seconds</span>
+<span class="sd">    movie_fn : str</span>
+<span class="sd">        File path (full path) for exported movie</span>
+<span class="sd">    scale_png : str</span>
+<span class="sd">        File path (full path) for png showing scale bar</span>
+<span class="sd">    sima_dir : str</span>
+<span class="sd">        Full path to directory for sima exports</span>
+<span class="sd">    basefile : str</span>
+<span class="sd">        File name trunk for individual tiffs (without path)</span>
+<span class="sd">        (e.g. ``ChanA_0001_``)</span>
+<span class="sd">    filetrunk : str</span>
+<span class="sd">        Full path and file name trunk for individual tiffs</span>
+<span class="sd">        (e.g. ``/home/cs/data/ChanA_0001_``)</span>
+<span class="sd">    ffmpeg_fn : str</span>
+<span class="sd">        File name filter (full path) used as input to ffmpeg</span>
+<span class="sd">        (e.g. ``/home/cs/data/ChanA_0001_%04d.tif``)</span>
+<span class="sd">    filenames : list of str</span>
+<span class="sd">        List of file paths (full paths) of individual tiffs</span>
+<span class="sd">    width_idx : str</span>
+<span class="sd">        Width of index string in file names</span>
+<span class="sd">    maxtime : float</span>
+<span class="sd">        Limit data to maxtime</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">chan</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">xml_path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">sync_path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">width_idx</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">maxtime</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw_array</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">maxtime</span> <span class="o">=</span> <span class="n">maxtime</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">dirname</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">chan</span> <span class="o">=</span> <span class="n">chan</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">width_idx</span> <span class="o">=</span> <span class="n">width_idx</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_filenames</span><span class="p">(</span><span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sync_episodes</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">sync_xml</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Reading experiment settings... &quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span><span class="p">)</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_dimensions</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_timing</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_get_sync</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">diff</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timing</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">fps</span> <span class="o">=</span> <span class="mf">1.0</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timing</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;done</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxtime</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iend</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">timing</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">maxtime</span><span class="p">)[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">[:</span><span class="bp">self</span><span class="o">.</span><span class="n">iend</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">iend</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">xml_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">):</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span> <span class="o">&lt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="p">)</span>
+                <span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                    <span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">),</span> <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="p">)</span>
+                    <span class="k">raise</span> <span class="n">err</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">):</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span> <span class="o">!=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_get_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_get_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+    <span class="k">def</span> <span class="nf">_get_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+    <span class="k">def</span> <span class="nf">read_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="nd">@abc.abstractmethod</span>
+    <span class="k">def</span> <span class="nf">read_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">raw2tiff</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mp</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_raw</span><span class="p">()</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">mp</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">ni</span><span class="p">,</span> <span class="n">img</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">arr</span><span class="p">):</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span>
+                    <span class="s2">&quot;</span><span class="se">\r</span><span class="s2">{0:6.2%}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">ni</span><span class="p">)</span><span class="o">/</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+                <span class="n">tifffile</span><span class="o">.</span><span class="n">imsave</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span><span class="p">,</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="n">ni</span><span class="o">+</span><span class="mi">1</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span><span class="p">,</span> <span class="n">img</span><span class="p">)</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">tifffile</span><span class="o">.</span><span class="n">imsave</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span> <span class="s2">&quot;mp.tif&quot;</span><span class="p">),</span> <span class="n">arr</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">tiff2raw</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">path_f</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">path_f</span> <span class="o">=</span> <span class="n">path</span>
+        <span class="n">rawfn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_f</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rawfn</span><span class="p">))</span>
+        <span class="n">compressfn</span> <span class="o">=</span> <span class="n">rawfn</span> <span class="o">+</span> <span class="s2">&quot;.xz&quot;</span>
+        <span class="k">assert</span><span class="p">(</span><span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">compressfn</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rawfn</span><span class="p">):</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Reading files...&quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">asarray_uint16</span><span class="p">()</span>
+            <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot; done in {0:.2f}s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">))</span>
+            <span class="n">compress_np</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">path_f</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">+</span> <span class="s2">&quot;.mp4&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_png</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">+</span> <span class="s2">&quot;_scale.png&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">+</span> <span class="s2">&quot;.sima&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">=</span> <span class="s2">&quot;Chan&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">chan</span> <span class="o">+</span> <span class="s2">&quot;_0001_0001_0001_&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="o">=</span> <span class="n">sync_path</span>
+        <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span>
+                <span class="s2">&quot;?&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&#39;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span>
+
+<div class="viewcode-block" id="HaussIO.get_normframe"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.get_normframe">[docs]</a>    <span class="k">def</span> <span class="nf">get_normframe</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return a representative frame that will be used to normalize</span>
+<span class="sd">        the brightness in movies</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        arr : numpy.ndarray</span>
+<span class="sd">            Frame converted to numpy.ndarray</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">:</span>
+                <span class="n">normdir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span><span class="p">[</span><span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span><span class="p">)</span><span class="o">/</span><span class="mf">2.0</span><span class="p">))]</span>
+                <span class="n">normtrunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">,</span> <span class="n">normdir</span><span class="p">)</span>
+                <span class="n">nframes</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span>
+                    <span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">normdir</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">)))</span>
+                <span class="n">normframe</span> <span class="o">=</span> <span class="n">normtrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">nframes</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">normframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span>
+                    <span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">))</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span>
+            <span class="n">sample</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">normframe</span><span class="p">)</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">sample</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">arr</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_raw</span><span class="p">()[</span><span class="nb">int</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span><span class="o">/</span><span class="mi">2</span><span class="p">)]</span>
+
+        <span class="k">return</span> <span class="n">arr</span></div>
+
+<div class="viewcode-block" id="HaussIO.tosima"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.tosima">[docs]</a>    <span class="k">def</span> <span class="nf">tosima</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Convert the experiment to a sima.ImagingDataset</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        startIdx : int, optional</span>
+<span class="sd">            Starting index (inclusive) for conversion.</span>
+<span class="sd">        stopIdx : int</span>
+<span class="sd">            Last index (exclusive) for conversion.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        dataset : sima.ImagingDataset</span>
+<span class="sd">            A sima.ImagingDataset</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span><span class="p">):</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="k">return</span> <span class="n">sima</span><span class="o">.</span><span class="n">ImagingDataset</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">EOFError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Could not read from &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span> <span class="o">+</span>
+                                 <span class="s2">&quot;regenerating sima files: &quot;</span> <span class="o">+</span> <span class="n">err</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">IndexError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+                <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Could not read from &quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span> <span class="o">+</span>
+                                 <span class="s2">&quot;regenerating sima files: &quot;</span> <span class="o">+</span> <span class="n">err</span> <span class="o">+</span> <span class="s2">&quot;</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">):</span>
+            <span class="c1"># The string paths[i][j] is a unix style expression for the</span>
+            <span class="c1"># filenames for plane i and channel j</span>
+            <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="n">sima</span><span class="o">.</span><span class="n">Sequence</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="s1">&#39;TIFFs&#39;</span><span class="p">,</span> <span class="p">[[</span><span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span><span class="p">]])]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="n">sima</span><span class="o">.</span><span class="n">Sequence</span><span class="o">.</span><span class="n">create</span><span class="p">(</span>
+                <span class="s1">&#39;ndarray&#39;</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_raw</span><span class="p">()[:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="n">np</span><span class="o">.</span><span class="n">newaxis</span><span class="p">])]</span>
+
+        <span class="k">if</span> <span class="n">stopIdx</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">stopIdx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="n">seq</span><span class="p">[:</span><span class="n">stopIdx</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">startIdx</span> <span class="o">!=</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">sequences</span> <span class="o">=</span> <span class="p">[</span><span class="n">seq</span><span class="p">[</span><span class="n">startIdx</span><span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">seq</span> <span class="ow">in</span> <span class="n">sequences</span><span class="p">]</span>
+        <span class="k">return</span> <span class="n">sima</span><span class="o">.</span><span class="n">ImagingDataset</span><span class="p">(</span>
+            <span class="n">sequences</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span><span class="p">,</span> <span class="n">channel_names</span><span class="o">=</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">chan</span><span class="p">,</span> <span class="p">])</span></div>
+
+    <span class="k">def</span> <span class="nf">asarray</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">tosima</span><span class="p">()</span><span class="o">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">asarray_uint16</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span>
+            <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">fn</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">])</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+            <span class="k">assert</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="n">arr</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
+            <span class="k">print</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="n">err</span>
+
+        <span class="k">return</span> <span class="n">arr</span>
+
+<div class="viewcode-block" id="HaussIO.make_movie"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.make_movie">[docs]</a>    <span class="k">def</span> <span class="nf">make_movie</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="mf">16.0</span><span class="p">,</span> <span class="n">scalebar</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="mf">28.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Produce a movie of the experiment</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        norm : float, optional</span>
+<span class="sd">            Normalize min, norm*median and max brightness to 0, 0.5 and 1.0</span>
+<span class="sd">            None for no normalization. Default: 16.0</span>
+<span class="sd">        scalebar : bool, optional</span>
+<span class="sd">            Show a scale bar in the movie.</span>
+<span class="sd">        crf : int, optional</span>
+<span class="sd">            crf value to be passed to ffmpeg. Default: 28</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        html_movie : str</span>
+<span class="sd">            An html tag containing the complete movie</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="k">if</span> <span class="n">norm</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">):</span>
+                <span class="n">normbright</span> <span class="o">=</span> <span class="n">movies</span><span class="o">.</span><span class="n">get_normbright</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">read_raw</span><span class="p">(),</span> <span class="n">mid</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">normbright</span> <span class="o">=</span> <span class="n">movies</span><span class="o">.</span><span class="n">get_normbright</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">get_normframe</span><span class="p">(),</span> <span class="n">mid</span><span class="o">=</span><span class="n">norm</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">normbright</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">scalebar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_scale_bar</span><span class="p">()</span>
+            <span class="n">scalebarframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_png</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scalebarframe</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">):</span>
+            <span class="n">movie_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_raw</span><span class="p">()</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">movie_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span>
+
+        <span class="k">return</span> <span class="n">movies</span><span class="o">.</span><span class="n">make_movie</span><span class="p">(</span>
+            <span class="n">movie_input</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie_fn</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span> <span class="n">normbright</span><span class="p">,</span> <span class="n">scalebarframe</span><span class="p">,</span>
+            <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HaussIO.make_movie_extern"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.make_movie_extern">[docs]</a>    <span class="k">def</span> <span class="nf">make_movie_extern</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">path_extern</span><span class="p">,</span> <span class="n">norm</span><span class="o">=</span><span class="mf">16.0</span><span class="p">,</span> <span class="n">scalebar</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                          <span class="n">crf</span><span class="o">=</span><span class="mi">28</span><span class="p">,</span> <span class="n">width_idx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Produce a movie from a directory with individual tiffs, using</span>
+<span class="sd">        the present experimental settings for scale bar and frame rate</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        path_extern : str</span>
+<span class="sd">            Full path to the directory that contains the individual tiffs</span>
+<span class="sd">        norm : float, optional</span>
+<span class="sd">            Normalize min, norm*median and max brightness to 0, 0.5 and 1.0</span>
+<span class="sd">            None for no normalization. Default: 16.0</span>
+<span class="sd">        scalebar : bool, optional</span>
+<span class="sd">            Show a scale bar in the movie.</span>
+<span class="sd">        crf : int, optional</span>
+<span class="sd">            crf value to be passed to ffmpeg. Default: 28</span>
+<span class="sd">        width_idx : int, optional</span>
+<span class="sd">            Override default index string width. Default: None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        html_movie : str</span>
+<span class="sd">            An html tag containing the complete movie</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">rawfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_extern</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rawfile</span><span class="p">):</span>
+            <span class="n">rawfile</span> <span class="o">+=</span> <span class="s2">&quot;.xz&quot;</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">rawfile</span><span class="p">):</span>
+                <span class="n">rawfile</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">rawfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">shapefn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path_extern</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;shape.npy&quot;</span><span class="p">)</span>
+            <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">shapefn</span><span class="p">)</span>
+            <span class="n">movie_input</span> <span class="o">=</span> <span class="n">raw2np</span><span class="p">(</span><span class="n">rawfile</span><span class="p">,</span> <span class="p">(</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">],</span> <span class="n">shape</span><span class="p">[</span><span class="mi">3</span><span class="p">]))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">movie_input</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="n">path_extern</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span>
+                    <span class="s2">&quot;%&quot;</span><span class="p">,</span> <span class="n">width_idx</span><span class="o">=</span><span class="n">width_idx</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span><span class="p">),</span>
+
+        <span class="k">if</span> <span class="n">norm</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">rawfile</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+                <span class="n">normbright</span> <span class="o">=</span> <span class="n">movies</span><span class="o">.</span><span class="n">get_normbright</span><span class="p">(</span><span class="n">movie_input</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">normbright</span> <span class="o">=</span> <span class="n">movies</span><span class="o">.</span><span class="n">get_normbright</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="n">Image</span><span class="o">.</span><span class="n">open</span><span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                        <span class="n">path_extern</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span>
+                            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="o">/</span><span class="mi">2</span><span class="p">),</span> <span class="n">width_idx</span><span class="o">=</span><span class="n">width_idx</span><span class="p">)</span> <span class="o">+</span>
+                        <span class="s2">&quot;.tif&quot;</span><span class="p">))))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">normbright</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">if</span> <span class="n">scalebar</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">save_scale_bar</span><span class="p">()</span>
+            <span class="n">scalebarframe</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">scale_png</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">scalebarframe</span> <span class="o">=</span> <span class="bp">None</span>
+
+        <span class="k">return</span> <span class="n">movies</span><span class="o">.</span><span class="n">make_movie</span><span class="p">(</span>
+            <span class="n">movie_input</span><span class="p">,</span>
+            <span class="n">path_extern</span> <span class="o">+</span> <span class="s2">&quot;.mp4&quot;</span><span class="p">,</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">fps</span><span class="p">,</span>
+            <span class="n">normbright</span><span class="p">,</span>
+            <span class="n">scalebarframe</span><span class="p">,</span>
+            <span class="n">scale</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="p">),</span>
+            <span class="n">crf</span><span class="o">=</span><span class="n">crf</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HaussIO.get_scale_bar"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.get_scale_bar">[docs]</a>    <span class="k">def</span> <span class="nf">get_scale_bar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prop</span><span class="o">=</span><span class="mi">1</span><span class="o">/</span><span class="mf">8.0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Returns lengths in specimen dimensions (e.g. um) and in pixels</span>
+<span class="sd">        of a scale bar that fills the given fraction of the width of the</span>
+<span class="sd">        image</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        prop : float, optional</span>
+<span class="sd">            Length of scale bar expressed as fraction of image width</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        scale_length_int : int</span>
+<span class="sd">            Scale bar length in specimen dimensions (e.g. um)</span>
+<span class="sd">        scale_length_px : int</span>
+<span class="sd">            Scale bar length in pixels</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+
+        <span class="c1"># Reasonable scale bar length (in specimen dimensions, e.g. um)</span>
+        <span class="c1"># given the width of the image:</span>
+        <span class="n">scale_length_float</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span> <span class="o">*</span> <span class="n">prop</span>
+
+        <span class="c1"># Find closest integer that looks pretty as a scale bar label:</span>
+        <span class="n">nzeros</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="n">scale_length_float</span><span class="p">))</span>
+        <span class="n">closest_int</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">scale_length_float</span><span class="o">/</span><span class="mi">10</span><span class="o">**</span><span class="n">nzeros</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">closest_int</span> <span class="o">&lt;=</span> <span class="mi">5</span><span class="p">:</span>
+            <span class="n">scale_length_int</span> <span class="o">=</span> <span class="n">closest_int</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="n">nzeros</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># Closer to 5 or closer to 10?</span>
+            <span class="k">if</span> <span class="mi">10</span><span class="o">-</span><span class="n">closest_int</span> <span class="o">&lt;</span> <span class="n">closest_int</span><span class="o">-</span><span class="mi">5</span><span class="p">:</span>
+                <span class="n">scale_length_int</span> <span class="o">=</span> <span class="mi">1</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">nzeros</span><span class="o">+</span><span class="mi">1</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">scale_length_int</span> <span class="o">=</span> <span class="mi">5</span> <span class="o">*</span> <span class="mi">10</span><span class="o">**</span><span class="p">(</span><span class="n">nzeros</span><span class="p">)</span>
+
+        <span class="n">scale_length_px</span> <span class="o">=</span> <span class="n">scale_length_int</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="o">/</span><span class="bp">self</span><span class="o">.</span><span class="n">xsize</span>
+
+        <span class="k">return</span> <span class="n">scale_length_int</span><span class="p">,</span> <span class="n">scale_length_px</span></div>
+
+<div class="viewcode-block" id="HaussIO.save_scale_bar"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.save_scale_bar">[docs]</a>    <span class="k">def</span> <span class="nf">save_scale_bar</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Save scale bar as png (using file name stored in self.scale_png)</span>
+<span class="sd">        so that it can be used in a movie</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">scale_length_int</span><span class="p">,</span> <span class="n">scale_length_px</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scale_bar</span><span class="p">()</span>
+        <span class="n">movies</span><span class="o">.</span><span class="n">save_scale_bar</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">scale_png</span><span class="p">,</span> <span class="n">scale_length_int</span><span class="p">,</span>
+                              <span class="n">scale_length_px</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HaussIO.plot_scale_bar"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.plot_scale_bar">[docs]</a>    <span class="k">def</span> <span class="nf">plot_scale_bar</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ax</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Add scale bar to a matplotlib axis</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        ax : matplotlib.axes.Axes</span>
+<span class="sd">            matplotlib axes on which to plot the scale bar, as</span>
+<span class="sd">            e.g. returned by &#39;fig.add_suplot(1,1,1)&#39;</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sb_int</span><span class="p">,</span> <span class="n">sb_px</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_scale_bar</span><span class="p">()</span>
+        <span class="n">scale_text</span> <span class="o">=</span> <span class="s2">u&quot;{0:0d} $\mu$m&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">sb_int</span><span class="p">))</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="o">/</span><span class="mf">10.0</span><span class="p">,</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="o">/</span><span class="mf">10.0</span><span class="o">+</span><span class="n">sb_px</span><span class="p">],</span>
+                <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="o">/</span><span class="mf">20.0</span><span class="p">,</span>
+                 <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="o">/</span><span class="mf">20.0</span><span class="p">],</span>
+                <span class="n">lw</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="o">/</span><span class="mf">125.0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+        <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="o">/</span><span class="mf">10.0</span><span class="o">+</span><span class="n">sb_px</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="o">/</span><span class="mf">15.0</span><span class="p">,</span>
+                <span class="n">scale_text</span><span class="p">,</span>
+                <span class="n">va</span><span class="o">=</span><span class="s1">&#39;top&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;center&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="HaussIO.format_index"><a class="viewcode-back" href="../usage/haussio.html#haussio.HaussIO.format_index">[docs]</a>    <span class="k">def</span> <span class="nf">format_index</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n</span><span class="p">,</span> <span class="n">width_idx</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return formatted index string</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        n : int or str</span>
+<span class="sd">            Index as int, or &quot;?&quot; (returns series of &quot;?&quot;), or &quot;%&quot; (returns</span>
+<span class="sd">            old-school formatter)</span>
+<span class="sd">        width_idx : int, optional</span>
+<span class="sd">            Override default width of index string. Default: None</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        format : string</span>
+<span class="sd">            Formatted index string, or series of &quot;?&quot;, or old-school formatter</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">width_idx</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">width_idx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">width_idx</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">n</span> <span class="o">==</span> <span class="s2">&quot;?&quot;</span><span class="p">:</span>
+                <span class="n">ret</span> <span class="o">=</span> <span class="s2">&quot;?&quot;</span>
+                <span class="k">for</span> <span class="n">nq</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">width_idx</span><span class="o">-</span><span class="mi">1</span><span class="p">):</span>
+                    <span class="n">ret</span> <span class="o">+=</span> <span class="s2">&quot;?&quot;</span>
+                <span class="k">return</span> <span class="n">ret</span>
+            <span class="k">elif</span> <span class="n">n</span> <span class="o">==</span> <span class="s2">&quot;%&quot;</span><span class="p">:</span>
+                <span class="k">return</span> <span class="s2">&quot;%0{0:01d}d&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width_idx</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="s2">&quot;{0:0{width}d}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">n</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width_idx</span><span class="p">)</span></div></div>
+
+
+<div class="viewcode-block" id="ThorHaussIO"><a class="viewcode-back" href="../usage/haussio.html#haussio.ThorHaussIO">[docs]</a><span class="k">class</span> <span class="nc">ThorHaussIO</span><span class="p">(</span><span class="n">HaussIO</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object representing 2p imaging data acquired with ThorImageLS</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">_get_filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">ThorHaussIO</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_get_filenames</span><span class="p">(</span><span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">xml_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span> <span class="o">+</span> <span class="s2">&quot;/Experiment.xml&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="o">=</span> <span class="n">xml_path</span>
+        <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="p">[]</span>
+            <span class="k">for</span> <span class="n">dirname</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span><span class="p">:</span>
+                <span class="n">filenames_orig</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="n">dirname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">)))</span>
+                <span class="n">nf</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filenames</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">+=</span> <span class="p">[</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">+</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="n">nf</span><span class="o">+</span><span class="n">nfno</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span><span class="p">)</span>
+                    <span class="k">for</span> <span class="n">nfno</span><span class="p">,</span> <span class="n">fno</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">filenames_orig</span><span class="p">)]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="o">+</span> <span class="s2">&quot;.xz&quot;</span><span class="p">):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="o">+</span> <span class="s2">&quot;.xz&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ysize</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;LSM&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;pixelX&#39;</span><span class="p">])</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;pixelY&#39;</span><span class="p">])</span>
+                <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;averageMode&#39;</span><span class="p">])</span> <span class="o">==</span> <span class="mi">1</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">naverage</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;averageNum&#39;</span><span class="p">])</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">naverage</span> <span class="o">=</span> <span class="bp">None</span>
+            <span class="k">elif</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;Sample&quot;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">grandchild</span> <span class="ow">in</span> <span class="n">child</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">grandchild</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;Wells&quot;</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">ggrandchild</span> <span class="ow">in</span> <span class="n">grandchild</span><span class="p">:</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                                <span class="n">ggrandchild</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;subOffsetXMM&#39;</span><span class="p">])</span><span class="o">*</span><span class="mf">1e3</span>
+                            <span class="bp">self</span><span class="o">.</span><span class="n">ysize</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span>
+                                <span class="n">ggrandchild</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;subOffsetYMM&#39;</span><span class="p">])</span><span class="o">*</span><span class="mf">1e3</span>
+
+    <span class="k">def</span> <span class="nf">_get_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">:</span>
+            <span class="n">dirname_wildcard</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">[</span>
+                <span class="p">:</span><span class="nb">len</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span><span class="p">))]</span> <span class="o">+</span> <span class="s2">&quot;/timing.txt&quot;</span>
+            <span class="n">timings</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">dirname_wildcard</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">timings</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">for</span> <span class="n">timing</span> <span class="ow">in</span> <span class="n">timings</span><span class="p">[</span><span class="mi">1</span><span class="p">:]:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">timing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">([</span>
+                    <span class="bp">self</span><span class="o">.</span><span class="n">timing</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span><span class="n">timing</span><span class="p">)</span><span class="o">+</span><span class="bp">self</span><span class="o">.</span><span class="n">timing</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">timing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">loadtxt</span><span class="p">(</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;/timing.txt&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_paths</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_episodes</span> <span class="o">=</span> <span class="p">[</span><span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="n">sync_path</span> <span class="o">+</span> <span class="s2">&quot;/Episode*.h5&quot;</span><span class="p">))</span>
+                              <span class="k">for</span> <span class="n">sync_path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_paths</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_xml</span> <span class="o">=</span> <span class="p">[</span><span class="n">sync_path</span> <span class="o">+</span> <span class="s2">&quot;/ThorRealTimeDataSettings.xml&quot;</span>
+                         <span class="k">for</span> <span class="n">sync_path</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_paths</span><span class="p">]</span>
+
+    <span class="k">def</span> <span class="nf">_find_dt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">nsync</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_root</span> <span class="o">=</span> <span class="n">ET</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sync_xml</span><span class="p">[</span><span class="n">nsync</span><span class="p">])</span><span class="o">.</span><span class="n">getroot</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_root</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;DaqDevices&quot;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">cchild</span> <span class="ow">in</span> <span class="n">child</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">cchild</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;AcquireBoard&quot;</span><span class="p">:</span>
+                        <span class="k">for</span> <span class="n">ccchild</span> <span class="ow">in</span> <span class="n">cchild</span><span class="p">:</span>
+                            <span class="k">if</span> <span class="n">ccchild</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;DataChannel&quot;</span><span class="p">:</span>
+                                <span class="k">if</span> <span class="n">ccchild</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;alias&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="n">name</span><span class="p">:</span>
+                                    <span class="n">board</span> <span class="o">=</span> <span class="n">cchild</span>
+        <span class="k">for</span> <span class="n">cboard</span> <span class="ow">in</span> <span class="n">board</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">cboard</span><span class="o">.</span><span class="n">tag</span> <span class="o">==</span> <span class="s2">&quot;SampleRate&quot;</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">cboard</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;enable&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;1&quot;</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="mf">1.0</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">cboard</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;rate&#39;</span><span class="p">])</span> <span class="o">*</span> <span class="mf">1e3</span>
+
+    <span class="k">def</span> <span class="nf">read_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span> <span class="bp">None</span>
+
+        <span class="n">sync_data</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">sync_dt</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="k">for</span> <span class="n">epi_files</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_episodes</span><span class="p">:</span>
+            <span class="k">for</span> <span class="n">episode</span> <span class="ow">in</span> <span class="n">epi_files</span><span class="p">:</span>
+                <span class="n">sync_data</span><span class="o">.</span><span class="n">append</span><span class="p">({})</span>
+                <span class="n">sync_dt</span><span class="o">.</span><span class="n">append</span><span class="p">({})</span>
+                <span class="k">print</span><span class="p">(</span><span class="n">episode</span><span class="p">)</span>
+                <span class="n">h5</span> <span class="o">=</span> <span class="n">tables</span><span class="o">.</span><span class="n">open_file</span><span class="p">(</span><span class="n">episode</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">el</span> <span class="ow">in</span> <span class="n">h5</span><span class="o">.</span><span class="n">root</span><span class="o">.</span><span class="n">DI</span><span class="p">:</span>
+                    <span class="n">sync_data</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">el</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">squeeze</span><span class="p">(</span><span class="n">el</span><span class="p">)</span>
+                    <span class="n">sync_dt</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="n">el</span><span class="o">.</span><span class="n">name</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_find_dt</span><span class="p">(</span>
+                        <span class="n">el</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">sync_dt</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+                <span class="n">h5</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
+
+        <span class="k">return</span> <span class="n">sync_data</span><span class="p">,</span> <span class="n">sync_dt</span>
+
+    <span class="k">def</span> <span class="nf">read_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_array</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="n">shapefn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;shape.npy&quot;</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">shapefn</span><span class="p">):</span>
+                <span class="n">shape</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">shapefn</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">shape</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">nframes</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">raw_array</span> <span class="o">=</span> <span class="n">raw2np</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span><span class="p">,</span> <span class="n">shape</span><span class="p">)[:</span><span class="bp">self</span><span class="o">.</span><span class="n">iend</span><span class="p">]</span>
+
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw_array</span></div>
+
+
+<div class="viewcode-block" id="PrairieHaussIO"><a class="viewcode-back" href="../usage/haussio.html#haussio.PrairieHaussIO">[docs]</a><span class="k">class</span> <span class="nc">PrairieHaussIO</span><span class="p">(</span><span class="n">HaussIO</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object representing 2p imaging data acquired with Prairie scopes</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">PrairieHaussIO</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_get_filenames</span><span class="p">(</span><span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="s2">&quot;{0:04d}.tif&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="mi">1</span><span class="p">)):</span>
+            <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">):</span>
+                <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Converting to individual tiffs... &quot;</span><span class="p">)</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">mptif</span> <span class="o">=</span> <span class="n">tifffile</span><span class="o">.</span><span class="n">TiffFile</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span><span class="p">)</span>
+            <span class="k">for</span> <span class="n">nf</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mptif</span><span class="o">.</span><span class="n">pages</span><span class="p">):</span>
+                <span class="n">tifffile</span><span class="o">.</span><span class="n">imsave</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="s2">&quot;{0:04d}.tif&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nf</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span>
+                                <span class="n">frame</span><span class="o">.</span><span class="n">asarray</span><span class="p">())</span>
+            <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;done</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">xml_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span> <span class="o">+</span> <span class="s2">&quot;.xml&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="o">=</span> <span class="n">xml_path</span>
+        <span class="c1"># This needs to be done *after* the individual tiffs have been written</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span>
+                <span class="s2">&quot;?&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&#39;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span>
+
+    <span class="k">def</span> <span class="nf">_get_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ysize</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span> <span class="o">=</span> <span class="bp">None</span><span class="p">,</span> <span class="bp">None</span>
+        <span class="k">for</span> <span class="n">fi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span><span class="s2">&quot;PVStateShard&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;PVStateValue&quot;</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">fi</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;linesPerFrame&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fi</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">fi</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;pixelsPerLine&quot;</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">fi</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+            <span class="k">elif</span> <span class="n">fi</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;key&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s2">&quot;micronsPerPixel&quot;</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">fi</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;XAxis&#39;</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+                    <span class="k">if</span> <span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;index&#39;</span><span class="p">]</span> <span class="o">==</span> <span class="s1">&#39;YAxis&#39;</span><span class="p">:</span>
+                        <span class="bp">self</span><span class="o">.</span><span class="n">ysize</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">child</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;value&#39;</span><span class="p">])</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ysize</span> <span class="o">*=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">naverage</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="nb">float</span><span class="p">(</span><span class="n">fi</span><span class="o">.</span><span class="n">attrib</span><span class="p">[</span><span class="s1">&#39;relativeTime&#39;</span><span class="p">])</span>
+                                <span class="k">for</span> <span class="n">fi</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">xml_root</span><span class="o">.</span><span class="n">find</span><span class="p">(</span>
+                                    <span class="s2">&quot;Sequence&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">findall</span><span class="p">(</span><span class="s2">&quot;Frame&quot;</span><span class="p">)])</span>
+
+    <span class="k">def</span> <span class="nf">_get_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">read_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Synchronization readout not implemented for Prairie files yet&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Raw file reading not implemented for Prairie files yet&quot;</span><span class="p">)</span></div>
+
+
+<div class="viewcode-block" id="MovieHaussIO"><a class="viewcode-back" href="../usage/haussio.html#haussio.MovieHaussIO">[docs]</a><span class="k">class</span> <span class="nc">MovieHaussIO</span><span class="p">(</span><span class="n">HaussIO</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Object representing 2p imaging data for which only a movie is available</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dirname</span><span class="p">,</span> <span class="n">dx</span><span class="p">,</span> <span class="n">dt</span><span class="p">,</span> <span class="n">chan</span><span class="o">=</span><span class="s1">&#39;A&#39;</span><span class="p">,</span> <span class="n">xml_path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                 <span class="n">sync_path</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">width_idx</span><span class="o">=</span><span class="mi">4</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dx</span> <span class="o">=</span> <span class="n">dx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dt</span> <span class="o">=</span> <span class="n">dt</span>
+        <span class="k">print</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s2">&quot;.mp4&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie</span> <span class="o">=</span> <span class="n">movies</span><span class="o">.</span><span class="n">numpy_movie</span><span class="p">(</span><span class="n">dirname</span> <span class="o">+</span> <span class="s2">&quot;.mp4&quot;</span><span class="p">)</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">MovieHaussIO</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">__init__</span><span class="p">(</span>
+            <span class="n">dirname</span><span class="p">,</span> <span class="n">chan</span><span class="p">,</span> <span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">,</span> <span class="n">width_idx</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_get_dimensions</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">xsize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">xpx</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">ysize</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">ypx</span><span class="o">*</span><span class="bp">self</span><span class="o">.</span><span class="n">dx</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">naverage</span> <span class="o">=</span> <span class="bp">None</span>
+
+    <span class="k">def</span> <span class="nf">_get_filenames</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">xml_path</span><span class="p">,</span> <span class="n">sync_path</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s2">&quot;?&quot;</span><span class="p">,</span> <span class="s2">&quot;n&quot;</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">movie_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">+</span> <span class="s2">&quot;.mp4&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">scale_png</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">+</span> <span class="s2">&quot;_scale.png&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sima_dir</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dirname_comp</span> <span class="o">+</span> <span class="s2">&quot;.sima&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span> <span class="o">=</span> <span class="s2">&quot;Chan&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">chan</span> <span class="o">+</span> <span class="s2">&quot;_0001_0001_0001_&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">rawfile</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie_fn</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">basefile</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="o">=</span> <span class="n">sync_path</span>
+        <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span> <span class="o">=</span> <span class="s2">&quot;&#39;&quot;</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span>
+                <span class="s2">&quot;?&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&#39;&quot;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">dirnames</span> <span class="o">=</span> <span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">dirname</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">ffmpeg_fn</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">format_index</span><span class="p">(</span><span class="s2">&quot;%&quot;</span><span class="p">)</span> <span class="o">+</span> <span class="s2">&quot;.tif&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">xml_name</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">filenames</span> <span class="o">=</span> <span class="nb">sorted</span><span class="p">(</span><span class="n">glob</span><span class="o">.</span><span class="n">glob</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">filetrunk</span> <span class="o">+</span> <span class="s2">&quot;*.tif&quot;</span><span class="p">))</span>
+
+    <span class="k">def</span> <span class="nf">_get_timing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">timing</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">movie</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">dt</span>
+
+    <span class="k">def</span> <span class="nf">_get_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">sync_path</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">return</span>
+
+    <span class="k">def</span> <span class="nf">read_sync</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">raise</span> <span class="ne">NotImplementedError</span><span class="p">(</span>
+            <span class="s2">&quot;Synchronization readout not implemented for Prairie files yet&quot;</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">read_raw</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">movie</span></div>
+
+
+<div class="viewcode-block" id="sima_export_frames"><a class="viewcode-back" href="../usage/haussio.html#haussio.sima_export_frames">[docs]</a><span class="k">def</span> <span class="nf">sima_export_frames</span><span class="p">(</span><span class="n">dataset</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">filenames</span><span class="p">,</span> <span class="n">startIdx</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">stopIdx</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                       <span class="n">ftype</span><span class="o">=</span><span class="s2">&quot;tiff&quot;</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="bp">False</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Export a sima.ImagingDataset to individual tiffs.</span>
+<span class="sd">    Works around sima only producing multipage tiffs.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    dataset : sima.ImagingDataset</span>
+<span class="sd">        The sima.ImagingDataset to be exported</span>
+<span class="sd">    path : string</span>
+<span class="sd">        Full path to target directory for exported tiffs</span>
+<span class="sd">    filenames : list of strings</span>
+<span class="sd">        Filenames to be used for the export. While these can be</span>
+<span class="sd">        full paths, only the file name part will be used.</span>
+<span class="sd">    startIdx : int, optional</span>
+<span class="sd">        Index of first frame to be exported (inclusive). Default: 0</span>
+<span class="sd">    stopIdx : int, optional</span>
+<span class="sd">        Index of last frame to be exported (exclusive). Default: None</span>
+<span class="sd">    ftype : stf, optional</span>
+<span class="sd">        file type, one of &quot;tiff&quot; or &quot;raw&quot;. Default: &quot;tiff&quot;</span>
+<span class="sd">    compress : boolean, optional</span>
+<span class="sd">        Compress raw file with xz. Default: False</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;tiff&quot;</span><span class="p">:</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="k">assert</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span> <span class="o">==</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">AssertionError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="k">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">),</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="k">raise</span> <span class="n">err</span>
+    <span class="k">assert</span><span class="p">(</span><span class="n">ftype</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;tiff&quot;</span><span class="p">,</span> <span class="s2">&quot;raw&quot;</span><span class="p">])</span>
+
+    <span class="k">if</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;raw&quot;</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">startIdx</span> <span class="o">!=</span> <span class="mi">0</span> <span class="ow">or</span> <span class="n">stopIdx</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span>
+                <span class="s2">&quot;Can only export complete dataset in raw format&quot;</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">exists</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">makedirs</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">stopIdx</span> <span class="ow">is</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">stopIdx</span> <span class="o">&gt;</span> <span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">):</span>
+        <span class="n">stopIdx</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">filenames</span><span class="p">)</span>
+    <span class="n">save_frames</span> <span class="o">=</span> <span class="n">sima</span><span class="o">.</span><span class="n">sequence</span><span class="o">.</span><span class="n">_fill_gaps</span><span class="p">(</span>
+        <span class="nb">iter</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span> <span class="nb">iter</span><span class="p">(</span><span class="n">dataset</span><span class="o">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
+    <span class="k">if</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;tiff&quot;</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">nf</span><span class="p">,</span> <span class="n">frame</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">save_frames</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">nf</span> <span class="o">&gt;=</span> <span class="n">startIdx</span> <span class="ow">and</span> <span class="n">nf</span> <span class="o">&lt;</span> <span class="n">stopIdx</span><span class="p">:</span>
+                <span class="n">tifffile</span><span class="o">.</span><span class="n">imsave</span><span class="p">(</span>
+                    <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">basename</span><span class="p">(</span><span class="n">filenames</span><span class="p">[</span><span class="n">nf</span><span class="p">])),</span>
+                    <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">frame</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                        <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">))</span>
+    <span class="k">elif</span> <span class="n">ftype</span> <span class="o">==</span> <span class="s2">&quot;raw&quot;</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Reading files...&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">arr</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span>
+            <span class="p">[</span><span class="n">frame</span> <span class="k">for</span> <span class="n">frame</span> <span class="ow">in</span> <span class="n">save_frames</span><span class="p">])</span><span class="o">.</span><span class="n">squeeze</span><span class="p">()</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot; done in {0:.2f}s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">))</span>
+        <span class="n">compress_np</span><span class="p">(</span>
+            <span class="n">arr</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">,</span> <span class="n">dataset</span><span class="o">.</span><span class="n">sequences</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">shape</span><span class="p">,</span>
+            <span class="n">compress</span><span class="o">=</span><span class="n">compress</span><span class="p">)</span></div>
+
+
+<span class="k">def</span> <span class="nf">compress_np</span><span class="p">(</span><span class="n">arr</span><span class="p">,</span> <span class="n">path</span><span class="p">,</span> <span class="n">rawfn</span><span class="p">,</span> <span class="n">shape</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">compress</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">shape</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">shape</span> <span class="o">=</span> <span class="n">arr</span><span class="o">.</span><span class="n">shape</span>
+
+    <span class="n">shapefn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">THOR_RAW_FN</span><span class="p">[:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span> <span class="o">+</span> <span class="s2">&quot;shape.npy&quot;</span><span class="p">)</span>
+    <span class="n">np</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">shapefn</span><span class="p">,</span> <span class="n">shape</span><span class="p">)</span>
+
+    <span class="n">rawfn</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">path</span><span class="p">,</span> <span class="n">rawfn</span><span class="p">)</span>
+
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Writing raw file...&quot;</span><span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+    <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+    <span class="n">arr</span><span class="o">.</span><span class="n">tofile</span><span class="p">(</span><span class="n">rawfn</span><span class="p">)</span>
+    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot; done in {0:.2f}s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">))</span>
+
+    <span class="k">if</span> <span class="n">compress</span><span class="p">:</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="n">shlex</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">XZ_BIN</span> <span class="o">+</span> <span class="s2">&quot; -T 0&quot;</span><span class="p">)</span>
+        <span class="n">cmd</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rawfn</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Compressing file...&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="n">t0</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="n">P</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+        <span class="n">P</span><span class="o">.</span><span class="n">wait</span><span class="p">()</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot; done in {0:.2f}s</span><span class="se">\n</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span><span class="o">-</span><span class="n">t0</span><span class="p">))</span>
+
+
+<span class="k">def</span> <span class="nf">raw2np</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">shape</span><span class="p">):</span>
+    <span class="k">if</span> <span class="n">filename</span><span class="p">[</span><span class="o">-</span><span class="mi">3</span><span class="p">:]</span> <span class="o">==</span> <span class="s2">&quot;.xz&quot;</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Decompressing data...</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
+        <span class="k">with</span> <span class="n">lzma</span><span class="o">.</span><span class="n">open</span><span class="p">(</span><span class="n">filename</span><span class="p">)</span> <span class="k">as</span> <span class="n">decompf</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fromstring</span><span class="p">(</span>
+                <span class="n">decompf</span><span class="o">.</span><span class="n">read</span><span class="p">(),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">fromfile</span><span class="p">(</span><span class="n">filename</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">shape</span><span class="p">)</span>
+</pre></div>
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

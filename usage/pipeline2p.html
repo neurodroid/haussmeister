@@ -1,0 +1,852 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>pipeline2p module &mdash; haussmeister 0.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
+    <link rel="up" title="haussmeister" href="index.html" />
+    <link rel="next" title="spectral module" href="spectral.html" />
+    <link rel="prev" title="movies module" href="movies.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          haussmeister</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">haussmeister</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">pipeline2p module</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="movies.html" title="Previous Chapter: movies module"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; movies module</span>
+    </a>
+  </li>
+  <li>
+    <a href="spectral.html" title="Next Chapter: spectral module"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">spectral module &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/usage/pipeline2p.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="module-pipeline2p">
+<span id="pipeline2p-module"></span><h1>pipeline2p module<a class="headerlink" href="#module-pipeline2p" title="Permalink to this headline">¶</a></h1>
+<p>Module for feeding ThorLabs imaging datasets into a 2p imaging analysis
+pipeline</p>
+<p>(c) 2015 C. Schmidt-Hieber
+GPLv3</p>
+<dl class="class">
+<dt id="pipeline2p.ThorExperiment">
+<em class="property">class </em><code class="descclassname">pipeline2p.</code><code class="descname">ThorExperiment</code><span class="sig-paren">(</span><em>fn2p</em>, <em>ch2p='A'</em>, <em>area2p=None</em>, <em>fnsync=None</em>, <em>fnvr=None</em>, <em>roi_subset=''</em>, <em>mc_method='hmmc'</em>, <em>detrend=False</em>, <em>nrois_init=200</em>, <em>roi_translate=None</em>, <em>root_path=''</em>, <em>ftype='thor'</em>, <em>dx=None</em>, <em>dt=None</em>, <em>seg_method='cnmf'</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.ThorExperiment" title="Permalink to this definition">¶</a></dt>
+<dd><p>Helper class to feed ThorLabs imaging datasets into a 2p imaging
+analysis pipeline</p>
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.fn2p">
+<code class="descname">fn2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fn2p" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; File path (relative to root_path) leading to directory that contains
+tiff series</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.ch2p">
+<code class="descname">ch2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.ch2p" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.area2p">
+<code class="descname">area2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.area2p" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.fnsync">
+<code class="descname">fnsync</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fnsync" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Thorsync directory name. Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.fnvr">
+<code class="descname">fnvr</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fnvr" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; VR file name trunk. Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.roi_subset">
+<code class="descname">roi_subset</code><a class="headerlink" href="#pipeline2p.ThorExperiment.roi_subset" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; String appended to roi label to distinguish between roi subsets.
+Default: &#8220;&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.mc_method">
+<code class="descname">mc_method</code><a class="headerlink" href="#pipeline2p.ThorExperiment.mc_method" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
+&#8220;hmmcpx&#8221;, &#8220;calblitz&#8221;. Default: &#8220;hmmc&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.detrend">
+<code class="descname">detrend</code><a class="headerlink" href="#pipeline2p.ThorExperiment.detrend" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>bool</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.roi_translate">
+<code class="descname">roi_translate</code><a class="headerlink" href="#pipeline2p.ThorExperiment.roi_translate" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>2-tuple of ints</em> &#8211; Apply ROI translation in x and y. Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.root_path">
+<code class="descname">root_path</code><a class="headerlink" href="#pipeline2p.ThorExperiment.root_path" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.seg_method">
+<code class="descname">seg_method</code><a class="headerlink" href="#pipeline2p.ThorExperiment.seg_method" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>str, optional</em> &#8211; One of &#8220;thunder&#8221; (ROIs are identified by thunder&#8217;s ICA), &#8220;sima&#8221; (ROIs
+are identified by SIMA&#8217;s stICA), &#8220;ij&#8221; (an ImageJ RoiSet is used),
+&#8220;cnmf&#8221; (constrained non-negative matrix factorization).
+Default: &#8220;cnmf&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.maxtime">
+<code class="descname">maxtime</code><a class="headerlink" href="#pipeline2p.ThorExperiment.maxtime" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>float, optional</em> &#8211; Limit data to maxtime. Default: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="pipeline2p.ThorExperiment.to_haussio">
+<code class="descname">to_haussio</code><span class="sig-paren">(</span><em>mc=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_haussio"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.ThorExperiment.to_haussio" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert experiment to haussio.HaussIO</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>dataset</strong> &#8211; A haussio.HaussIO instance</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO">haussio.HaussIO</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt id="pipeline2p.ThorExperiment.to_sima">
+<code class="descname">to_sima</code><span class="sig-paren">(</span><em>mc=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_sima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.ThorExperiment.to_sima" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert experiment to sima.ImagingDataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">sima.ImagingDataset</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.activity_level">
+<code class="descclassname">pipeline2p.</code><code class="descname">activity_level</code><span class="sig-paren">(</span><em>data</em>, <em>infer_threshold=0.15</em>, <em>roi_subset=''</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#activity_level"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.activity_level" title="Permalink to this definition">¶</a></dt>
+<dd><p>Determine the ratio of active over inactive neurons</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>infer_threshold</strong> (<em>float, optional</em>) &#8211; Activity threshold of spike inference. Default: 0.15</li>
+<li><strong>roi_subset</strong> (<em>str</em>) &#8211; Roi subset to be processed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>level</strong> &#8211; Number of active and inactive neurons</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">int, int</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.contiguous_stationary">
+<code class="descclassname">pipeline2p.</code><code class="descname">contiguous_stationary</code><span class="sig-paren">(</span><em>speed</em>, <em>speed_time</em>, <em>speed_thr</em>, <em>time_thr</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#contiguous_stationary"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.contiguous_stationary" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find contiguous stationary periods</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>speed</strong> (<em>numpy.ndarray</em>) &#8211; Running speed</li>
+<li><strong>speed_time</strong> (<em>numpy.ndarray</em>) &#8211; Time of running speed</li>
+<li><strong>speed_thr</strong> (<em>float</em>) &#8211; Speed threshold</li>
+<li><strong>time_thr</strong> (<em>float</em>) &#8211; Maximal resting duration
+If the resting period is shorter than time_thr, it will be counted as
+a non-stationary period</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>running_mask</strong> &#8211; Boolean mask denoting stationary periods</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.eta">
+<code class="descclassname">pipeline2p.</code><code class="descname">eta</code><span class="sig-paren">(</span><em>measured</em>, <em>vrdict</em>, <em>evcodelist</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#eta"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.eta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute event-triggered average of fluorescence data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
+<li><strong>evcodelist</strong> (<em>list of str</em>) &#8211; List of event types to trigger on</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.extract_rois">
+<code class="descclassname">pipeline2p.</code><code class="descname">extract_rois</code><span class="sig-paren">(</span><em>signal_label</em>, <em>dataset</em>, <em>rois</em>, <em>data</em>, <em>dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#extract_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.extract_rois" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract fluorescence data from ROIs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be extracted</li>
+<li><strong>dataset</strong> (<em>sima.Imaging.Dataset</em>) &#8211; sima dataset</li>
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList</li>
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>dt</strong> (<em>Frame interval</em>) &#8211; </li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.extract_signals">
+<code class="descclassname">pipeline2p.</code><code class="descname">extract_signals</code><span class="sig-paren">(</span><em>signal_label</em>, <em>rois</em>, <em>data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#extract_signals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.extract_signals" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract fluorescence data from ROIs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be extracted</li>
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference for each ROI</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.get_rois_cnmf">
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_cnmf</code><span class="sig-paren">(</span><em>data</em>, <em>vrdict</em>, <em>speed_thr</em>, <em>time_thr</em>, <em>nrois_init</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_cnmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_cnmf" title="Permalink to this definition">¶</a></dt>
+<dd><p>Identify ROIs, extract fluorescence and infer spikes using constrained
+non-negative matrix factorization (CNMF)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
+<li><strong>speed_thr</strong> (<em>float</em>) &#8211; Speed threshold</li>
+<li><strong>time_thr</strong> (<em>float</em>) &#8211; Maximal resting duration
+If the resting period is shorter than time_thr, it will be counted as
+a non-stationary period</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
+<li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.get_rois_ij">
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_ij</code><span class="sig-paren">(</span><em>data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_ij"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_ij" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract fluorescence data from ImageJ ROIs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.get_rois_sima">
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_sima</code><span class="sig-paren">(</span><em>data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_sima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_sima" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract fluorescence data from ROIs that are identified
+by sima&#8217;s stICA</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.get_rois_thunder">
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_thunder</code><span class="sig-paren">(</span><em>data</em>, <em>sc</em>, <em>infer=True</em>, <em>speed=None</em>, <em>nrois_init=100</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_thunder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_thunder" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract fluorescence data from ROIs that are identified
+by thunder&#8217;s ICA. If running speed is available, ROIs will
+be determined during running periods. Otherwise, MAXFRAMES_ICA
+at the beginning of the recording will be used.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>sc</strong> (<em>SparkContext</em>) &#8211; Thunder wrapper for a Spark context</li>
+<li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
+<li><strong>speed</strong> (<em>numpy.ndarray, optional</em>) &#8211; Running speed. Default: None</li>
+<li><strong>nrois_init</strong> (<em>int, optional</em>) &#8211; Initial estimate of the number of ROIs</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.get_vr_maps">
+<code class="descclassname">pipeline2p.</code><code class="descname">get_vr_maps</code><span class="sig-paren">(</span><em>data</em>, <em>measured</em>, <em>spikes</em>, <em>vrdict</em>, <em>method</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_vr_maps"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_vr_maps" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read and assemble VR data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
+<li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
+<li><strong>method</strong> (<em>str</em>) &#8211; Method that was used to extract ROIs</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>mapdict</strong> &#8211; Dictionary with processed VR data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.infer_spikes">
+<code class="descclassname">pipeline2p.</code><code class="descname">infer_spikes</code><span class="sig-paren">(</span><em>dataset</em>, <em>signal_label</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#infer_spikes"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.infer_spikes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Perform spike inference</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>dataset</strong> (<em>sima.Imaging.Dataset</em>) &#8211; Dataset to be processed</li>
+<li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be processed</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
+<li><strong>inference</strong> (<em>ndarray of float</em>) &#8211; The inferred normalized spike count at each time-bin.  Values are
+normalized to the maximium value over all time-bins.</li>
+<li><strong>fit</strong> (<em>ndarray of float</em>) &#8211; The inferred denoised fluorescence signal at each time-bin.</li>
+<li><strong>parameters</strong> (<em>dict</em>) &#8211; Dictionary with values for &#8216;sigma&#8217;, &#8216;gamma&#8217;, and &#8216;baseline&#8217;.</li>
+</ul>
+</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.norm">
+<code class="descclassname">pipeline2p.</code><code class="descname">norm</code><span class="sig-paren">(</span><em>sig</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#norm"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.norm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Normalize data to have range [0,1]</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sig</strong> (<em>numpy.ndarray</em>) &#8211; Data to be normalized</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>norm</strong> &#8211; Normalized data</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.plot_rois">
+<code class="descclassname">pipeline2p.</code><code class="descname">plot_rois</code><span class="sig-paren">(</span><em>rois</em>, <em>measured</em>, <em>experiment</em>, <em>zproj</em>, <em>data_path</em>, <em>pdf_suffix=''</em>, <em>spikes=None</em>, <em>infer_threshold=0.15</em>, <em>region=''</em>, <em>mapdict=None</em>, <em>lopass=1.0</em>, <em>plot_events=False</em>, <em>minimaps=None</em>, <em>dpi=1200</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#plot_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.plot_rois" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot ROIs on top of z-projected image, extracted fluorescence, spike
+inference, fluorescence and spike inference against position (if available)</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>experiment</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
+<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>data_path</strong> (<em>str</em>) &#8211; Path to data directory</li>
+<li><strong>pdf_suffix</strong> (<em>str, optional</em>) &#8211; Suffix appended to pdf. Default: &#8220;&#8221;</li>
+<li><strong>spikes</strong> (<em>numpy.ndarray, optional</em>) &#8211; Spike inference values. Default: None</li>
+<li><strong>infer_threshold</strong> (<em>float, optional</em>) &#8211; Spike inference threshold. Default: 0.15</li>
+<li><strong>region</strong> (<em>str, optional</em>) &#8211; Brain region. Default: &#8220;&#8221;</li>
+<li><strong>mapdict</strong> (<em>dict, optional</em>) &#8211; Dictionary containing processed VR data. Default: None</li>
+<li><strong>lopass</strong> (<em>float, optional</em>) &#8211; Lowpass filter frequency for plotted traces. Default: 1.0</li>
+<li><strong>plot_events</strong> (<em>bool, optional</em>) &#8211; Plot events. Default: False</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.process_data">
+<code class="descclassname">pipeline2p.</code><code class="descname">process_data</code><span class="sig-paren">(</span><em>data</em>, <em>detrend=False</em>, <em>base_fraction=0.2</em>, <em>zscore=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#process_data"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.process_data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute Delta F / F_0 and detrend if required</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<em>numpy.ndarray</em>) &#8211; Fluorescence trace, shape: (nrois, nframes)</li>
+<li><strong>detrend</strong> (<em>bool, optional</em>) &#8211; Detrend fluorescence traces. Default: False</li>
+<li><strong>base_fraction</strong> (<em>float, optional</em>) &#8211; Bottom fraction to be used for F_0 computation. If None, F_0 is set to
+data.mean(). Default: 0.05</li>
+<li><strong>zscore</strong> (<em>bool, optional</em>) &#8211; Use z score instead of mean</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ret_data</strong> &#8211; Processed data</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.thor_extract_roi">
+<code class="descclassname">pipeline2p.</code><code class="descname">thor_extract_roi</code><span class="sig-paren">(</span><em>data</em>, <em>tsc=None</em>, <em>infer=True</em>, <em>infer_threshold=0.15</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#thor_extract_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.thor_extract_roi" title="Permalink to this definition">¶</a></dt>
+<dd><p>Extract and process fluorescence data from ROIs</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>tsc</strong> (<em>thunder.ThunderContext, optional</em>) &#8211; A ThunderContext in case the method is &#8220;thunder&#8221;</li>
+<li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
+<li><strong>infer_threshold</strong> (<em>float, optional</em>) &#8211; Activity threshold of spike inference. Default: 0.15</li>
+<li><strong>nrois_init</strong> (<em>int, optional</em>) &#8211; Initial estimate of number of ROIs. Default: 200</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.thor_preprocess">
+<code class="descclassname">pipeline2p.</code><code class="descname">thor_preprocess</code><span class="sig-paren">(</span><em>data</em>, <em>ffmpeg='ffmpeg'</em>, <em>compress=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#thor_preprocess"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.thor_preprocess" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read in ThorImage dataset, apply motion correction, export motion-corrected
+tiffs, produce movie of corrected and uncorrected data</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>ffmpeg</strong> (<em>str, optional</em>) &#8211; Path to ffmpeg binary. Default: movies.FFMPEG global variable</li>
+<li><strong>compress</strong> (<em>boolean, optional</em>) &#8211; Compress resulting raw file with xz. Default: False</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="pipeline2p.xcorr">
+<code class="descclassname">pipeline2p.</code><code class="descname">xcorr</code><span class="sig-paren">(</span><em>data</em>, <em>chan</em>, <em>roi_subset1='DG'</em>, <em>roi_subset2='CA3'</em>, <em>infer_threshold=0.15</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#xcorr"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.xcorr" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute cross correlation between fluorescence extracted from two
+roi subsets</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>chan</strong> (<em>str</em>) &#8211; Channel character</li>
+<li><strong>roi_subset1</strong> (<em>str, optional</em>) &#8211; Roi subset 1 suffix. Default: &#8220;DG&#8221;</li>
+<li><strong>roi_subset2</strong> (<em>str, optional</em>) &#8211; Roi subset 2 suffix. Default: &#8220;CA3&#8221;</li>
+<li><strong>infer_threshold</strong> (<em>float, optional</em>) &#8211; Spike inference threshold. Default: 0.15</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>high_xcs</strong> &#8211; List of roi indices with xcorr values &gt; 0.5</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">list of 2-tuple of ints</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="class">
+<dt>
+<em class="property">class </em><code class="descclassname">pipeline2p.</code><code class="descname">ThorExperiment</code><span class="sig-paren">(</span><em>fn2p</em>, <em>ch2p='A'</em>, <em>area2p=None</em>, <em>fnsync=None</em>, <em>fnvr=None</em>, <em>roi_subset=''</em>, <em>mc_method='hmmc'</em>, <em>detrend=False</em>, <em>nrois_init=200</em>, <em>roi_translate=None</em>, <em>root_path=''</em>, <em>ftype='thor'</em>, <em>dx=None</em>, <em>dt=None</em>, <em>seg_method='cnmf'</em>, <em>maxtime=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Helper class to feed ThorLabs imaging datasets into a 2p imaging
+analysis pipeline</p>
+<dl class="attribute">
+<dt>
+<code class="descname">fn2p</code></dt>
+<dd><p><em>str</em> &#8211; File path (relative to root_path) leading to directory that contains
+tiff series</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">ch2p</code></dt>
+<dd><p><em>str</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">area2p</code></dt>
+<dd><p><em>str</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">fnsync</code></dt>
+<dd><p><em>str</em> &#8211; Thorsync directory name. Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">fnvr</code></dt>
+<dd><p><em>str</em> &#8211; VR file name trunk. Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">roi_subset</code></dt>
+<dd><p><em>str</em> &#8211; String appended to roi label to distinguish between roi subsets.
+Default: &#8220;&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">mc_method</code></dt>
+<dd><p><em>str</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
+&#8220;hmmcpx&#8221;, &#8220;calblitz&#8221;. Default: &#8220;hmmc&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">detrend</code></dt>
+<dd><p><em>bool</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">roi_translate</code></dt>
+<dd><p><em>2-tuple of ints</em> &#8211; Apply ROI translation in x and y. Default: None</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">root_path</code></dt>
+<dd><p><em>str</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">seg_method</code></dt>
+<dd><p><em>str, optional</em> &#8211; One of &#8220;thunder&#8221; (ROIs are identified by thunder&#8217;s ICA), &#8220;sima&#8221; (ROIs
+are identified by SIMA&#8217;s stICA), &#8220;ij&#8221; (an ImageJ RoiSet is used),
+&#8220;cnmf&#8221; (constrained non-negative matrix factorization).
+Default: &#8220;cnmf&#8221;</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">maxtime</code></dt>
+<dd><p><em>float, optional</em> &#8211; Limit data to maxtime. Default: None</p>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">to_haussio</code><span class="sig-paren">(</span><em>mc=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_haussio"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Convert experiment to haussio.HaussIO</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>dataset</strong> &#8211; A haussio.HaussIO instance</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO">haussio.HaussIO</a></td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
+<dt>
+<code class="descname">to_sima</code><span class="sig-paren">(</span><em>mc=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_sima"><span class="viewcode-link">[source]</span></a></dt>
+<dd><p>Convert experiment to sima.ImagingDataset</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">sima.ImagingDataset</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>

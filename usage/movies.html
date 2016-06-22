@@ -1,0 +1,278 @@
+<!DOCTYPE html>
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>movies module &mdash; haussmeister 0.2.0 documentation</title>
+    
+    <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../',
+        VERSION:     '0.2.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../_static/jquery.js"></script>
+    <script type="text/javascript" src="../_static/underscore.js"></script>
+    <script type="text/javascript" src="../_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
+    <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
+    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
+    <link rel="up" title="haussmeister" href="index.html" />
+    <link rel="next" title="pipeline2p module" href="pipeline2p.html" />
+    <link rel="prev" title="haussio module" href="haussio.html" />
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+
+  </head>
+  <body role="document">
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../index.html">
+          haussmeister</a>
+        <span class="navbar-text navbar-version pull-left"><b>0.2</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+            
+              <li class="dropdown globaltoc-container">
+  <a role="button"
+     id="dLabelGlobalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="../index.html">Site <b class="caret"></b></a>
+  <ul class="dropdown-menu globaltoc"
+      role="menu"
+      aria-labelledby="dLabelGlobalToc"><ul class="current">
+<li class="toctree-l1 current"><a class="reference internal" href="index.html">haussmeister</a></li>
+</ul>
+</ul>
+</li>
+              
+                <li class="dropdown">
+  <a role="button"
+     id="dLabelLocalToc"
+     data-toggle="dropdown"
+     data-target="#"
+     href="#">Page <b class="caret"></b></a>
+  <ul class="dropdown-menu localtoc"
+      role="menu"
+      aria-labelledby="dLabelLocalToc"><ul>
+<li><a class="reference internal" href="#">movies module</a></li>
+</ul>
+</ul>
+</li>
+              
+            
+            
+              
+                
+  <li>
+    <a href="haussio.html" title="Previous Chapter: haussio module"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; haussio module</span>
+    </a>
+  </li>
+  <li>
+    <a href="pipeline2p.html" title="Next Chapter: pipeline2p module"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">pipeline2p mo... &raquo;</span>
+    </a>
+  </li>
+              
+            
+            
+            
+            
+              <li class="hidden-sm">
+<div id="sourcelink">
+  <a href="../_sources/usage/movies.txt"
+     rel="nofollow">Source</a>
+</div></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="col-md-12">
+      
+  <div class="section" id="module-movies">
+<span id="movies-module"></span><h1>movies module<a class="headerlink" href="#module-movies" title="Permalink to this headline">¶</a></h1>
+<p>Module for generating movies from 2p images</p>
+<p>(c) 2015 C. Schmidt-Hieber
+GPLv3</p>
+<dl class="function">
+<dt id="movies.get_normbright">
+<code class="descclassname">movies.</code><code class="descname">get_normbright</code><span class="sig-paren">(</span><em>arr</em>, <em>mid=16.0</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/movies.html#get_normbright"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#movies.get_normbright" title="Permalink to this definition">¶</a></dt>
+<dd><p>Create 3-point calibration curve. Returns 3 points of input brightness
+that will be mapped to 0, 0.5, and 1.0 output</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>arr</strong> (<em>numpy.ndarray</em>) &#8211; Frame that will be used for calibration</li>
+<li><strong>mid</strong> (<em>float, optional</em>) &#8211; Midpoint value scaling. Default: 16.0</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>normcurve</strong> &#8211; 3 points of input brightness that will be mapped to
+0, 0.5, and 1.0 output</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">3-tuple of floats</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="movies.html_movie">
+<code class="descclassname">movies.</code><code class="descname">html_movie</code><span class="sig-paren">(</span><em>fn</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/movies.html#html_movie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#movies.html_movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts an mp4 movie to an html tag containing
+the complete encoded movie</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fn</strong> (<em>str</em>) &#8211; Full path to movie file name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>html_movie</strong> &#8211; An html tag containing the complete movie</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">str</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="movies.make_movie">
+<code class="descclassname">movies.</code><code class="descname">make_movie</code><span class="sig-paren">(</span><em>tiff_trunk</em>, <em>out_file</em>, <em>fps</em>, <em>normbright=None</em>, <em>scalebarframe=None</em>, <em>verbose=False</em>, <em>scale=None</em>, <em>crf=30</em>, <em>ffmpeg='ffmpeg'</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/movies.html#make_movie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#movies.make_movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a movie from a directory with individual tiffs
+at given frame rate</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>tiff_trunk</strong> (<em>str or np.ndarray</em>) &#8211; File name filter (full path) used as input to ffmpeg
+(e.g. <code class="docutils literal"><span class="pre">/home/cs/data/ChanA_0001_%04d.tif</span></code>);
+or movie as np.ndarray of shape (nframes, nx, ny).</li>
+<li><strong>out_file</strong> (<em>str</em>) &#8211; Full path to movie file name</li>
+<li><strong>fps</strong> (<em>float</em>) &#8211; Acquisition rate of tiffs in frames per second</li>
+<li><strong>normbright</strong> (<em>3-tuple of floats, optional</em>) &#8211; Brightness adjustment curve; see get_normbright() for format</li>
+<li><strong>scalebarframe</strong> (<em>str, optional</em>) &#8211; Full path to png with scale bar</li>
+<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Print progress of ffmpeg</li>
+<li><strong>scale</strong> (<em>2-tuple of ints, optional</em>) &#8211; Rescale movie to given width and height in pixels. Default: None</li>
+<li><strong>crf</strong> (<em>int, optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 30</li>
+<li><strong>ffmpeg</strong> (<em>str, optional</em>) &#8211; Path to ffmpeg binary. Default: FFMPEG global variable</li>
+</ul>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>html_movie</strong> &#8211; An html tag containing the complete movie</p>
+</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">str</p>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="movies.numpy_movie">
+<code class="descclassname">movies.</code><code class="descname">numpy_movie</code><span class="sig-paren">(</span><em>fn</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/movies.html#numpy_movie"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#movies.numpy_movie" title="Permalink to this definition">¶</a></dt>
+<dd><p>Converts a movie to a numpy array</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>fn</strong> (<em>str</em>) &#8211; Full path to movie file name</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>array</strong> &#8211; Numpy array of shape (nframes, npixels_x, npixels_y)</td>
+</tr>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="function">
+<dt id="movies.save_scale_bar">
+<code class="descclassname">movies.</code><code class="descname">save_scale_bar</code><span class="sig-paren">(</span><em>png_name</em>, <em>scale_length_int</em>, <em>scale_length_px</em>, <em>xpx</em>, <em>ypx</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/movies.html#save_scale_bar"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#movies.save_scale_bar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Save a png with transparent background showing a white scale bar
+with white label that can be added to a movie.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>png_name</strong> (<em>str</em>) &#8211; Full path to png file name</li>
+<li><strong>scale_length_int</strong> (<em>int</em>) &#8211; Scale bar length in specimen dimensions (e.g. um)</li>
+<li><strong>scale_length_px</strong> (<em>int</em>) &#8211; Scale bar length in pixels</li>
+<li><strong>xpx</strong> (<em>int</em>) &#8211; Image width in pixels</li>
+<li><strong>ypx</strong> (<em>int</em>) &#8211; Image height in pixels</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+    </div>
+      
+  </div>
+</div>
+<footer class="footer">
+  <div class="container">
+    <p class="pull-right">
+      <a href="#">Back to top</a>
+      
+    </p>
+    <p>
+        &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.3.<br/>
+    </p>
+  </div>
+</footer>
+  </body>
+</html>
