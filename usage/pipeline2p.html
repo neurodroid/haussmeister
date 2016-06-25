@@ -9,8 +9,8 @@
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     
     <script type="text/javascript">
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
     <link rel="up" title="haussmeister" href="index.html" />
@@ -129,7 +129,7 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12">
+    <div class="col-md-12 content">
       
   <div class="section" id="module-pipeline2p">
 <span id="pipeline2p-module"></span><h1>pipeline2p module<a class="headerlink" href="#module-pipeline2p" title="Permalink to this headline">¶</a></h1>
@@ -240,17 +240,23 @@ Default: &#8220;cnmf&#8221;</p>
 
 <dl class="method">
 <dt id="pipeline2p.ThorExperiment.to_sima">
-<code class="descname">to_sima</code><span class="sig-paren">(</span><em>mc=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_sima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.ThorExperiment.to_sima" title="Permalink to this definition">¶</a></dt>
+<code class="descname">to_sima</code><span class="sig-paren">(</span><em>mc=False</em>, <em>haussio_data=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_sima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.ThorExperiment.to_sima" title="Permalink to this definition">¶</a></dt>
 <dd><p>Convert experiment to sima.ImagingDataset</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</li>
+<li><strong>haussio_data</strong> (<em>haussio.HaussIO, optional</em>) &#8211; A pre-existing HaussIO object to save memory. Default: None</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">sima.ImagingDataset</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sima.ImagingDataset</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -332,7 +338,7 @@ a non-stationary period</li>
 
 <dl class="function">
 <dt id="pipeline2p.extract_rois">
-<code class="descclassname">pipeline2p.</code><code class="descname">extract_rois</code><span class="sig-paren">(</span><em>signal_label</em>, <em>dataset</em>, <em>rois</em>, <em>data</em>, <em>dt</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#extract_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.extract_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">extract_rois</code><span class="sig-paren">(</span><em>signal_label</em>, <em>dataset</em>, <em>rois</em>, <em>data</em>, <em>haussio_data</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#extract_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.extract_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract fluorescence data from ROIs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -343,7 +349,7 @@ a non-stationary period</li>
 <li><strong>dataset</strong> (<em>sima.Imaging.Dataset</em>) &#8211; sima dataset</li>
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList</li>
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
-<li><strong>dt</strong> (<em>Frame interval</em>) &#8211; </li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 </ul>
 </td>
 </tr>
@@ -360,7 +366,7 @@ a non-stationary period</li>
 
 <dl class="function">
 <dt id="pipeline2p.extract_signals">
-<code class="descclassname">pipeline2p.</code><code class="descname">extract_signals</code><span class="sig-paren">(</span><em>signal_label</em>, <em>rois</em>, <em>data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#extract_signals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.extract_signals" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">extract_signals</code><span class="sig-paren">(</span><em>signal_label</em>, <em>rois</em>, <em>data</em>, <em>haussio_data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#extract_signals"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.extract_signals" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract fluorescence data from ROIs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -370,6 +376,7 @@ a non-stationary period</li>
 <li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be extracted</li>
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
 </ul>
 </td>
@@ -388,7 +395,7 @@ a non-stationary period</li>
 
 <dl class="function">
 <dt id="pipeline2p.get_rois_cnmf">
-<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_cnmf</code><span class="sig-paren">(</span><em>data</em>, <em>vrdict</em>, <em>speed_thr</em>, <em>time_thr</em>, <em>nrois_init</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_cnmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_cnmf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_cnmf</code><span class="sig-paren">(</span><em>data</em>, <em>haussio_data</em>, <em>vrdict</em>, <em>speed_thr</em>, <em>time_thr</em>, <em>nrois_init</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_cnmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_cnmf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identify ROIs, extract fluorescence and infer spikes using constrained
 non-negative matrix factorization (CNMF)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -397,6 +404,7 @@ non-negative matrix factorization (CNMF)</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
 <li><strong>speed_thr</strong> (<em>float</em>) &#8211; Speed threshold</li>
 <li><strong>time_thr</strong> (<em>float</em>) &#8211; Maximal resting duration
@@ -408,7 +416,6 @@ a non-stationary period</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
 <li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
-<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
 <li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
 <li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
 <li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
@@ -422,7 +429,7 @@ a non-stationary period</li>
 
 <dl class="function">
 <dt id="pipeline2p.get_rois_ij">
-<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_ij</code><span class="sig-paren">(</span><em>data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_ij"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_ij" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_ij</code><span class="sig-paren">(</span><em>data</em>, <em>haussio_data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_ij"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_ij" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract fluorescence data from ImageJ ROIs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -430,6 +437,7 @@ a non-stationary period</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
 </ul>
 </td>
@@ -437,7 +445,6 @@ a non-stationary period</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
 <li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
-<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
 <li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
 <li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
 </ul>
@@ -450,7 +457,7 @@ a non-stationary period</li>
 
 <dl class="function">
 <dt id="pipeline2p.get_rois_sima">
-<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_sima</code><span class="sig-paren">(</span><em>data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_sima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_sima" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_sima</code><span class="sig-paren">(</span><em>data</em>, <em>haussio_data</em>, <em>infer=True</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_sima"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_sima" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract fluorescence data from ROIs that are identified
 by sima&#8217;s stICA</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -459,6 +466,7 @@ by sima&#8217;s stICA</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
 </ul>
 </td>
@@ -466,7 +474,6 @@ by sima&#8217;s stICA</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
 <li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
-<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
 <li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
 <li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
 </ul>
@@ -479,7 +486,7 @@ by sima&#8217;s stICA</p>
 
 <dl class="function">
 <dt id="pipeline2p.get_rois_thunder">
-<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_thunder</code><span class="sig-paren">(</span><em>data</em>, <em>sc</em>, <em>infer=True</em>, <em>speed=None</em>, <em>nrois_init=100</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_thunder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_thunder" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_thunder</code><span class="sig-paren">(</span><em>data</em>, <em>haussio_data</em>, <em>sc</em>, <em>infer=True</em>, <em>speed=None</em>, <em>nrois_init=100</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_thunder"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_thunder" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract fluorescence data from ROIs that are identified
 by thunder&#8217;s ICA. If running speed is available, ROIs will
 be determined during running periods. Otherwise, MAXFRAMES_ICA
@@ -490,6 +497,7 @@ at the beginning of the recording will be used.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>sc</strong> (<em>SparkContext</em>) &#8211; Thunder wrapper for a Spark context</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
 <li><strong>speed</strong> (<em>numpy.ndarray, optional</em>) &#8211; Running speed. Default: None</li>
@@ -500,7 +508,6 @@ at the beginning of the recording will be used.</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first last"><ul class="simple">
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
 <li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
-<li><strong>experiment</strong> (<em>haussio.HaussIO</em>) &#8211; haussio.HaussIO instance</li>
 <li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
 <li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
 </ul>
@@ -585,7 +592,7 @@ normalized to the maximium value over all time-bins.</li>
 
 <dl class="function">
 <dt id="pipeline2p.plot_rois">
-<code class="descclassname">pipeline2p.</code><code class="descname">plot_rois</code><span class="sig-paren">(</span><em>rois</em>, <em>measured</em>, <em>experiment</em>, <em>zproj</em>, <em>data_path</em>, <em>pdf_suffix=''</em>, <em>spikes=None</em>, <em>infer_threshold=0.15</em>, <em>region=''</em>, <em>mapdict=None</em>, <em>lopass=1.0</em>, <em>plot_events=False</em>, <em>minimaps=None</em>, <em>dpi=1200</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#plot_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.plot_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">plot_rois</code><span class="sig-paren">(</span><em>rois</em>, <em>measured</em>, <em>haussio_data</em>, <em>zproj</em>, <em>data_path</em>, <em>pdf_suffix=''</em>, <em>spikes=None</em>, <em>infer_threshold=0.15</em>, <em>region=''</em>, <em>mapdict=None</em>, <em>lopass=1.0</em>, <em>plot_events=False</em>, <em>minimaps=None</em>, <em>dpi=1200</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#plot_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.plot_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot ROIs on top of z-projected image, extracted fluorescence, spike
 inference, fluorescence and spike inference against position (if available)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -595,7 +602,7 @@ inference, fluorescence and spike inference against position (if available)</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
 <li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
-<li><strong>experiment</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
+<li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
 <li><strong>data_path</strong> (<em>str</em>) &#8211; Path to data directory</li>
 <li><strong>pdf_suffix</strong> (<em>str, optional</em>) &#8211; Suffix appended to pdf. Default: &#8220;&#8221;</li>
@@ -641,7 +648,7 @@ data.mean(). Default: 0.05</li>
 
 <dl class="function">
 <dt id="pipeline2p.thor_extract_roi">
-<code class="descclassname">pipeline2p.</code><code class="descname">thor_extract_roi</code><span class="sig-paren">(</span><em>data</em>, <em>tsc=None</em>, <em>infer=True</em>, <em>infer_threshold=0.15</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#thor_extract_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.thor_extract_roi" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">thor_extract_roi</code><span class="sig-paren">(</span><em>data</em>, <em>sc=None</em>, <em>infer=True</em>, <em>infer_threshold=0.15</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#thor_extract_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.thor_extract_roi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract and process fluorescence data from ROIs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -649,7 +656,7 @@ data.mean(). Default: 0.05</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
-<li><strong>tsc</strong> (<em>thunder.ThunderContext, optional</em>) &#8211; A ThunderContext in case the method is &#8220;thunder&#8221;</li>
+<li><strong>sc</strong> (<em>SparkContext</em>) &#8211; A SparkContext</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
 <li><strong>infer_threshold</strong> (<em>float, optional</em>) &#8211; Activity threshold of spike inference. Default: 0.15</li>
 <li><strong>nrois_init</strong> (<em>int, optional</em>) &#8211; Initial estimate of number of ROIs. Default: 200</li>
@@ -811,17 +818,23 @@ Default: &#8220;cnmf&#8221;</p>
 
 <dl class="method">
 <dt>
-<code class="descname">to_sima</code><span class="sig-paren">(</span><em>mc=False</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_sima"><span class="viewcode-link">[source]</span></a></dt>
+<code class="descname">to_sima</code><span class="sig-paren">(</span><em>mc=False</em>, <em>haussio_data=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#ThorExperiment.to_sima"><span class="viewcode-link">[source]</span></a></dt>
 <dd><p>Convert experiment to sima.ImagingDataset</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
+<li><strong>mc</strong> (<em>bool, optional</em>) &#8211; Use motion corrected images. Default: False</li>
+<li><strong>haussio_data</strong> (<em>haussio.HaussIO, optional</em>) &#8211; A pre-existing HaussIO object to save memory. Default: None</li>
+</ul>
+</td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</td>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</p>
+</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">sima.ImagingDataset</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sima.ImagingDataset</p>
+</td>
 </tr>
 </tbody>
 </table>
@@ -844,7 +857,7 @@ Default: &#8220;cnmf&#8221;</p>
     </p>
     <p>
         &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
-      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.3.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.4.<br/>
     </p>
   </div>
 </footer>
