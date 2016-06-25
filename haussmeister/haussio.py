@@ -257,8 +257,12 @@ class HaussIO(object):
             sequences = [sima.Sequence.create(
                 'TIFFs', [[self.filetrunk + self.format_index("?") + ".tif"]])]
         else:
-            sequences = [sima.Sequence.create(
-                'ndarray', self.read_raw()[:, np.newaxis, :, :, np.newaxis])]
+            rawarray = self.read_raw()
+            if rawarray.ndim == 3:
+                sequences = [sima.Sequence.create(
+                    'ndarray', rawarray[:, np.newaxis, :, :, np.newaxis])]
+            else:
+                sequences = [sima.Sequence.create('ndarray', rawarray)]
 
         if stopIdx is None:
             stopIdx = self.nframes

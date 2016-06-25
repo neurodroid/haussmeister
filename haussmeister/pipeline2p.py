@@ -240,7 +240,7 @@ class ThorExperiment(object):
                     self.data_path + self.mc_suffix, self.dx, self.dt,
                     chan=self.ch2p, sync_path=self.sync_path, width_idx=5)
 
-    def to_sima(self, mc=False):
+    def to_sima(self, mc=False, haussio_data=None):
         """
         Convert experiment to sima.ImagingDataset
 
@@ -248,6 +248,8 @@ class ThorExperiment(object):
         ----------
         mc : bool, optional
             Use motion corrected images. Default: False
+        haussio_data : haussio.HaussIO, optional
+            A pre-existing HaussIO object to save memory. Default: None
 
         Returns
         -------
@@ -276,18 +278,19 @@ class ThorExperiment(object):
                 restore = True
 
         if restore:
-            experiment = self.to_haussio(mc=mc)
-            sima_bak = experiment.sima_dir + ".bak"
-            if os.path.exists(experiment.sima_dir):
+            if haussio_data is None:
+                haussio_data = self.to_haussio(mc=mc)
+            sima_bak = haussio_data.sima_dir + ".bak"
+            if os.path.exists(haussio_data.sima_dir):
                 if os.path.exists(sima_bak):
                     shutil.rmtree(sima_bak)
                 while os.path.exists(sima_bak):
                     time.wait(1)
-                shutil.copytree(experiment.sima_dir, sima_bak)
-                shutil.rmtree(experiment.sima_dir)
-                while os.path.exists(experiment.sima_dir):
+                shutil.copytree(haussio_data.sima_dir, sima_bak)
+                shutil.rmtree(haussio_data.sima_dir)
+                while os.path.exists(haussio_data.sima_dir):
                     time.wait(1)
-            dataset = experiment.tosima(stopIdx=None)
+            dataset = haussio_data.tosima(stopIdx=None)
 
         return dataset
 
@@ -306,20 +309,20 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
     compress : boolean, optional
         Compress resulting raw file with xz. Default: False
     """
-    experiment = data.to_haussio(mc=False)
+    haussio_data = data.to_haussio(mc=False)
 
-    if os.path.exists(experiment.movie_fn):
-        raw_movie = movies.html_movie(experiment.movie_fn)
+    if os.path.exists(haussio_data.movie_fn):
+        raw_movie = movies.html_movie(haussio_data.movie_fn)
     else:
         try:
-            raw_movie = experiment.make_movie(norm=14.0, crf=28)
+            raw_movie = haussio_data.make_movie(norm=14.0, crf=28)
         except IOError:
-            raw_movie = experiment.make_movie(norm=False, crf=28)
+            raw_movie = haussio_data.make_movie(norm=False, crf=28)
 
-    if not os.path.exists(experiment.sima_dir):
-        dataset = experiment.tosima(stopIdx=None)
+    if not os.path.exists(haussio_data.sima_dir):
+        dataset = haussio_data.tosima(stopIdx=None)
     else:
-        dataset = data.to_sima(mc=False)
+        dataset = data.to_sima(mc=False, haussio_data=haussio_data)
 
     if not os.path.exists(data.sima_mc_dir):
         t0 = time.time()
@@ -334,8 +337,8 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
             print("Couldn't load sima dataset: ", err)
             dataset_mc = data.to_sima(mc=True)
 
-    filenames_mc = ["{0}{1:05d}.tif".format(experiment.filetrunk, nf+1)
-                    for nf in range(experiment.nframes)]
+    filenames_mc = ["{0}{1:05d}.tif".format(haussio_data.filetrunk, nf+1)
+                    for nf in range(haussio_data.nframes)]
     if data.maxtime is None:
         try:
             assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
@@ -358,7 +361,7 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
     if os.path.exists(data.movie_mc_fn):
         corr_movie = movies.html_movie(data.movie_mc_fn)
     else:
-        corr_movie = experiment.make_movie_extern(
+        corr_movie = haussio_data.make_movie_extern(
             data.mc_tiff_dir, norm=14.0, crf=28, width_idx=5)
 
     return dataset_mc
@@ -527,7 +530,7 @@ def norm(sig):
     return (sig-sig.min())/(sig.max()-sig.min())
 
 
-def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
+def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
               lopass=1.0, plot_events=False, minimaps=None, dpi=1200):
 
@@ -541,7 +544,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
         sima ROIList to be plotted
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    experiment : haussio.HaussIO
+    haussio_data : haussio.HaussIO
         haussio.HaussIO instance
     zproj : numpy.ndarray
         z-projected fluorescence image
@@ -580,12 +583,12 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
 
     ax_blank = fig.add_subplot(gs[:strow, stcol:stcol+1])
     ax_blank.imshow(zproj, cmap='gray')
-    experiment.plot_scale_bar(ax_blank)
+    haussio_data.plot_scale_bar(ax_blank)
     plt.axis('off')
 
     ax2 = fig.add_subplot(gs[:strow, stcol+1:])
     ax2.imshow(zproj, cmap='gray')
-    experiment.plot_scale_bar(ax2)
+    haussio_data.plot_scale_bar(ax2)
     plt.axis('off')
 
     ax_spike = fig.add_subplot(gs[strow:, 0:1])
@@ -642,7 +645,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
         if lopass is not None:
             measured_float = measured[nroi, :].astype(np.float)
             meas_filt = spectral.lowpass(
-                stfio_plot.Timeseries(measured_float, experiment.dt),
+                stfio_plot.Timeseries(measured_float, haussio_data.dt),
                 lopass, verbose=False).data[ndiscard:]
         else:
             meas_filt = measured[nroi, ndiscard:]
@@ -661,7 +664,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
             print("NonBooleanMask")
 
         if mapdict is None:
-            trange = np.arange(len(meas_filt))*experiment.dt
+            trange = np.arange(len(meas_filt))*haussio_data.dt
         else:
             trange = mapdict['t_2p'][ndiscard:] * 1e-3
 
@@ -724,7 +727,7 @@ def plot_rois(rois, measured, experiment, zproj, data_path, pdf_suffix="",
     else:
         regionstr = region
 
-    fig.suptitle(experiment.filetrunk.replace("_", " ") + " " + regionstr,
+    fig.suptitle(haussio_data.filetrunk.replace("_", " ") + " " + regionstr,
                  fontsize=18)
     if mapdict is not None:
         ax_maps_fluo.set_xlim(
@@ -831,7 +834,7 @@ def infer_spikes(dataset, signal_label):
     return res
 
 
-def extract_signals(signal_label, rois, data, infer=True):
+def extract_signals(signal_label, rois, data, haussio_data, infer=True):
     """
     Extract fluorescence data from ROIs
 
@@ -843,6 +846,8 @@ def extract_signals(signal_label, rois, data, infer=True):
         sima ROIList to be plotted
     data : ThorExperiment
         The ThorExperiment to be processed
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
     infer : bool, optional
         Perform spike inference. Default: True
 
@@ -856,15 +861,14 @@ def extract_signals(signal_label, rois, data, infer=True):
         Spike inference for each ROI
     """
 
-    experiment = data.to_haussio()
-    dataset = data.to_sima(mc=True)
+    dataset = data.to_sima(mc=True, haussio_data=haussio_data)
 
     sys.stdout.write(
         "Extracting signals with label {0}... ".format(signal_label))
     sys.stdout.flush()
     t0 = time.time()
     measured, zproj = extract_rois(
-        signal_label, dataset, rois, data, experiment.dt)
+        signal_label, dataset, rois, data, haussio_data)
     sys.stdout.write("done (took %.2fs)\n" % (time.time()-t0))
     sys.stdout.flush()
 
@@ -900,7 +904,7 @@ def extract_signals(signal_label, rois, data, infer=True):
     return measured, zproj, spikes
 
 
-def get_rois_ij(data, infer=True):
+def get_rois_ij(data, haussio_data, infer=True):
     """
     Extract fluorescence data from ImageJ ROIs
 
@@ -908,6 +912,8 @@ def get_rois_ij(data, infer=True):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
     infer : bool, optional
         Perform spike inference. Default: True
 
@@ -917,8 +923,6 @@ def get_rois_ij(data, infer=True):
         sima ROIList to be plotted
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    experiment : haussio.HaussIO
-        haussio.HaussIO instance
     zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
@@ -928,8 +932,7 @@ def get_rois_ij(data, infer=True):
         print("Couldn't find ImageJ ROIs in", data.roi_path_mc)
         return
 
-    experiment = data.to_haussio()
-    dataset_mc = data.to_sima(mc=True)
+    dataset_mc = data.to_sima(mc=True, haussio_data=haussio_data)
 
     dataset_mc.delete_ROIs('from_ImageJ' + data.roi_subset)
     rois = ROIList.load(data.roi_path_mc, fmt='ImageJ')
@@ -941,12 +944,12 @@ def get_rois_ij(data, infer=True):
     signal_label = 'imagej_rois' + data.roi_subset
 
     measured, zproj, spikes = extract_signals(
-        signal_label, rois, data, infer=infer)
+        signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, experiment, zproj, spikes
+    return rois, measured, zproj, spikes
 
 
-def get_rois_sima(data, infer=True):
+def get_rois_sima(data, haussio_data, infer=True):
     """
     Extract fluorescence data from ROIs that are identified
     by sima's stICA
@@ -955,6 +958,8 @@ def get_rois_sima(data, infer=True):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
     infer : bool, optional
         Perform spike inference. Default: True
 
@@ -964,15 +969,12 @@ def get_rois_sima(data, infer=True):
         sima ROIList to be plotted
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    experiment : haussio.HaussIO
-        haussio.HaussIO instance
     zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
         Spike inference values
     """
-    experiment = data.to_haussio()
-    dataset_mc = data.to_sima(mc=True)
+    dataset_mc = data.to_sima(mc=True, haussio_data=haussio_data)
 
     if not('from_sima_stICA' in dataset_mc.ROIs.keys()):
         print("Running sima stICA... ")
@@ -998,12 +1000,13 @@ def get_rois_sima(data, infer=True):
     signal_label = 'sima_stICA_rois' + data.roi_subset
 
     measured, zproj, spikes = extract_signals(
-        signal_label, rois, data, infer=infer)
+        signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, experiment, zproj, spikes
+    return rois, measured, zproj, spikes
 
 
-def get_rois_thunder(data, sc, infer=True, speed=None, nrois_init=100):
+def get_rois_thunder(
+        data, haussio_data, sc, infer=True, speed=None, nrois_init=100):
     """
     Extract fluorescence data from ROIs that are identified
     by thunder's ICA. If running speed is available, ROIs will
@@ -1014,6 +1017,8 @@ def get_rois_thunder(data, sc, infer=True, speed=None, nrois_init=100):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
     sc : SparkContext
         Thunder wrapper for a Spark context
     infer : bool, optional
@@ -1029,27 +1034,34 @@ def get_rois_thunder(data, sc, infer=True, speed=None, nrois_init=100):
         sima ROIList to be plotted
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    experiment : haussio.HaussIO
-        haussio.HaussIO instance
     zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
         Spike inference values
     """
-    experiment = data.to_haussio()
-    dataset_mc = data.to_sima(mc=True)
+
+    # Produce a z projection first so that we don't run out of memory later
+    dataset_mc = data.to_sima(mc=True, haussio_data=haussio_data)
+    assert(len(dataset_mc.frame_shape) == 4)
+
+    if not os.path.exists(data.proj_fn):
+        sys.stdout.write("Compute z projection...")
+        sys.stdout.flush()
+        zproj = utils.zproject(haussio_data.read_raw().squeeze())
+        np.save(data.proj_fn, zproj)
+        sys.stdout.write("done\n")
 
     thunder_roiraw_fn = data.data_path_comp + "_thunder_rois.npy"
 
     maxframes_ica = int(MAXFRAMES_ICA/(
-        experiment.xpx*experiment.ypx/(512.0*512.0)))
+        haussio_data.xpx*haussio_data.ypx/(512.0*512.0)))
     if not os.path.exists(thunder_roiraw_fn):
         # Find longest contiguous running region:
         if speed is not None:
             try:
-                assert(experiment.nframes == len(speed))
+                assert(haussio_data.nframes == len(speed))
             except AssertionError as err:
-                print("nframes, nspeed: ", experiment.nframes, len(speed))
+                print("nframes, nspeed: ", haussio_data.nframes, len(speed))
                 raise err
 
             # find startIdx that maximizes the median speed over maxframes_ica
@@ -1122,9 +1134,9 @@ def get_rois_thunder(data, sc, infer=True, speed=None, nrois_init=100):
     signal_label = 'thunder_ICA_rois' + data.roi_subset
 
     measured, zproj, spikes = extract_signals(
-        signal_label, rois, data, infer=infer)
+        signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, experiment, zproj, spikes
+    return rois, measured, zproj, spikes
 
 
 def get_vr_maps(data, measured, spikes, vrdict, method):
@@ -1208,7 +1220,7 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
     imp.reload(syncfiles.haussmeister)
 
     if data.fnvr is not None:
-        vrdict = syncfiles.read_files_2p(data)
+        vrdict, haussio_data = syncfiles.read_files_2p(data)
         vrspeed = vrdict["speed2p"]
     else:
         vrdict = None
@@ -1216,19 +1228,20 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
 
     lopass = 1.0
     if data.seg_method == "thunder":
-        rois, measured, experiment, zproj, spikes = get_rois_thunder(
-            data, tsc, infer, speed=vrspeed, nrois_init=data.nrois_init)
+        rois, measured, zproj, spikes = get_rois_thunder(
+            data, haussio_data, sc, infer, speed=vrspeed,
+            nrois_init=data.nrois_init)
     elif data.seg_method == "sima":
-        rois, measured, experiment, zproj, spikes = get_rois_sima(
-            data, infer)
+        rois, measured, zproj, spikes = get_rois_sima(
+            data, haussio_data, infer)
     elif data.seg_method == "ij":
-        rois, measured, experiment, zproj, spikes = get_rois_ij(
-            data, infer)
+        rois, measured, zproj, spikes = get_rois_ij(
+            data, haussio_data, infer)
     elif data.seg_method == "cnmf":
         speed_thr = 0.01  # m/s
         time_thr = 5000.0  # ms
-        rois, measured, experiment, zproj, spikes, vrdict = get_rois_cnmf(
-            data, vrdict, speed_thr, time_thr, data.nrois_init)
+        rois, measured, zproj, spikes, vrdict = get_rois_cnmf(
+            data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init)
         lopass = None
 
     if data.fnvr is not None:
@@ -1252,7 +1265,7 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
         mapdict = None
         minimaps = None
 
-    plot_rois(rois, measured, experiment, zproj, data.data_path_comp,
+    plot_rois(rois, measured, haussio_data, zproj, data.data_path_comp,
               pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
               infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
               minimaps=minimaps)
@@ -1400,7 +1413,7 @@ def eta(measured, vrdict, evcodelist):
 
 def thor_gain_roi_ij(exp_list, infer=True, infer_threshold=0.15):
     for data in exp_list:
-        rois, measured, experiment, zproj, spikes = \
+        rois, measured, haussio_data, zproj, spikes = \
             get_rois_ij(data, infer)
 
         vrdict = get_vr_data(data, measured, spikes)
@@ -1424,7 +1437,7 @@ def compare_rois(rois1, rois2):
     return True
 
 
-def extract_rois(signal_label, dataset, rois, data, dt):
+def extract_rois(signal_label, dataset, rois, data, haussio_data):
     """
     Extract fluorescence data from ROIs
 
@@ -1438,7 +1451,8 @@ def extract_rois(signal_label, dataset, rois, data, dt):
         sima ROIList
     data : ThorExperiment
         The ThorExperiment to be processed
-    dt : Frame interval
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
 
     Returns
     -------
@@ -1460,8 +1474,7 @@ def extract_rois(signal_label, dataset, rois, data, dt):
     measured = process_data(signals['raw'][0], detrend=data.detrend)
 
     if not os.path.exists(data.proj_fn):
-        zproj = utils.zproject(
-            np.array(dataset.sequences[0][:, 0, :, :, 0]).squeeze())
+        zproj = utils.zproject(haussio_data.read_raw().squeeze())
         np.save(data.proj_fn, zproj)
     else:
         zproj = np.load(data.proj_fn)
@@ -1597,7 +1610,7 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
     return xret
 
 
-def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
+def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
     """
     Identify ROIs, extract fluorescence and infer spikes using constrained
     non-negative matrix factorization (CNMF)
@@ -1606,6 +1619,8 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
     vrdict : dict
         Dictionary with processed VR data
     speed_thr : float
@@ -1621,8 +1636,6 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
         sima ROIList to be plotted
     measured : numpy.ndarray
         Processed fluorescence data for each ROI
-    experiment : haussio.HaussIO
-        haussio.HaussIO instance
     zproj : numpy.ndarray
         z-projected fluorescence image
     spikes : numpy.ndarray
@@ -1641,10 +1654,9 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
     else:
         mask2p = None
 
-    data_haussio = data.to_haussio(mc=True)
-    rois, measured, experiment, zproj, spikes, movie, noise = \
+    rois, measured, zproj, spikes, movie, noise = \
         cnmf.process_data_patches(
-            data_haussio, mask=mask2p, p=2, nrois_init=nrois_init)
+            haussio_data, mask=mask2p, p=2, nrois_init=nrois_init)
 
     if vrdict is not None:
         if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
@@ -1667,7 +1679,7 @@ def get_rois_cnmf(data, vrdict, speed_thr, time_thr, nrois_init):
 
     measured = process_data(measured, base_fraction=None, zscore=False)
 
-    return rois, measured, experiment, zproj, spikes, vrdict
+    return rois, measured, zproj, spikes, vrdict
 
 
 def collapse_time(time_full, maskvr):
