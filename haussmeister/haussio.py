@@ -257,8 +257,12 @@ class HaussIO(object):
             sequences = [sima.Sequence.create(
                 'TIFFs', [[self.filetrunk + self.format_index("?") + ".tif"]])]
         else:
-            sequences = [sima.Sequence.create(
-                'ndarray', self.read_raw()[:, np.newaxis, :, :, np.newaxis])]
+            rawarray = self.read_raw()
+            if rawarray.ndim == 3:
+                sequences = [sima.Sequence.create(
+                    'ndarray', rawarray[:, np.newaxis, :, :, np.newaxis])]
+            else:
+                sequences = [sima.Sequence.create('ndarray', rawarray)]
 
         if stopIdx is None:
             stopIdx = self.nframes
@@ -836,10 +840,12 @@ def compress_np(arr, path, rawfn, shape=None, compress=True):
 
 def raw2np(filename, shape):
     if filename[-3:] == ".xz":
-        sys.stdout.write("Decompressing data...\n")
+        sys.stdout.write("Decompressing {0}...\n".format(filename))
         sys.stdout.flush()
         with lzma.open(filename) as decompf:
             return np.fromstring(
                 decompf.read(), dtype=np.uint16).reshape(shape)
     else:
+        sys.stdout.write("Reading {0}...\n".format(filename))
+        sys.stdout.flush()
         return np.fromfile(filename, dtype=np.uint16).reshape(shape)
