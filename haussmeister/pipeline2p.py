@@ -1072,28 +1072,28 @@ def get_rois_thunder(
             maxstart = 0
 
         from thunder import images
+        from thunder import series
         from factorization import ICA
 
         print("Reading files into thunder... ")
 
-        data_thunder = images.loadImages(
-            data.mc_tiff_dir, inputFormat='tif',
-            startIdx=maxstart, stopIdx=maxstart+maxframes_ica,
-            npartitions=1, engine=sc)
-        data_thunder.cache()
-        data_thunder.count()
-
-        data_time_series = data_thunder.toSeries().toTimeSeries()
-        data_time_series.cache()
-        data_time_series.count()
+        rawarray = haussio_data.read_raw()
+        if rawarray.ndim > 3:
+            rawarray.reshape(rawarray.shape[0], rawarray.shape[2], rawarray.shape[3])
+        data_series = images.fromarray(
+            haussio_data.read_raw()[maxstart:maxstart+maxframes_ica],
+            engine=sc).toseries().flatten()
+        data_series.cache()
+        data_series.count()
 
         print("Running thunder ICA... ")
         t0 = time.time()
-        model = ICA(k=nrois_init, c=int(nrois_init/2),
-                    svdMethod='em').fit(data_time_series)
+        W, sigs, A = ICA(
+            k=int(nrois_init/2), k_pca=nrois_init, svd_method='em').fit(
+                data_series)
         print("Thunder ICA took {0:.2f} s".format(time.time()-t0))
 
-        imgs = model.sigs.pack()
+        imgs = sigs.toarray()
 
         np.save(thunder_roiraw_fn, imgs)
 
@@ -1101,13 +1101,17 @@ def get_rois_thunder(
 
         imgs = np.load(thunder_roiraw_fn)
 
+    imgs = imgs.T
+    imgs = np.reshape(imgs, (
+        imgs.shape[0], dataset_mc.frame_shape[1], dataset_mc.frame_shape[2]))
+
     thunder_roi_fn = data.data_path_comp + "_rois_thunder.pkl"
     if not os.path.exists(thunder_roi_fn):
         rois = ROIList([sima.ROI.ROI(img) for img in imgs])
 
         sparsify = sima.segment.SparseROIsFromMasks(
-            min_size=80.0, n_processes=NCPUS)
-        smoothen = sima.segment.SmoothROIBoundaries(n_processes=NCPUS)
+            min_size=80.0, n_processes=1) #NCPUS)
+        smoothen = sima.segment.SmoothROIBoundaries(n_processes=1)#NCPUS)
         merge = sima.segment.MergeOverlapping(threshold=0.5)
         remove_lines = sima.segment.ROIFilter(
             lambda roi: (
@@ -1115,10 +1119,10 @@ def get_rois_thunder(
                 (roi.coords[0].T[0].max()-roi.coords[0].T[0].min()) > 0.125))
         t0 = time.time()
         print("Postprocessing... ")
-        rois = remove_lines.apply(
-            merge.apply(
+        # rois = remove_lines.apply(
+        rois = merge.apply(
                 smoothen.apply(
-                    sparsify.apply(rois))))
+                    sparsify.apply(rois))) # )
         print("Postprocessing took {:.2f}".format(time.time()-t0))
         rois.save(thunder_roi_fn)
     else:
@@ -1195,7 +1199,7 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
         return None
 
 
-def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
+def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1203,8 +1207,8 @@ def thor_extract_roi(data, tsc=None, infer=True, infer_threshold=0.15):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
-    tsc : thunder.ThunderContext, optional
-        A ThunderContext in case the method is "thunder"
+    sc : SparkContext
+        A SparkContext
     infer : bool, optional
         Perform spike inference. Default: True
     infer_threshold : float, optional
