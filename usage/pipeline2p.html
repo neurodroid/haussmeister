@@ -535,7 +535,22 @@ at the beginning of the recording will be used.</p>
 </ul>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>mapdict</strong> &#8211; Dictionary with processed VR data</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>mapdict</strong> &#8211; Dictionary with processed VR data. Contains:
+&#8220;t_2p&#8221;: Time points of 2p frames, shape (nt2p)
+&#8220;DFoF_2p&#8221;: Fluorescence for each roi, shape (nrois, nt2p)
+&#8220;spikes_2p&#8221;: Spike inference values for each roi, shape (nrois, nt2p)
+&#8220;t_vr&#8221;: Time points of VR values, shape (ntvr)
+&#8220;posy_vr&#8221;: Position in VR along y, shape (ntvr)
+&#8220;speed_vr&#8221;: Speed in VR, shape (ntvr)
+&#8220;events&#8221;: List of events, each containing the time of the event (event.time) and a 2-character event code (event.code)
+&#8220;t_ev_matlab&#8221;: List of event times for processing with MATLAB
+&#8220;events_matlab&#8221;: Numerical event codes for processing with MATLAB
+&#8220;fluomap&#8221;: Fluorescence values against space, shape (nrois, 2)
+fluomap[:, 0] is position along y
+fluomap[:, 1] is fluorescence along y
+&#8220;infermap&#8221;: Spike inference values against space, shape (nrois, 2)
+infermap[:, 0] is position along y
+infermap[:, 1] is fluorescence along y</p>
 </td>
 </tr>
 <tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">dict</p>

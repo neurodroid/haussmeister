@@ -1280,7 +1280,22 @@
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
 <span class="sd">    mapdict : dict</span>
-<span class="sd">        Dictionary with processed VR data</span>
+<span class="sd">        Dictionary with processed VR data. Contains:</span>
+<span class="sd">        &quot;t_2p&quot;: Time points of 2p frames, shape (nt2p)</span>
+<span class="sd">        &quot;DFoF_2p&quot;: Fluorescence for each roi, shape (nrois, nt2p)</span>
+<span class="sd">        &quot;spikes_2p&quot;: Spike inference values for each roi, shape (nrois, nt2p)</span>
+<span class="sd">        &quot;t_vr&quot;: Time points of VR values, shape (ntvr)</span>
+<span class="sd">        &quot;posy_vr&quot;: Position in VR along y, shape (ntvr)</span>
+<span class="sd">        &quot;speed_vr&quot;: Speed in VR, shape (ntvr)</span>
+<span class="sd">        &quot;events&quot;: List of events, each containing the time of the event (event.time) and a 2-character event code (event.code)</span>
+<span class="sd">        &quot;t_ev_matlab&quot;: List of event times for processing with MATLAB</span>
+<span class="sd">        &quot;events_matlab&quot;: Numerical event codes for processing with MATLAB</span>
+<span class="sd">        &quot;fluomap&quot;: Fluorescence values against space, shape (nrois, 2)</span>
+<span class="sd">        fluomap[:, 0] is position along y</span>
+<span class="sd">        fluomap[:, 1] is fluorescence along y</span>
+<span class="sd">        &quot;infermap&quot;: Spike inference values against space, shape (nrois, 2)</span>
+<span class="sd">        infermap[:, 0] is position along y</span>
+<span class="sd">        infermap[:, 1] is fluorescence along y</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="kn">import</span> <span class="nn">syncfiles</span>
     <span class="kn">import</span> <span class="nn">imp</span>
