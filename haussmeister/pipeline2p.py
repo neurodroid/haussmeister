@@ -1110,8 +1110,8 @@ def get_rois_thunder(
         rois = ROIList([sima.ROI.ROI(img) for img in imgs])
 
         sparsify = sima.segment.SparseROIsFromMasks(
-            min_size=80.0, n_processes=1) #NCPUS)
-        smoothen = sima.segment.SmoothROIBoundaries(n_processes=1)#NCPUS)
+            min_size=80.0, n_processes=NCPUS)
+        smoothen = sima.segment.SmoothROIBoundaries(n_processes=NCPUS)
         merge = sima.segment.MergeOverlapping(threshold=0.5)
         remove_lines = sima.segment.ROIFilter(
             lambda roi: (
