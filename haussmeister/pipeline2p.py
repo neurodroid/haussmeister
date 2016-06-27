@@ -1164,20 +1164,36 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
     -------
     mapdict : dict
         Dictionary with processed VR data. Contains:
+
         "t_2p": Time points of 2p frames, shape (nt2p)
+
         "DFoF_2p": Fluorescence for each roi, shape (nrois, nt2p)
+
         "spikes_2p": Spike inference values for each roi, shape (nrois, nt2p)
+
         "t_vr": Time points of VR values, shape (ntvr)
+
         "posy_vr": Position in VR along y, shape (ntvr)
+
         "speed_vr": Speed in VR, shape (ntvr)
-        "events": List of events, each containing the time of the event (event.time) and a 2-character event code (event.code)
+
+        "events": List of events, each containing the time of the 
+        event (event.time) and a 2-character event code (event.code)
+
         "t_ev_matlab": List of event times for processing with MATLAB
+
         "events_matlab": Numerical event codes for processing with MATLAB
+
         "fluomap": Fluorescence values against space, shape (nrois, 2)
+
         fluomap[:, 0] is position along y
+
         fluomap[:, 1] is fluorescence along y
+
         "infermap": Spike inference values against space, shape (nrois, 2)
+
         infermap[:, 0] is position along y
+
         infermap[:, 1] is fluorescence along y
     """
     import syncfiles
