@@ -150,17 +150,16 @@
 <p>Define your recording as a <a class="reference internal" href="usage/pipeline2p.html#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><code class="xref py py-obj docutils literal"><span class="pre">pipeline2p.ThorExperiment</span></code></a>:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">haussio</span> <span class="kn">import</span> <span class="n">pipeline2p</span> <span class="k">as</span> <span class="n">p2p</span>
 
-<span class="n">ROOT_PATH</span> <span class="o">=</span> <span class="s2">&quot;/Volumes/fileserver/data&quot;</span>
-
 <span class="n">experiment</span> <span class="o">=</span> <span class="n">p2p</span><span class="o">.</span><span class="n">ThorExperiment</span><span class="p">(</span>
-    <span class="s2">&quot;2016/2016-03/2016-03-21/DKL7-verm6f_002_016&quot;</span><span class="p">,</span> <span class="c1"># Path to experiment (from root_path)</span>
-    <span class="s2">&quot;A&quot;</span><span class="p">,</span> <span class="c1"># Channel</span>
-    <span class="s2">&quot;CE&quot;</span><span class="p">,</span> <span class="c1"># Brain region</span>
-    <span class="s2">&quot;DKL7-verm6f_002_sync_016&quot;</span><span class="p">,</span> <span class="c1"># ThorSync file name</span>
-    <span class="s2">&quot;vr/20160321_0029&quot;</span><span class="p">,</span> <span class="c1"># Corresponding VR file</span>
-    <span class="n">mc_method</span><span class="o">=</span><span class="s2">&quot;hmmc&quot;</span><span class="p">,</span> <span class="c1"># Motion correction method</span>
-    <span class="n">root_path</span><span class="o">=</span><span class="s2">&quot;/Volumes/fileserver/data/&quot;</span><span class="p">,</span> <span class="c1"># Root path of your data</span>
-    <span class="n">seg_method</span><span class="o">=</span><span class="s2">&quot;cnmf&quot;</span><span class="p">)</span> <span class="c1"># Segmentation method</span>
+    <span class="s2">&quot;2016/2016-03/2016-03-21/DKL7-verm6f_002_016&quot;</span><span class="p">,</span>  <span class="c1"># Path to experiment (from root_path)</span>
+    <span class="s2">&quot;A&quot;</span><span class="p">,</span>  <span class="c1"># Channel</span>
+    <span class="s2">&quot;CE&quot;</span><span class="p">,</span>  <span class="c1"># Brain region</span>
+    <span class="s2">&quot;DKL7-verm6f_002_sync_016&quot;</span><span class="p">,</span>  <span class="c1"># ThorSync file name</span>
+    <span class="s2">&quot;vr/20160321_0029&quot;</span><span class="p">,</span>  <span class="c1"># Corresponding VR file</span>
+    <span class="n">mc_method</span><span class="o">=</span><span class="s2">&quot;hmmc&quot;</span><span class="p">,</span>  <span class="c1"># Motion correction method</span>
+    <span class="n">root_path</span><span class="o">=</span><span class="s2">&quot;/Volumes/fileserver/data/&quot;</span><span class="p">,</span>  <span class="c1"># Root path of your data</span>
+    <span class="n">seg_method</span><span class="o">=</span><span class="s2">&quot;cnmf&quot;</span>  <span class="c1"># Segmentation method</span>
+<span class="p">)</span>
 </pre></div>
 </div>
 <p>Preprocess your data (currently this involves motion correction only):</p>
