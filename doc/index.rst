@@ -20,17 +20,16 @@ Define your recording as a :obj:`pipeline2p.ThorExperiment`:
 
    from haussio import pipeline2p as p2p
 
-   ROOT_PATH = "/Volumes/fileserver/data"
-                
    experiment = p2p.ThorExperiment(
-       "2016/2016-03/2016-03-21/DKL7-verm6f_002_016", # Path to experiment (from root_path)
-       "A", # Channel
-       "CE", # Brain region
-       "DKL7-verm6f_002_sync_016", # ThorSync file name
-       "vr/20160321_0029", # Corresponding VR file
-       mc_method="hmmc", # Motion correction method
-       root_path="/Volumes/fileserver/data/", # Root path of your data
-       seg_method="cnmf") # Segmentation method
+       "2016/2016-03/2016-03-21/DKL7-verm6f_002_016",  # Path to experiment (from root_path)
+       "A",  # Channel
+       "CE",  # Brain region
+       "DKL7-verm6f_002_sync_016",  # ThorSync file name
+       "vr/20160321_0029",  # Corresponding VR file
+       mc_method="hmmc",  # Motion correction method
+       root_path="/Volumes/fileserver/data/",  # Root path of your data
+       seg_method="cnmf"  # Segmentation method
+   )
 
 
 Preprocess your data (currently this involves motion correction only):
