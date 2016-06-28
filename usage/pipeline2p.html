@@ -546,12 +546,14 @@ at the beginning of the recording will be used.</p>
 event (event.time) and a 2-character event code (event.code)</p>
 <p>&#8220;t_ev_matlab&#8221;: List of event times for processing with MATLAB</p>
 <p>&#8220;events_matlab&#8221;: Numerical event codes for processing with MATLAB</p>
-<p>&#8220;fluomap&#8221;: Fluorescence values against space, shape (nrois, 2)</p>
-<p>fluomap[:, 0] is position along y</p>
-<p>fluomap[:, 1] is fluorescence along y</p>
-<p>&#8220;infermap&#8221;: Spike inference values against space, shape (nrois, 2)</p>
-<p>infermap[:, 0] is position along y</p>
-<p>infermap[:, 1] is fluorescence along y</p>
+<p>&#8220;fluomap&#8221;: Mean Fluorescence values against space,
+shape (nrois, 2, nbins)</p>
+<p>fluomap[:, 0, :] is position along y</p>
+<p>fluomap[:, 1, :] is fluorescence along y</p>
+<p>&#8220;infermap&#8221;: Spike inference values against space,
+shape (nrois, 2, nbins)</p>
+<p>infermap[:, 0, :] is position along y</p>
+<p>infermap[:, 1, :] is fluorescence along y</p>
 </p>
 </td>
 </tr>
