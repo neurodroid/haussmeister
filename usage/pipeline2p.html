@@ -255,7 +255,7 @@ Default: &#8220;cnmf&#8221;</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sima.ImagingDataset</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/datasets.html#sima.ImagingDataset" title="(in SIMA v1.3)">sima.ImagingDataset</a></p>
 </td>
 </tr>
 </tbody>
@@ -298,8 +298,8 @@ Default: &#8220;cnmf&#8221;</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>speed</strong> (<em>numpy.ndarray</em>) &#8211; Running speed</li>
-<li><strong>speed_time</strong> (<em>numpy.ndarray</em>) &#8211; Time of running speed</li>
+<li><strong>speed</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Running speed</li>
+<li><strong>speed_time</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Time of running speed</li>
 <li><strong>speed_thr</strong> (<em>float</em>) &#8211; Speed threshold</li>
 <li><strong>time_thr</strong> (<em>float</em>) &#8211; Maximal resting duration
 If the resting period is shorter than time_thr, it will be counted as
@@ -310,7 +310,7 @@ a non-stationary period</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>running_mask</strong> &#8211; Boolean mask denoting stationary periods</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)">numpy.ndarray</a></p>
 </td>
 </tr>
 </tbody>
@@ -326,7 +326,7 @@ a non-stationary period</li>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>measured</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Processed fluorescence data for each ROI</li>
 <li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
 <li><strong>evcodelist</strong> (<em>list of str</em>) &#8211; List of event types to trigger on</li>
 </ul>
@@ -347,7 +347,7 @@ a non-stationary period</li>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be extracted</li>
 <li><strong>dataset</strong> (<em>sima.Imaging.Dataset</em>) &#8211; sima dataset</li>
-<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList</li>
+<li><strong>rois</strong> (<a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/rois.html#sima.ROI.ROIList" title="(in SIMA v1.3)"><em>sima.ROI.ROIList</em></a>) &#8211; sima ROIList</li>
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
 <li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 </ul>
@@ -374,7 +374,7 @@ a non-stationary period</li>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be extracted</li>
-<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
+<li><strong>rois</strong> (<a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/rois.html#sima.ROI.ROIList" title="(in SIMA v1.3)"><em>sima.ROI.ROIList</em></a>) &#8211; sima ROIList to be plotted</li>
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
 <li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
@@ -528,8 +528,8 @@ at the beginning of the recording will be used.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>data</strong> (<a class="reference internal" href="#pipeline2p.ThorExperiment" title="pipeline2p.ThorExperiment"><em>ThorExperiment</em></a>) &#8211; The ThorExperiment to be processed</li>
-<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
-<li><strong>spikes</strong> (<em>numpy.ndarray</em>) &#8211; Spike inference values</li>
+<li><strong>measured</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>spikes</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Spike inference values</li>
 <li><strong>vrdict</strong> (<em>dict</em>) &#8211; Dictionary with processed VR data</li>
 <li><strong>method</strong> (<em>str</em>) &#8211; Method that was used to extract ROIs</li>
 </ul>
@@ -599,11 +599,11 @@ normalized to the maximium value over all time-bins.</li>
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sig</strong> (<em>numpy.ndarray</em>) &#8211; Data to be normalized</td>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><strong>sig</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Data to be normalized</td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>norm</strong> &#8211; Normalized data</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body">numpy.ndarray</td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)">numpy.ndarray</a></td>
 </tr>
 </tbody>
 </table>
@@ -619,10 +619,10 @@ inference, fluorescence and spike inference against position (if available)</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
-<li><strong>rois</strong> (<em>sima.ROI.ROIList</em>) &#8211; sima ROIList to be plotted</li>
-<li><strong>measured</strong> (<em>numpy.ndarray</em>) &#8211; Processed fluorescence data for each ROI</li>
+<li><strong>rois</strong> (<a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/rois.html#sima.ROI.ROIList" title="(in SIMA v1.3)"><em>sima.ROI.ROIList</em></a>) &#8211; sima ROIList to be plotted</li>
+<li><strong>measured</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Processed fluorescence data for each ROI</li>
 <li><strong>haussio_data</strong> (<a class="reference internal" href="haussio.html#haussio.HaussIO" title="haussio.HaussIO"><em>haussio.HaussIO</em></a>) &#8211; haussio.HaussIO instance</li>
-<li><strong>zproj</strong> (<em>numpy.ndarray</em>) &#8211; z-projected fluorescence image</li>
+<li><strong>zproj</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; z-projected fluorescence image</li>
 <li><strong>data_path</strong> (<em>str</em>) &#8211; Path to data directory</li>
 <li><strong>pdf_suffix</strong> (<em>str, optional</em>) &#8211; Suffix appended to pdf. Default: &#8220;&#8221;</li>
 <li><strong>spikes</strong> (<em>numpy.ndarray, optional</em>) &#8211; Spike inference values. Default: None</li>
@@ -647,7 +647,7 @@ inference, fluorescence and spike inference against position (if available)</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>data</strong> (<em>numpy.ndarray</em>) &#8211; Fluorescence trace, shape: (nrois, nframes)</li>
+<li><strong>data</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Fluorescence trace, shape: (nrois, nframes)</li>
 <li><strong>detrend</strong> (<em>bool, optional</em>) &#8211; Detrend fluorescence traces. Default: False</li>
 <li><strong>base_fraction</strong> (<em>float, optional</em>) &#8211; Bottom fraction to be used for F_0 computation. If None, F_0 is set to
 data.mean(). Default: 0.05</li>
@@ -658,7 +658,7 @@ data.mean(). Default: 0.05</li>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>ret_data</strong> &#8211; Processed data</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">numpy.ndarray</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)">numpy.ndarray</a></p>
 </td>
 </tr>
 </tbody>
@@ -852,7 +852,7 @@ Default: &#8220;cnmf&#8221;</p>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>dataset</strong> &#8211; A sima.ImagingDataset instance</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last">sima.ImagingDataset</p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/datasets.html#sima.ImagingDataset" title="(in SIMA v1.3)">sima.ImagingDataset</a></p>
 </td>
 </tr>
 </tbody>
