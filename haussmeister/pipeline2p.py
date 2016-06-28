@@ -1177,24 +1177,26 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
 
         "speed_vr": Speed in VR, shape (ntvr)
 
-        "events": List of events, each containing the time of the 
+        "events": List of events, each containing the time of the
         event (event.time) and a 2-character event code (event.code)
 
         "t_ev_matlab": List of event times for processing with MATLAB
 
         "events_matlab": Numerical event codes for processing with MATLAB
 
-        "fluomap": Fluorescence values against space, shape (nrois, 2)
+        "fluomap": Mean Fluorescence values against space,
+        shape (nrois, 2, nbins)
 
-        fluomap[:, 0] is position along y
+        fluomap[:, 0, :] is position along y
 
-        fluomap[:, 1] is fluorescence along y
+        fluomap[:, 1, :] is fluorescence along y
 
-        "infermap": Spike inference values against space, shape (nrois, 2)
+        "infermap": Spike inference values against space,
+        shape (nrois, 2, nbins)
 
-        infermap[:, 0] is position along y
+        infermap[:, 0, :] is position along y
 
-        infermap[:, 1] is fluorescence along y
+        infermap[:, 1, :] is fluorescence along y
     """
     import syncfiles
     import imp
