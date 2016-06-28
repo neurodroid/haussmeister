@@ -806,7 +806,7 @@ def infer_spikes(dataset, signal_label):
 
     Parameters
     ----------
-    dataset : sima.Imaging.Dataset
+    dataset : sima.ImagingDataset
         Dataset to be processed
     signal_label : str
         Label of signal to be processed
