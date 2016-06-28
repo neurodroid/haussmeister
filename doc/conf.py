@@ -33,11 +33,16 @@ extensions = [
     'sphinx.ext.autodoc',
     'sphinx.ext.todo',
     'sphinx.ext.ifconfig',
+    'sphinx.ext.intersphinx',
     'sphinx.ext.viewcode',
     'sphinx.ext.githubpages',
     'sphinx.ext.napoleon',
     'sphinx.ext.mathjax',
 ]
+
+intersphinx_mapping = {
+    'numpy': ('http://docs.scipy.org/doc/numpy/', None),
+    'sima': ('http://www.losonczylab.org/sima/', None)}
 
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ['_templates']
