@@ -1234,7 +1234,8 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
         return None
 
 
-def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
+def thor_extract_roi(
+        data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1250,6 +1251,8 @@ def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
         Activity threshold of spike inference. Default: 0.15
     nrois_init : int, optional
         Initial estimate of number of ROIs. Default: 200
+    selected_rois : list of ints, optional
+        Indices of ROIs to be plotted. Default: None (plots all ROIs)
     """
     assert(data.seg_method in ["thunder", "sima", "ij", "cnmf"])
 
@@ -1303,6 +1306,9 @@ def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
     else:
         mapdict = None
         minimaps = None
+
+    if selected_rois is not None:
+        rois = rois[selected_rois]
 
     plot_rois(rois, measured, haussio_data, zproj, data.data_path_comp,
               pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
