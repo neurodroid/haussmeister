@@ -84,25 +84,27 @@ class ThorExperiment(object):
     fn2p : str
         File path (relative to root_path) leading to directory that contains
         tiff series
-    ch2p : str
+    ch2p : str, optional
         Channel. Default: "A"
-    area2p : str
+    area2p : str, optional
         Brain area code (e.g. "CA1"). Default: None
-    fnsync : str
+    fnsync : str, optional
         Thorsync directory name. Default: None
-    fnvr : str
+    fnvr : str, optional
         VR file name trunk. Default: None
-    roi_subset : str
+    roi_subset : str, optional
         String appended to roi label to distinguish between roi subsets.
         Default: ""
-    mc_method : str
+    mc_method : str, optional
         Motion correction method. One of "hmmc", "dft", "hmmcres", "hmmcframe",
         "hmmcpx", "calblitz". Default: "hmmc"
-    detrend : bool
+    detrend : bool, optional
         Whether to detrend fluorescence traces. Default: False
-    roi_translate : 2-tuple of ints
+    nrois_init : int, optional
+        Estimate of the number of ROIs. Default: 200
+    roi_translate : 2-tuple of ints, optional
         Apply ROI translation in x and y. Default: None
-    root_path : str
+    root_path : str, optional
         Root directory leading to fn2p. Default: ""
     seg_method : str, optional
         One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
