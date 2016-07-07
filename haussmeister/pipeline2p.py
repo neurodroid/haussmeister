@@ -1308,7 +1308,9 @@ def thor_extract_roi(
         minimaps = None
 
     if selected_rois is not None:
-        rois = rois[selected_rois]
+        rois = [rois[sel] for sel in selected_rois]
+        measured = measured[selected_rois, :]
+        spikes = spikes[selected_rois, :]
 
     plot_rois(rois, measured, haussio_data, zproj, data.data_path_comp,
               pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
