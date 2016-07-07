@@ -9,8 +9,8 @@
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap.min.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootstrap-3.3.6/css/bootstrap-theme.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootstrap-3.2.0/css/bootstrap-theme.min.css" type="text/css" />
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     
     <script type="text/javascript">
@@ -28,7 +28,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.2.0/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
     <link rel="up" title="haussmeister" href="index.html" />
@@ -129,7 +129,7 @@
 
 <div class="container">
   <div class="row">
-    <div class="col-md-12 content">
+    <div class="col-md-12">
       
   <div class="section" id="module-pipeline2p">
 <span id="pipeline2p-module"></span><h1>pipeline2p module<a class="headerlink" href="#module-pipeline2p" title="Permalink to this headline">¶</a></h1>
@@ -152,57 +152,63 @@ tiff series</p>
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.ch2p">
 <code class="descname">ch2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.ch2p" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.area2p">
 <code class="descname">area2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.area2p" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.fnsync">
 <code class="descname">fnsync</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fnsync" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Thorsync directory name. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Thorsync directory name. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.fnvr">
 <code class="descname">fnvr</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fnvr" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; VR file name trunk. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; VR file name trunk. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.roi_subset">
 <code class="descname">roi_subset</code><a class="headerlink" href="#pipeline2p.ThorExperiment.roi_subset" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; String appended to roi label to distinguish between roi subsets.
+<dd><p><em>str, optional</em> &#8211; String appended to roi label to distinguish between roi subsets.
 Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.mc_method">
 <code class="descname">mc_method</code><a class="headerlink" href="#pipeline2p.ThorExperiment.mc_method" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
+<dd><p><em>str, optional</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
 &#8220;hmmcpx&#8221;, &#8220;calblitz&#8221;. Default: &#8220;hmmc&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.detrend">
 <code class="descname">detrend</code><a class="headerlink" href="#pipeline2p.ThorExperiment.detrend" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+<dd><p><em>bool, optional</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.nrois_init">
+<code class="descname">nrois_init</code><a class="headerlink" href="#pipeline2p.ThorExperiment.nrois_init" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int, optional</em> &#8211; Estimate of the number of ROIs. Default: 200</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.roi_translate">
 <code class="descname">roi_translate</code><a class="headerlink" href="#pipeline2p.ThorExperiment.roi_translate" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>2-tuple of ints</em> &#8211; Apply ROI translation in x and y. Default: None</p>
+<dd><p><em>2-tuple of ints, optional</em> &#8211; Apply ROI translation in x and y. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.root_path">
 <code class="descname">root_path</code><a class="headerlink" href="#pipeline2p.ThorExperiment.root_path" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -573,7 +579,7 @@ shape (nrois, 2, nbins)</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>dataset</strong> (<em>sima.Imaging.Dataset</em>) &#8211; Dataset to be processed</li>
+<li><strong>dataset</strong> (<a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/datasets.html#sima.ImagingDataset" title="(in SIMA v1.3)"><em>sima.ImagingDataset</em></a>) &#8211; Dataset to be processed</li>
 <li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be processed</li>
 </ul>
 </td>
@@ -749,57 +755,63 @@ tiff series</p>
 <dl class="attribute">
 <dt>
 <code class="descname">ch2p</code></dt>
-<dd><p><em>str</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">area2p</code></dt>
-<dd><p><em>str</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">fnsync</code></dt>
-<dd><p><em>str</em> &#8211; Thorsync directory name. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Thorsync directory name. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">fnvr</code></dt>
-<dd><p><em>str</em> &#8211; VR file name trunk. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; VR file name trunk. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">roi_subset</code></dt>
-<dd><p><em>str</em> &#8211; String appended to roi label to distinguish between roi subsets.
+<dd><p><em>str, optional</em> &#8211; String appended to roi label to distinguish between roi subsets.
 Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">mc_method</code></dt>
-<dd><p><em>str</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
+<dd><p><em>str, optional</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
 &#8220;hmmcpx&#8221;, &#8220;calblitz&#8221;. Default: &#8220;hmmc&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">detrend</code></dt>
-<dd><p><em>bool</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+<dd><p><em>bool, optional</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">nrois_init</code></dt>
+<dd><p><em>int, optional</em> &#8211; Estimate of the number of ROIs. Default: 200</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">roi_translate</code></dt>
-<dd><p><em>2-tuple of ints</em> &#8211; Apply ROI translation in x and y. Default: None</p>
+<dd><p><em>2-tuple of ints, optional</em> &#8211; Apply ROI translation in x and y. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">root_path</code></dt>
-<dd><p><em>str</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -876,7 +888,7 @@ Default: &#8220;cnmf&#8221;</p>
     </p>
     <p>
         &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.4.<br/>
+      Created using <a href="http://sphinx.pocoo.org/">Sphinx</a> 1.4.4.<br/>
     </p>
   </div>
 </footer>
