@@ -225,7 +225,8 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
     return rois, C2, zproj, S2, Y, YrA
 
 
-def process_data_patches(haussio_data, mask=None, p=2, nrois_init=400):
+def process_data_patches(
+        haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
     fn_cnmf = haussio_data.dirname_comp + '_cnmf.mat'
 
     tiffs_to_cnmf(haussio_data, mask)
@@ -343,15 +344,15 @@ def process_data_patches(haussio_data, mask=None, p=2, nrois_init=400):
 
     # DF_F, DF = cse.extract_DF_F(Y.reshape(d1*d2, T), A2, C2)
 
-    t0 = time.time()
-    sys.stdout.write("Ordering components... ")
-    sys.stdout.flush()
-    A_or, C_or, srt = cse.order_components(A2, C2)
-    sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
+    # t0 = time.time()
+    # sys.stdout.write("Ordering components... ")
+    # sys.stdout.flush()
+    # A_or, C_or, srt = cse.order_components(A2, C2)
+    # sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
     cse.utilities.stop_server()
 
-    polygons = contour(A2, d1, d2, thr=0.9)
+    polygons = contour(A2, d1, d2, thr=roi_iceberg)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
 
     return rois, C2, zproj, S2, Y, YrA

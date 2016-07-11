@@ -84,25 +84,27 @@ class ThorExperiment(object):
     fn2p : str
         File path (relative to root_path) leading to directory that contains
         tiff series
-    ch2p : str
+    ch2p : str, optional
         Channel. Default: "A"
-    area2p : str
+    area2p : str, optional
         Brain area code (e.g. "CA1"). Default: None
-    fnsync : str
+    fnsync : str, optional
         Thorsync directory name. Default: None
-    fnvr : str
+    fnvr : str, optional
         VR file name trunk. Default: None
-    roi_subset : str
+    roi_subset : str, optional
         String appended to roi label to distinguish between roi subsets.
         Default: ""
-    mc_method : str
+    mc_method : str, optional
         Motion correction method. One of "hmmc", "dft", "hmmcres", "hmmcframe",
         "hmmcpx", "calblitz". Default: "hmmc"
-    detrend : bool
+    detrend : bool, optional
         Whether to detrend fluorescence traces. Default: False
-    roi_translate : 2-tuple of ints
+    nrois_init : int, optional
+        Estimate of the number of ROIs. Default: 200
+    roi_translate : 2-tuple of ints, optional
         Apply ROI translation in x and y. Default: None
-    root_path : str
+    root_path : str, optional
         Root directory leading to fn2p. Default: ""
     seg_method : str, optional
         One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
@@ -532,7 +534,8 @@ def norm(sig):
 
 def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
-              lopass=1.0, plot_events=False, minimaps=None, dpi=1200):
+              lopass=1.0, plot_events=False, minimaps=None, dpi=1200,
+              selected_rois=None):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -564,6 +567,8 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         Lowpass filter frequency for plotted traces. Default: 1.0
     plot_events : bool, optional
         Plot events. Default: False
+    selected_rois : list of ints, optional
+        Indices of ROIs to be plotted. Default: None (plots all ROIs)
     """
     fig = plt.figure(figsize=(18, 24))
     colors = ['r', 'g', 'b', 'c', 'm', 'y']
@@ -639,7 +644,11 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             ax_maps_infer = stfio_plot.StandardAxis(
                 fig, gs[strow:, 3:4], hasx=True, hasy=False, sharey=ax_spike)
 
+    normamp = None
     for nroi, roi in enumerate(rois):
+        if selected_rois is not None and nroi not in selected_rois:
+            continue
+
         sys.stdout.write("\rROI %d/%d" % (nroi+1, len(rois)))
         sys.stdout.flush()
         if lopass is not None:
@@ -650,14 +659,14 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         else:
             meas_filt = measured[nroi, ndiscard:]
         meas_filt -= meas_filt.min()
-        if nroi == 0:
+        if normamp is None:
             normamp = meas_filt.max() - meas_filt.min()
 
         try:
             ax2.plot(roi.coords[0][:, 0], roi.coords[0][:, 1],
                      colors[nroi % len(colors)])
             ax2.text(roi.coords[0][0, 0], roi.coords[0][0, 1],
-                     "{0}".format(nroi+1),
+                     "{0}".format(nroi),
                      color=colors[nroi % len(colors)],
                      fontsize=10)
         except sima.ROI.NonBooleanMask:
@@ -695,7 +704,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos,
             colors[nroi % len(colors)])
         ax.text(0, (meas_filt-meas_filt.min()+pos).mean(),
-                "{0}".format(nroi + 1),
+                "{0}".format(nroi),
                 color=colors[nroi % len(colors)], ha='right',
                 fontweight=fontweight, fontsize=fontsize)
         if mapdict is not None:
@@ -748,15 +757,22 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     fig_rois_fluo = plt.figure(figsize=(24, 24))
     fig_rois_spikes = plt.figure(figsize=(24, 24))
-    ncols = int(np.ceil(np.sqrt(len(minimaps))))
-    nrows = int(np.ceil(len(minimaps)/float(ncols)))
-
+    if selected_rois is None:
+        ncols = int(np.ceil(np.sqrt(len(minimaps))))
+        nrows = int(np.ceil(len(minimaps)/float(ncols)))
+    else:
+        ncols = int(np.ceil(np.sqrt(len(selected_rois))))
+        nrows = int(np.ceil(len(selected_rois)/float(ncols)))
     gs_fluo = gridspec.GridSpec(nrows, ncols)
     gs_spikes = gridspec.GridSpec(nrows, ncols)
 
+    roi_counter = 0
     for nroi, (iroi, minimaps_roi) in enumerate(minimaps):
-        col = nroi % ncols
-        row = int(nroi/ncols)
+        if selected_rois is not None and iroi not in selected_rois:
+            continue
+
+        col = roi_counter % ncols
+        row = int(roi_counter/ncols)
         ax_fluo = stfio_plot.StandardAxis(
             fig_rois_fluo, gs_fluo[row, col],
             hasx=nroi == len(minimaps)-1, hasy=True)
@@ -794,6 +810,8 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         ax_spikes.set_ylim(
             0, (mapdict['infermap'][iroi][1].max() -
                 mapdict['infermap'][iroi][1].min())*2)
+        roi_counter += 1
+
     fig_rois_fluo.savefig(
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
     fig_rois_spikes.savefig(
@@ -806,7 +824,7 @@ def infer_spikes(dataset, signal_label):
 
     Parameters
     ----------
-    dataset : sima.Imaging.Dataset
+    dataset : sima.ImagingDataset
         Dataset to be processed
     signal_label : str
         Label of signal to be processed
@@ -1232,7 +1250,9 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
         return None
 
 
-def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
+def thor_extract_roi(
+        data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None,
+        roi_iceberg=0.9):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1248,6 +1268,10 @@ def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
         Activity threshold of spike inference. Default: 0.15
     nrois_init : int, optional
         Initial estimate of number of ROIs. Default: 200
+    selected_rois : list of ints, optional
+        Indices of ROIs to be plotted. Default: None (plots all ROIs)
+    roi_iceberg : float, optional
+        Relative level at which CNMF ROI contours will be plotted. Default: 0.9
     """
     assert(data.seg_method in ["thunder", "sima", "ij", "cnmf"])
 
@@ -1278,7 +1302,8 @@ def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
         speed_thr = 0.01  # m/s
         time_thr = 5000.0  # ms
         rois, measured, zproj, spikes, vrdict = get_rois_cnmf(
-            data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init)
+            data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init,
+            roi_iceberg)
         lopass = None
 
     if data.fnvr is not None:
@@ -1305,7 +1330,7 @@ def thor_extract_roi(data, sc=None, infer=True, infer_threshold=0.15):
     plot_rois(rois, measured, haussio_data, zproj, data.data_path_comp,
               pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
               infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
-              minimaps=minimaps)
+              minimaps=minimaps, selected_rois=selected_rois)
 
 
 def create_roi_map(iroi, teleport_times, measured, spikes, vrdict):
@@ -1647,7 +1672,9 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
     return xret
 
 
-def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
+def get_rois_cnmf(
+        data, haussio_data, vrdict, speed_thr, time_thr, nrois_init,
+        roi_iceberg=0.9):
     """
     Identify ROIs, extract fluorescence and infer spikes using constrained
     non-negative matrix factorization (CNMF)
@@ -1666,6 +1693,10 @@ def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
         Maximal resting duration
         If the resting period is shorter than time_thr, it will be counted as
         a non-stationary period
+    nrois_init : int
+        Estimate of the number of ROIs.
+    roi_iceberg : float, optional
+        Relative level at which ROI contours will be plotted. Default: 0.9
 
     Returns
     -------
@@ -1693,7 +1724,8 @@ def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
 
     rois, measured, zproj, spikes, movie, noise = \
         cnmf.process_data_patches(
-            haussio_data, mask=mask2p, p=2, nrois_init=nrois_init)
+            haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
+            roi_iceberg=roi_iceberg)
 
     if vrdict is not None:
         if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
