@@ -8,5 +8,6 @@ cd ..
 rsync -av ./doc/_build/html/* ./
 git add .
 git commit -m "Update documentation"     
+git pull origin gh-pages
 git push origin gh-pages
 git checkout master
