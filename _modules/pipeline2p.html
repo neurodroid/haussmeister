@@ -201,25 +201,27 @@
 <span class="sd">    fn2p : str</span>
 <span class="sd">        File path (relative to root_path) leading to directory that contains</span>
 <span class="sd">        tiff series</span>
-<span class="sd">    ch2p : str</span>
+<span class="sd">    ch2p : str, optional</span>
 <span class="sd">        Channel. Default: &quot;A&quot;</span>
-<span class="sd">    area2p : str</span>
+<span class="sd">    area2p : str, optional</span>
 <span class="sd">        Brain area code (e.g. &quot;CA1&quot;). Default: None</span>
-<span class="sd">    fnsync : str</span>
+<span class="sd">    fnsync : str, optional</span>
 <span class="sd">        Thorsync directory name. Default: None</span>
-<span class="sd">    fnvr : str</span>
+<span class="sd">    fnvr : str, optional</span>
 <span class="sd">        VR file name trunk. Default: None</span>
-<span class="sd">    roi_subset : str</span>
+<span class="sd">    roi_subset : str, optional</span>
 <span class="sd">        String appended to roi label to distinguish between roi subsets.</span>
 <span class="sd">        Default: &quot;&quot;</span>
-<span class="sd">    mc_method : str</span>
+<span class="sd">    mc_method : str, optional</span>
 <span class="sd">        Motion correction method. One of &quot;hmmc&quot;, &quot;dft&quot;, &quot;hmmcres&quot;, &quot;hmmcframe&quot;,</span>
 <span class="sd">        &quot;hmmcpx&quot;, &quot;calblitz&quot;. Default: &quot;hmmc&quot;</span>
-<span class="sd">    detrend : bool</span>
+<span class="sd">    detrend : bool, optional</span>
 <span class="sd">        Whether to detrend fluorescence traces. Default: False</span>
-<span class="sd">    roi_translate : 2-tuple of ints</span>
+<span class="sd">    nrois_init : int, optional</span>
+<span class="sd">        Estimate of the number of ROIs. Default: 200</span>
+<span class="sd">    roi_translate : 2-tuple of ints, optional</span>
 <span class="sd">        Apply ROI translation in x and y. Default: None</span>
-<span class="sd">    root_path : str</span>
+<span class="sd">    root_path : str, optional</span>
 <span class="sd">        Root directory leading to fn2p. Default: &quot;&quot;</span>
 <span class="sd">    seg_method : str, optional</span>
 <span class="sd">        One of &quot;thunder&quot; (ROIs are identified by thunder&#39;s ICA), &quot;sima&quot; (ROIs</span>
@@ -649,7 +651,8 @@
 
 <div class="viewcode-block" id="plot_rois"><a class="viewcode-back" href="../usage/pipeline2p.html#pipeline2p.plot_rois">[docs]</a><span class="k">def</span> <span class="nf">plot_rois</span><span class="p">(</span><span class="n">rois</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">haussio_data</span><span class="p">,</span> <span class="n">zproj</span><span class="p">,</span> <span class="n">data_path</span><span class="p">,</span> <span class="n">pdf_suffix</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span>
               <span class="n">spikes</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">infer_threshold</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">,</span> <span class="n">mapdict</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-              <span class="n">lopass</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">plot_events</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">minimaps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">):</span>
+              <span class="n">lopass</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span> <span class="n">plot_events</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">minimaps</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="mi">1200</span><span class="p">,</span>
+              <span class="n">selected_rois</span><span class="o">=</span><span class="bp">None</span><span class="p">):</span>
 
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Plot ROIs on top of z-projected image, extracted fluorescence, spike</span>
@@ -681,6 +684,8 @@
 <span class="sd">        Lowpass filter frequency for plotted traces. Default: 1.0</span>
 <span class="sd">    plot_events : bool, optional</span>
 <span class="sd">        Plot events. Default: False</span>
+<span class="sd">    selected_rois : list of ints, optional</span>
+<span class="sd">        Indices of ROIs to be plotted. Default: None (plots all ROIs)</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">fig</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">18</span><span class="p">,</span> <span class="mi">24</span><span class="p">))</span>
     <span class="n">colors</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="s1">&#39;m&#39;</span><span class="p">,</span> <span class="s1">&#39;y&#39;</span><span class="p">]</span>
@@ -756,7 +761,11 @@
             <span class="n">ax_maps_infer</span> <span class="o">=</span> <span class="n">stfio_plot</span><span class="o">.</span><span class="n">StandardAxis</span><span class="p">(</span>
                 <span class="n">fig</span><span class="p">,</span> <span class="n">gs</span><span class="p">[</span><span class="n">strow</span><span class="p">:,</span> <span class="mi">3</span><span class="p">:</span><span class="mi">4</span><span class="p">],</span> <span class="n">hasx</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">hasy</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="n">ax_spike</span><span class="p">)</span>
 
+    <span class="n">normamp</span> <span class="o">=</span> <span class="bp">None</span>
     <span class="k">for</span> <span class="n">nroi</span><span class="p">,</span> <span class="n">roi</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">rois</span><span class="p">):</span>
+        <span class="k">if</span> <span class="n">selected_rois</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">nroi</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected_rois</span><span class="p">:</span>
+            <span class="k">continue</span>
+
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\r</span><span class="s2">ROI </span><span class="si">%d</span><span class="s2">/</span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">nroi</span><span class="o">+</span><span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">rois</span><span class="p">)))</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">lopass</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -767,14 +776,14 @@
         <span class="k">else</span><span class="p">:</span>
             <span class="n">meas_filt</span> <span class="o">=</span> <span class="n">measured</span><span class="p">[</span><span class="n">nroi</span><span class="p">,</span> <span class="n">ndiscard</span><span class="p">:]</span>
         <span class="n">meas_filt</span> <span class="o">-=</span> <span class="n">meas_filt</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
-        <span class="k">if</span> <span class="n">nroi</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">if</span> <span class="n">normamp</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
             <span class="n">normamp</span> <span class="o">=</span> <span class="n">meas_filt</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span> <span class="n">meas_filt</span><span class="o">.</span><span class="n">min</span><span class="p">()</span>
 
         <span class="k">try</span><span class="p">:</span>
             <span class="n">ax2</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">roi</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">roi</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">][:,</span> <span class="mi">1</span><span class="p">],</span>
                      <span class="n">colors</span><span class="p">[</span><span class="n">nroi</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colors</span><span class="p">)])</span>
             <span class="n">ax2</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">roi</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">roi</span><span class="o">.</span><span class="n">coords</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">],</span>
-                     <span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nroi</span><span class="o">+</span><span class="mi">1</span><span class="p">),</span>
+                     <span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nroi</span><span class="p">),</span>
                      <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">nroi</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colors</span><span class="p">)],</span>
                      <span class="n">fontsize</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
         <span class="k">except</span> <span class="n">sima</span><span class="o">.</span><span class="n">ROI</span><span class="o">.</span><span class="n">NonBooleanMask</span><span class="p">:</span>
@@ -812,7 +821,7 @@
             <span class="n">meas_filt</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">trange</span><span class="p">)]</span><span class="o">-</span><span class="n">meas_filt</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">trange</span><span class="p">)]</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">+</span><span class="n">pos</span><span class="p">,</span>
             <span class="n">colors</span><span class="p">[</span><span class="n">nroi</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colors</span><span class="p">)])</span>
         <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">meas_filt</span><span class="o">-</span><span class="n">meas_filt</span><span class="o">.</span><span class="n">min</span><span class="p">()</span><span class="o">+</span><span class="n">pos</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(),</span>
-                <span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nroi</span> <span class="o">+</span> <span class="mi">1</span><span class="p">),</span>
+                <span class="s2">&quot;{0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">nroi</span><span class="p">),</span>
                 <span class="n">color</span><span class="o">=</span><span class="n">colors</span><span class="p">[</span><span class="n">nroi</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">colors</span><span class="p">)],</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">,</span>
                 <span class="n">fontweight</span><span class="o">=</span><span class="n">fontweight</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="n">fontsize</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">mapdict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -865,15 +874,22 @@
 
     <span class="n">fig_rois_fluo</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">))</span>
     <span class="n">fig_rois_spikes</span> <span class="o">=</span> <span class="n">plt</span><span class="o">.</span><span class="n">figure</span><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">24</span><span class="p">,</span> <span class="mi">24</span><span class="p">))</span>
-    <span class="n">ncols</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">minimaps</span><span class="p">))))</span>
-    <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">minimaps</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">ncols</span><span class="p">)))</span>
-
+    <span class="k">if</span> <span class="n">selected_rois</span> <span class="ow">is</span> <span class="bp">None</span><span class="p">:</span>
+        <span class="n">ncols</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">minimaps</span><span class="p">))))</span>
+        <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">minimaps</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">ncols</span><span class="p">)))</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">ncols</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_rois</span><span class="p">))))</span>
+        <span class="n">nrows</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">selected_rois</span><span class="p">)</span><span class="o">/</span><span class="nb">float</span><span class="p">(</span><span class="n">ncols</span><span class="p">)))</span>
     <span class="n">gs_fluo</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">)</span>
     <span class="n">gs_spikes</span> <span class="o">=</span> <span class="n">gridspec</span><span class="o">.</span><span class="n">GridSpec</span><span class="p">(</span><span class="n">nrows</span><span class="p">,</span> <span class="n">ncols</span><span class="p">)</span>
 
+    <span class="n">roi_counter</span> <span class="o">=</span> <span class="mi">0</span>
     <span class="k">for</span> <span class="n">nroi</span><span class="p">,</span> <span class="p">(</span><span class="n">iroi</span><span class="p">,</span> <span class="n">minimaps_roi</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">minimaps</span><span class="p">):</span>
-        <span class="n">col</span> <span class="o">=</span> <span class="n">nroi</span> <span class="o">%</span> <span class="n">ncols</span>
-        <span class="n">row</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">nroi</span><span class="o">/</span><span class="n">ncols</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">selected_rois</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">and</span> <span class="n">iroi</span> <span class="ow">not</span> <span class="ow">in</span> <span class="n">selected_rois</span><span class="p">:</span>
+            <span class="k">continue</span>
+
+        <span class="n">col</span> <span class="o">=</span> <span class="n">roi_counter</span> <span class="o">%</span> <span class="n">ncols</span>
+        <span class="n">row</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">roi_counter</span><span class="o">/</span><span class="n">ncols</span><span class="p">)</span>
         <span class="n">ax_fluo</span> <span class="o">=</span> <span class="n">stfio_plot</span><span class="o">.</span><span class="n">StandardAxis</span><span class="p">(</span>
             <span class="n">fig_rois_fluo</span><span class="p">,</span> <span class="n">gs_fluo</span><span class="p">[</span><span class="n">row</span><span class="p">,</span> <span class="n">col</span><span class="p">],</span>
             <span class="n">hasx</span><span class="o">=</span><span class="n">nroi</span> <span class="o">==</span> <span class="nb">len</span><span class="p">(</span><span class="n">minimaps</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">hasy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
@@ -911,6 +927,8 @@
         <span class="n">ax_spikes</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span>
             <span class="mi">0</span><span class="p">,</span> <span class="p">(</span><span class="n">mapdict</span><span class="p">[</span><span class="s1">&#39;infermap&#39;</span><span class="p">][</span><span class="n">iroi</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="o">-</span>
                 <span class="n">mapdict</span><span class="p">[</span><span class="s1">&#39;infermap&#39;</span><span class="p">][</span><span class="n">iroi</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">min</span><span class="p">())</span><span class="o">*</span><span class="mi">2</span><span class="p">)</span>
+        <span class="n">roi_counter</span> <span class="o">+=</span> <span class="mi">1</span>
+
     <span class="n">fig_rois_fluo</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
         <span class="n">data_path</span> <span class="o">+</span> <span class="s2">&quot;_rois_fluo&quot;</span> <span class="o">+</span> <span class="n">pdf_suffix</span> <span class="o">+</span> <span class="s2">&quot;.pdf&quot;</span><span class="p">,</span> <span class="n">dpi</span><span class="o">=</span><span class="n">dpi</span><span class="p">)</span>
     <span class="n">fig_rois_spikes</span><span class="o">.</span><span class="n">savefig</span><span class="p">(</span>
@@ -923,7 +941,7 @@
 
 <span class="sd">    Parameters</span>
 <span class="sd">    ----------</span>
-<span class="sd">    dataset : sima.Imaging.Dataset</span>
+<span class="sd">    dataset : sima.ImagingDataset</span>
 <span class="sd">        Dataset to be processed</span>
 <span class="sd">    signal_label : str</span>
 <span class="sd">        Label of signal to be processed</span>
@@ -1349,7 +1367,9 @@
         <span class="k">return</span> <span class="bp">None</span></div>
 
 
-<div class="viewcode-block" id="thor_extract_roi"><a class="viewcode-back" href="../usage/pipeline2p.html#pipeline2p.thor_extract_roi">[docs]</a><span class="k">def</span> <span class="nf">thor_extract_roi</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">infer</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">infer_threshold</span><span class="o">=</span><span class="mf">0.15</span><span class="p">):</span>
+<div class="viewcode-block" id="thor_extract_roi"><a class="viewcode-back" href="../usage/pipeline2p.html#pipeline2p.thor_extract_roi">[docs]</a><span class="k">def</span> <span class="nf">thor_extract_roi</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">sc</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">infer</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">infer_threshold</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span> <span class="n">selected_rois</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+        <span class="n">roi_iceberg</span><span class="o">=</span><span class="mf">0.9</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Extract and process fluorescence data from ROIs</span>
 
@@ -1365,6 +1385,10 @@
 <span class="sd">        Activity threshold of spike inference. Default: 0.15</span>
 <span class="sd">    nrois_init : int, optional</span>
 <span class="sd">        Initial estimate of number of ROIs. Default: 200</span>
+<span class="sd">    selected_rois : list of ints, optional</span>
+<span class="sd">        Indices of ROIs to be plotted. Default: None (plots all ROIs)</span>
+<span class="sd">    roi_iceberg : float, optional</span>
+<span class="sd">        Relative level at which CNMF ROI contours will be plotted. Default: 0.9</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="k">assert</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">seg_method</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;thunder&quot;</span><span class="p">,</span> <span class="s2">&quot;sima&quot;</span><span class="p">,</span> <span class="s2">&quot;ij&quot;</span><span class="p">,</span> <span class="s2">&quot;cnmf&quot;</span><span class="p">])</span>
 
@@ -1395,7 +1419,8 @@
         <span class="n">speed_thr</span> <span class="o">=</span> <span class="mf">0.01</span>  <span class="c1"># m/s</span>
         <span class="n">time_thr</span> <span class="o">=</span> <span class="mf">5000.0</span>  <span class="c1"># ms</span>
         <span class="n">rois</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">zproj</span><span class="p">,</span> <span class="n">spikes</span><span class="p">,</span> <span class="n">vrdict</span> <span class="o">=</span> <span class="n">get_rois_cnmf</span><span class="p">(</span>
-            <span class="n">data</span><span class="p">,</span> <span class="n">haussio_data</span><span class="p">,</span> <span class="n">vrdict</span><span class="p">,</span> <span class="n">speed_thr</span><span class="p">,</span> <span class="n">time_thr</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">nrois_init</span><span class="p">)</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">haussio_data</span><span class="p">,</span> <span class="n">vrdict</span><span class="p">,</span> <span class="n">speed_thr</span><span class="p">,</span> <span class="n">time_thr</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">nrois_init</span><span class="p">,</span>
+            <span class="n">roi_iceberg</span><span class="p">)</span>
         <span class="n">lopass</span> <span class="o">=</span> <span class="bp">None</span>
 
     <span class="k">if</span> <span class="n">data</span><span class="o">.</span><span class="n">fnvr</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
@@ -1422,7 +1447,7 @@
     <span class="n">plot_rois</span><span class="p">(</span><span class="n">rois</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">haussio_data</span><span class="p">,</span> <span class="n">zproj</span><span class="p">,</span> <span class="n">data</span><span class="o">.</span><span class="n">data_path_comp</span><span class="p">,</span>
               <span class="n">pdf_suffix</span><span class="o">=</span><span class="s2">&quot;_&quot;</span> <span class="o">+</span> <span class="n">data</span><span class="o">.</span><span class="n">seg_method</span><span class="p">,</span> <span class="n">spikes</span><span class="o">=</span><span class="n">spikes</span><span class="p">,</span> <span class="n">region</span><span class="o">=</span><span class="n">data</span><span class="o">.</span><span class="n">area2p</span><span class="p">,</span>
               <span class="n">infer_threshold</span><span class="o">=</span><span class="n">infer_threshold</span><span class="p">,</span> <span class="n">mapdict</span><span class="o">=</span><span class="n">mapdict</span><span class="p">,</span> <span class="n">lopass</span><span class="o">=</span><span class="n">lopass</span><span class="p">,</span>
-              <span class="n">minimaps</span><span class="o">=</span><span class="n">minimaps</span><span class="p">)</span></div>
+              <span class="n">minimaps</span><span class="o">=</span><span class="n">minimaps</span><span class="p">,</span> <span class="n">selected_rois</span><span class="o">=</span><span class="n">selected_rois</span><span class="p">)</span></div>
 
 
 <span class="k">def</span> <span class="nf">create_roi_map</span><span class="p">(</span><span class="n">iroi</span><span class="p">,</span> <span class="n">teleport_times</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">spikes</span><span class="p">,</span> <span class="n">vrdict</span><span class="p">):</span>
@@ -1764,7 +1789,9 @@
     <span class="k">return</span> <span class="n">xret</span>
 
 
-<div class="viewcode-block" id="get_rois_cnmf"><a class="viewcode-back" href="../usage/pipeline2p.html#pipeline2p.get_rois_cnmf">[docs]</a><span class="k">def</span> <span class="nf">get_rois_cnmf</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">haussio_data</span><span class="p">,</span> <span class="n">vrdict</span><span class="p">,</span> <span class="n">speed_thr</span><span class="p">,</span> <span class="n">time_thr</span><span class="p">,</span> <span class="n">nrois_init</span><span class="p">):</span>
+<div class="viewcode-block" id="get_rois_cnmf"><a class="viewcode-back" href="../usage/pipeline2p.html#pipeline2p.get_rois_cnmf">[docs]</a><span class="k">def</span> <span class="nf">get_rois_cnmf</span><span class="p">(</span>
+        <span class="n">data</span><span class="p">,</span> <span class="n">haussio_data</span><span class="p">,</span> <span class="n">vrdict</span><span class="p">,</span> <span class="n">speed_thr</span><span class="p">,</span> <span class="n">time_thr</span><span class="p">,</span> <span class="n">nrois_init</span><span class="p">,</span>
+        <span class="n">roi_iceberg</span><span class="o">=</span><span class="mf">0.9</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Identify ROIs, extract fluorescence and infer spikes using constrained</span>
 <span class="sd">    non-negative matrix factorization (CNMF)</span>
@@ -1783,6 +1810,10 @@
 <span class="sd">        Maximal resting duration</span>
 <span class="sd">        If the resting period is shorter than time_thr, it will be counted as</span>
 <span class="sd">        a non-stationary period</span>
+<span class="sd">    nrois_init : int</span>
+<span class="sd">        Estimate of the number of ROIs.</span>
+<span class="sd">    roi_iceberg : float, optional</span>
+<span class="sd">        Relative level at which ROI contours will be plotted. Default: 0.9</span>
 
 <span class="sd">    Returns</span>
 <span class="sd">    -------</span>
@@ -1810,7 +1841,8 @@
 
     <span class="n">rois</span><span class="p">,</span> <span class="n">measured</span><span class="p">,</span> <span class="n">zproj</span><span class="p">,</span> <span class="n">spikes</span><span class="p">,</span> <span class="n">movie</span><span class="p">,</span> <span class="n">noise</span> <span class="o">=</span> \
         <span class="n">cnmf</span><span class="o">.</span><span class="n">process_data_patches</span><span class="p">(</span>
-            <span class="n">haussio_data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask2p</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nrois_init</span><span class="o">=</span><span class="n">nrois_init</span><span class="p">)</span>
+            <span class="n">haussio_data</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask2p</span><span class="p">,</span> <span class="n">p</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">nrois_init</span><span class="o">=</span><span class="n">nrois_init</span><span class="p">,</span>
+            <span class="n">roi_iceberg</span><span class="o">=</span><span class="n">roi_iceberg</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">vrdict</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">vrdict</span><span class="p">[</span><span class="s2">&quot;evlist&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">.</span><span class="n">time</span> <span class="o">&gt;</span> <span class="n">vrdict</span><span class="p">[</span><span class="s2">&quot;frametvr&quot;</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span><span class="o">*</span><span class="mf">1e-3</span><span class="p">:</span>

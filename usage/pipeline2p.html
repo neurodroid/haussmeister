@@ -152,57 +152,63 @@ tiff series</p>
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.ch2p">
 <code class="descname">ch2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.ch2p" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.area2p">
 <code class="descname">area2p</code><a class="headerlink" href="#pipeline2p.ThorExperiment.area2p" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.fnsync">
 <code class="descname">fnsync</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fnsync" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Thorsync directory name. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Thorsync directory name. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.fnvr">
 <code class="descname">fnvr</code><a class="headerlink" href="#pipeline2p.ThorExperiment.fnvr" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; VR file name trunk. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; VR file name trunk. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.roi_subset">
 <code class="descname">roi_subset</code><a class="headerlink" href="#pipeline2p.ThorExperiment.roi_subset" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; String appended to roi label to distinguish between roi subsets.
+<dd><p><em>str, optional</em> &#8211; String appended to roi label to distinguish between roi subsets.
 Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.mc_method">
 <code class="descname">mc_method</code><a class="headerlink" href="#pipeline2p.ThorExperiment.mc_method" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
+<dd><p><em>str, optional</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
 &#8220;hmmcpx&#8221;, &#8220;calblitz&#8221;. Default: &#8220;hmmc&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.detrend">
 <code class="descname">detrend</code><a class="headerlink" href="#pipeline2p.ThorExperiment.detrend" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>bool</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+<dd><p><em>bool, optional</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="pipeline2p.ThorExperiment.nrois_init">
+<code class="descname">nrois_init</code><a class="headerlink" href="#pipeline2p.ThorExperiment.nrois_init" title="Permalink to this definition">¶</a></dt>
+<dd><p><em>int, optional</em> &#8211; Estimate of the number of ROIs. Default: 200</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.roi_translate">
 <code class="descname">roi_translate</code><a class="headerlink" href="#pipeline2p.ThorExperiment.roi_translate" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>2-tuple of ints</em> &#8211; Apply ROI translation in x and y. Default: None</p>
+<dd><p><em>2-tuple of ints, optional</em> &#8211; Apply ROI translation in x and y. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt id="pipeline2p.ThorExperiment.root_path">
 <code class="descname">root_path</code><a class="headerlink" href="#pipeline2p.ThorExperiment.root_path" title="Permalink to this definition">¶</a></dt>
-<dd><p><em>str</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
@@ -395,7 +401,7 @@ a non-stationary period</li>
 
 <dl class="function">
 <dt id="pipeline2p.get_rois_cnmf">
-<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_cnmf</code><span class="sig-paren">(</span><em>data</em>, <em>haussio_data</em>, <em>vrdict</em>, <em>speed_thr</em>, <em>time_thr</em>, <em>nrois_init</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_cnmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_cnmf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">get_rois_cnmf</code><span class="sig-paren">(</span><em>data</em>, <em>haussio_data</em>, <em>vrdict</em>, <em>speed_thr</em>, <em>time_thr</em>, <em>nrois_init</em>, <em>roi_iceberg=0.9</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#get_rois_cnmf"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.get_rois_cnmf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Identify ROIs, extract fluorescence and infer spikes using constrained
 non-negative matrix factorization (CNMF)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -410,6 +416,8 @@ non-negative matrix factorization (CNMF)</p>
 <li><strong>time_thr</strong> (<em>float</em>) &#8211; Maximal resting duration
 If the resting period is shorter than time_thr, it will be counted as
 a non-stationary period</li>
+<li><strong>nrois_init</strong> (<em>int</em>) &#8211; Estimate of the number of ROIs.</li>
+<li><strong>roi_iceberg</strong> (<em>float, optional</em>) &#8211; Relative level at which ROI contours will be plotted. Default: 0.9</li>
 </ul>
 </td>
 </tr>
@@ -573,7 +581,7 @@ shape (nrois, 2, nbins)</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>dataset</strong> (<em>sima.Imaging.Dataset</em>) &#8211; Dataset to be processed</li>
+<li><strong>dataset</strong> (<a class="reference external" href="http://www.losonczylab.org/sima/1.3/api/datasets.html#sima.ImagingDataset" title="(in SIMA v1.3)"><em>sima.ImagingDataset</em></a>) &#8211; Dataset to be processed</li>
 <li><strong>signal_label</strong> (<em>str</em>) &#8211; Label of signal to be processed</li>
 </ul>
 </td>
@@ -611,7 +619,7 @@ normalized to the maximium value over all time-bins.</li>
 
 <dl class="function">
 <dt id="pipeline2p.plot_rois">
-<code class="descclassname">pipeline2p.</code><code class="descname">plot_rois</code><span class="sig-paren">(</span><em>rois</em>, <em>measured</em>, <em>haussio_data</em>, <em>zproj</em>, <em>data_path</em>, <em>pdf_suffix=''</em>, <em>spikes=None</em>, <em>infer_threshold=0.15</em>, <em>region=''</em>, <em>mapdict=None</em>, <em>lopass=1.0</em>, <em>plot_events=False</em>, <em>minimaps=None</em>, <em>dpi=1200</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#plot_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.plot_rois" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">plot_rois</code><span class="sig-paren">(</span><em>rois</em>, <em>measured</em>, <em>haussio_data</em>, <em>zproj</em>, <em>data_path</em>, <em>pdf_suffix=''</em>, <em>spikes=None</em>, <em>infer_threshold=0.15</em>, <em>region=''</em>, <em>mapdict=None</em>, <em>lopass=1.0</em>, <em>plot_events=False</em>, <em>minimaps=None</em>, <em>dpi=1200</em>, <em>selected_rois=None</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#plot_rois"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.plot_rois" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot ROIs on top of z-projected image, extracted fluorescence, spike
 inference, fluorescence and spike inference against position (if available)</p>
 <table class="docutils field-list" frame="void" rules="none">
@@ -631,6 +639,7 @@ inference, fluorescence and spike inference against position (if available)</p>
 <li><strong>mapdict</strong> (<em>dict, optional</em>) &#8211; Dictionary containing processed VR data. Default: None</li>
 <li><strong>lopass</strong> (<em>float, optional</em>) &#8211; Lowpass filter frequency for plotted traces. Default: 1.0</li>
 <li><strong>plot_events</strong> (<em>bool, optional</em>) &#8211; Plot events. Default: False</li>
+<li><strong>selected_rois</strong> (<em>list of ints, optional</em>) &#8211; Indices of ROIs to be plotted. Default: None (plots all ROIs)</li>
 </ul>
 </td>
 </tr>
@@ -667,7 +676,7 @@ data.mean(). Default: 0.05</li>
 
 <dl class="function">
 <dt id="pipeline2p.thor_extract_roi">
-<code class="descclassname">pipeline2p.</code><code class="descname">thor_extract_roi</code><span class="sig-paren">(</span><em>data</em>, <em>sc=None</em>, <em>infer=True</em>, <em>infer_threshold=0.15</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#thor_extract_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.thor_extract_roi" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">pipeline2p.</code><code class="descname">thor_extract_roi</code><span class="sig-paren">(</span><em>data</em>, <em>sc=None</em>, <em>infer=True</em>, <em>infer_threshold=0.15</em>, <em>selected_rois=None</em>, <em>roi_iceberg=0.9</em><span class="sig-paren">)</span><a class="reference internal" href="../_modules/pipeline2p.html#thor_extract_roi"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#pipeline2p.thor_extract_roi" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract and process fluorescence data from ROIs</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -679,6 +688,8 @@ data.mean(). Default: 0.05</li>
 <li><strong>infer</strong> (<em>bool, optional</em>) &#8211; Perform spike inference. Default: True</li>
 <li><strong>infer_threshold</strong> (<em>float, optional</em>) &#8211; Activity threshold of spike inference. Default: 0.15</li>
 <li><strong>nrois_init</strong> (<em>int, optional</em>) &#8211; Initial estimate of number of ROIs. Default: 200</li>
+<li><strong>selected_rois</strong> (<em>list of ints, optional</em>) &#8211; Indices of ROIs to be plotted. Default: None (plots all ROIs)</li>
+<li><strong>roi_iceberg</strong> (<em>float, optional</em>) &#8211; Relative level at which CNMF ROI contours will be plotted. Default: 0.9</li>
 </ul>
 </td>
 </tr>
@@ -749,57 +760,63 @@ tiff series</p>
 <dl class="attribute">
 <dt>
 <code class="descname">ch2p</code></dt>
-<dd><p><em>str</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Channel. Default: &#8220;A&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">area2p</code></dt>
-<dd><p><em>str</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Brain area code (e.g. &#8220;CA1&#8221;). Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">fnsync</code></dt>
-<dd><p><em>str</em> &#8211; Thorsync directory name. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; Thorsync directory name. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">fnvr</code></dt>
-<dd><p><em>str</em> &#8211; VR file name trunk. Default: None</p>
+<dd><p><em>str, optional</em> &#8211; VR file name trunk. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">roi_subset</code></dt>
-<dd><p><em>str</em> &#8211; String appended to roi label to distinguish between roi subsets.
+<dd><p><em>str, optional</em> &#8211; String appended to roi label to distinguish between roi subsets.
 Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">mc_method</code></dt>
-<dd><p><em>str</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
+<dd><p><em>str, optional</em> &#8211; Motion correction method. One of &#8220;hmmc&#8221;, &#8220;dft&#8221;, &#8220;hmmcres&#8221;, &#8220;hmmcframe&#8221;,
 &#8220;hmmcpx&#8221;, &#8220;calblitz&#8221;. Default: &#8220;hmmc&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">detrend</code></dt>
-<dd><p><em>bool</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+<dd><p><em>bool, optional</em> &#8211; Whether to detrend fluorescence traces. Default: False</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt>
+<code class="descname">nrois_init</code></dt>
+<dd><p><em>int, optional</em> &#8211; Estimate of the number of ROIs. Default: 200</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">roi_translate</code></dt>
-<dd><p><em>2-tuple of ints</em> &#8211; Apply ROI translation in x and y. Default: None</p>
+<dd><p><em>2-tuple of ints, optional</em> &#8211; Apply ROI translation in x and y. Default: None</p>
 </dd></dl>
 
 <dl class="attribute">
 <dt>
 <code class="descname">root_path</code></dt>
-<dd><p><em>str</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
+<dd><p><em>str, optional</em> &#8211; Root directory leading to fn2p. Default: &#8220;&#8221;</p>
 </dd></dl>
 
 <dl class="attribute">
