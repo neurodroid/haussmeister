@@ -1251,7 +1251,8 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
 
 
 def thor_extract_roi(
-        data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None):
+        data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None,
+        roi_iceberg=0.9):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1269,6 +1270,8 @@ def thor_extract_roi(
         Initial estimate of number of ROIs. Default: 200
     selected_rois : list of ints, optional
         Indices of ROIs to be plotted. Default: None (plots all ROIs)
+    roi_iceberg : float, optional
+        Relative level at which CNMF ROI contours will be plotted. Default: 0.9
     """
     assert(data.seg_method in ["thunder", "sima", "ij", "cnmf"])
 
@@ -1299,7 +1302,8 @@ def thor_extract_roi(
         speed_thr = 0.01  # m/s
         time_thr = 5000.0  # ms
         rois, measured, zproj, spikes, vrdict = get_rois_cnmf(
-            data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init)
+            data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init,
+            roi_iceberg)
         lopass = None
 
     if data.fnvr is not None:
@@ -1668,7 +1672,9 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
     return xret
 
 
-def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
+def get_rois_cnmf(
+        data, haussio_data, vrdict, speed_thr, time_thr, nrois_init,
+        roi_iceberg=0.9):
     """
     Identify ROIs, extract fluorescence and infer spikes using constrained
     non-negative matrix factorization (CNMF)
@@ -1687,6 +1693,10 @@ def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
         Maximal resting duration
         If the resting period is shorter than time_thr, it will be counted as
         a non-stationary period
+    nrois_init : int
+        Estimate of the number of ROIs.
+    roi_iceberg : float, optional
+        Relative level at which ROI contours will be plotted. Default: 0.9
 
     Returns
     -------
@@ -1714,7 +1724,8 @@ def get_rois_cnmf(data, haussio_data, vrdict, speed_thr, time_thr, nrois_init):
 
     rois, measured, zproj, spikes, movie, noise = \
         cnmf.process_data_patches(
-            haussio_data, mask=mask2p, p=2, nrois_init=nrois_init)
+            haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
+            roi_iceberg=roi_iceberg)
 
     if vrdict is not None:
         if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
