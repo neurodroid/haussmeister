@@ -113,11 +113,15 @@ class ThorExperiment(object):
         Default: "cnmf"
     maxtime : float, optional
         Limit data to maxtime. Default: None
+    ignore_sync_errors: bool, optional
+        Whether to ignore mismatch between imaging and VR recording file
+        lengths. Default: False
     """
     def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
                  roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
                  roi_translate=None, root_path="", ftype="thor",
-                 dx=None, dt=None, seg_method="cnmf", maxtime=None):
+                 dx=None, dt=None, seg_method="cnmf", maxtime=None,
+                 ignore_sync_errors=False):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -133,6 +137,7 @@ class ThorExperiment(object):
         self.dt = dt
         self.nrois_init = nrois_init
         self.maxtime = maxtime
+        self.ignore_sync_errors = ignore_sync_errors
 
         assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
         self.seg_method = seg_method
