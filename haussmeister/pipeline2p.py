@@ -1290,6 +1290,7 @@ def thor_extract_roi(
         vrspeed = vrdict["speed2p"]
     else:
         vrdict = None
+        haussio_data = data.to_haussio(mc=True)
         vrspeed = None
 
     lopass = 1.0
