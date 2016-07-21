@@ -40,6 +40,7 @@ except ImportError:
     sys.stderr.write("Could not find cse module")
 
 NCPUS = int(mp.cpu_count()/2)
+NCPUS_PATCHES = 8
 
 
 def tiffs_to_cnmf(haussio_data, mask=None, force=False):
@@ -250,10 +251,10 @@ def process_data_patches(
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
 
         # how to subdivide the work among processes
-        n_pixels_per_process = d1*d2/NCPUS
+        n_pixels_per_process = d1*d2/NCPUS_PATCHES
 
         options = cse.utilities.CNMFSetParms(
-            Y, NCPUS, K=int(nrois_init/NCPUS/2.0), p=p, gSig=[9, 9],
+            Y, NCPUS, K=np.max((int(nrois_init/NCPUS), 1)), p=p, gSig=[9, 9],
             ssub=1, tsub=1)
         options['preprocess_params']['n_processes'] = NCPUS
         options['preprocess_params'][
@@ -276,7 +277,7 @@ def process_data_patches(
         sys.stdout.flush()
         A_tot, C_tot, b, f, sn_tot, opt_out = cse.map_reduce.run_CNMF_patches(
             fname_new, (d1, d2, T), options, rf=rf, stride=stride,
-            n_processes=NCPUS, backend='ipyparallel', memory_fact=4.0)
+            n_processes=NCPUS_PATCHES, backend='ipyparallel', memory_fact=4.0)
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         options = cse.utilities.CNMFSetParms(
