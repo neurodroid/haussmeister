@@ -18,6 +18,7 @@ import multiprocessing as mp
 import tempfile
 
 import ipyparallel
+from ipyparallel import Client
 
 import numpy as np
 from scipy.io import savemat, loadmat
@@ -268,16 +269,19 @@ def process_data_patches(
         options['temporal_params']['n_processes'] = NCPUS
         options['temporal_params'][
             'n_pixels_per_process'] = n_pixels_per_process
+        options['temporal_params']['backend'] = 'ipyparallel'
         rf = 16  # half-size of the patches in pixels. rf=25, patches are 50x50
         stride = 2  # amounpl of overlap between the patches in pixels
         cse.utilities.start_server()
+        cl = Client()
+        dview = cl[:len(cl)]
 
         t0 = time.time()
         sys.stdout.write("CNMF patches... ")
         sys.stdout.flush()
         A_tot, C_tot, b, f, sn_tot, opt_out = cse.map_reduce.run_CNMF_patches(
             fname_new, (d1, d2, T), options, rf=rf, stride=stride,
-            n_processes=NCPUS_PATCHES, backend='ipyparallel', memory_fact=4.0)
+            n_processes=NCPUS_PATCHES, dview=dview, memory_fact=4.0)
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         options = cse.utilities.CNMFSetParms(
