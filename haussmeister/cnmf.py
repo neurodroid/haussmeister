@@ -123,7 +123,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
         options['temporal_params'][
             'n_pixels_per_process'] = n_pixels_per_process
 
-        cse.utilities.start_server(NCPUS)
+        cse.utilities.start_server()
 
         t0 = time.time()
         sys.stdout.write("Preprocessing... ")
@@ -270,7 +270,7 @@ def process_data_patches(
             'n_pixels_per_process'] = n_pixels_per_process
         rf = 16  # half-size of the patches in pixels. rf=25, patches are 50x50
         stride = 2  # amounpl of overlap between the patches in pixels
-        cse.utilities.start_server(NCPUS)
+        cse.utilities.start_server()
 
         t0 = time.time()
         sys.stdout.write("CNMF patches... ")
