@@ -16,6 +16,7 @@ import time
 import subprocess
 import multiprocessing as mp
 import tempfile
+import glob
 
 import ipyparallel
 from ipyparallel import Client
@@ -40,12 +41,20 @@ try:
 except ImportError:
     sys.stderr.write("Could not find cse module")
 
-NCPUS = int(mp.cpu_count()/2)
+NCPUS = mp.cpu_count()
 NCPUS_PATCHES = 8
 
 
+def get_mmap_name(basename, d1, d2, T):
+    return basename.replace('_', '') + \
+        '_d1_' + str(d1) + '_d2_' + str(d2) + '_d3_' + \
+        str(1) + '_order_' + 'C' + '_frames_' + str(T) + '_.mmap'
+
 def tiffs_to_cnmf(haussio_data, mask=None, force=False):
-    if not os.path.exists(haussio_data.dirname_comp + '_Y.npy') or force:
+    mmap_files = glob.glob(
+        haussio_data.dirname_comp.replace('_', '') + "*_.mmap")
+
+    if len(mmap_files) == 0 or force:
         sys.stdout.write('Converting to {0}... '.format(
             haussio_data.dirname_comp + '_Y*.npy'))
         sys.stdout.flush()
@@ -77,12 +86,17 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
 
         tiff_data = np.transpose(tiff_data, (1, 2, 0))
         d1, d2, T = tiff_data.shape
-        tiff_data_r = np.reshape(tiff_data, (d1*d2, T), order='F')
         np.save(haussio_data.dirname_comp + '_Y', tiff_data)
-        np.save(haussio_data.dirname_comp + '_Yr', tiff_data_r)
+
+        fname_tot = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
+        big_mov = np.memmap(
+            fname_tot, mode='w+',
+            dtype=np.float32, shape=(d1*d2, T), order='C')
+        big_mov[:] = np.reshape(tiff_data, (d1*d2, T), order='C')[:]
+        big_mov.flush()
 
         del tiff_data
-        del tiff_data_r
+        del big_mov
 
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
         # 888s
@@ -103,24 +117,23 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
 
         sys.stdout.flush()
         t0 = time.time()
-        Yr = np.load(haussio_data.dirname_comp + '_Yr.npy', mmap_mode='r')
+        fname_tot = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
+        Yr, _, _ = cse.utilities.load_memmap(fname_tot)
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
 
         # how to subdivide the work among processes
         n_pixels_per_process = d1*d2/NCPUS
 
         options = cse.utilities.CNMFSetParms(
-            Y, NCPUS, K=nrois_init, p=p, gSig=[9, 9], ssub=2, tsub=2)
+            Y, NCPUS, K=nrois_init, p=p, gSig=[9, 9], ssub=1, tsub=1)
         options['preprocess_params']['n_processes'] = NCPUS
         options['preprocess_params'][
             'n_pixels_per_process'] =  n_pixels_per_process
         options['init_params']['nIter'] = 10
         options['init_params']['maxIter'] = 10
         options['init_params']['use_hals'] = True
-        options['spatial_params']['n_processes'] = NCPUS
         options['spatial_params'][
             'n_pixels_per_process'] = n_pixels_per_process
-        options['temporal_params']['n_processes'] = NCPUS
         options['temporal_params'][
             'n_pixels_per_process'] = n_pixels_per_process
 
@@ -147,7 +160,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
         sys.stdout.write("Updating spatial components... ")
         sys.stdout.flush()
         A, b, Cin = cse.update_spatial_components(
-            Yr, Cin, f_in, Ain, sn=sn, **options['spatial_params'])
+            Yr, Cin, f_in, Ain, sn=sn, dview=dview, **options['spatial_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 252.57s
         # 2016-05-24: 445.95s
@@ -158,7 +171,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
         C, f, S, bl, c1, neurons_sn, g, YrA = \
             cse.update_temporal_components(
                 Yr, A, b, Cin, f_in, bl=None, c1=None, sn=None, g=None,
-                **options['temporal_params'])
+                dview=dview, **options['temporal_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 455.14s
         # 2016-05-24: 86.10s
@@ -247,8 +260,8 @@ def process_data_patches(
 
         sys.stdout.flush()
         t0 = time.time()
-        fname_new = haussio_data.dirname_comp + '_Yr.npy'
-        Yr = np.load(fname_new, mmap_mode='r')
+        fname_new = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
+        Yr, _, _ = cse.utilities.load_memmap(fname_new)
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
 
         # how to subdivide the work among processes
@@ -256,32 +269,38 @@ def process_data_patches(
 
         options = cse.utilities.CNMFSetParms(
             Y, NCPUS, K=np.max((int(nrois_init/NCPUS), 1)), p=p, gSig=[9, 9],
-            ssub=1, tsub=1)
-        options['preprocess_params']['n_processes'] = NCPUS
+            ssub=1, tsub=1, thr=0.8)
+        sys.stdout.flush()
+        cse.utilities.stop_server()
+        cse.utilities.start_server()
+        cl = Client()
+        dview = cl[:NCPUS]
+
+        options['preprocess_params']['dview'] = dview
         options['preprocess_params'][
             'n_pixels_per_process'] =  n_pixels_per_process
         options['init_params']['nIter'] = 10
         options['init_params']['maxIter'] = 10
         options['init_params']['use_hals'] = True
-        options['spatial_params']['n_processes'] = NCPUS
+        options['spatial_params']['dview'] = dview
         options['spatial_params'][
             'n_pixels_per_process'] = n_pixels_per_process
-        options['temporal_params']['n_processes'] = NCPUS
+        options['temporal_params']['dview'] = dview
         options['temporal_params'][
             'n_pixels_per_process'] = n_pixels_per_process
         options['temporal_params']['backend'] = 'ipyparallel'
         rf = 16  # half-size of the patches in pixels. rf=25, patches are 50x50
         stride = 2  # amounpl of overlap between the patches in pixels
-        cse.utilities.start_server()
-        cl = Client()
-        dview = cl[:len(cl)]
 
         t0 = time.time()
         sys.stdout.write("CNMF patches... ")
         sys.stdout.flush()
+        options_patch = cse.utilities.CNMFSetParms(
+            Y, NCPUS, p=p, gSig=[9, 9], K=np.max((int(nrois_init/NCPUS), 1)),
+            ssub=1, tsub=8, thr=0.8)
         A_tot, C_tot, b, f, sn_tot, opt_out = cse.map_reduce.run_CNMF_patches(
-            fname_new, (d1, d2, T), options, rf=rf, stride=stride,
-            n_processes=NCPUS_PATCHES, dview=dview, memory_fact=4.0)
+            fname_new, (d1, d2, T), options_patch, rf=rf, stride=stride,
+            dview=dview, memory_fact=4.0)
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         options = cse.utilities.CNMFSetParms(

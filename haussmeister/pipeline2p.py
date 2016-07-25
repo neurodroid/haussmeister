@@ -1730,7 +1730,7 @@ def get_rois_cnmf(
 
     rois, measured, zproj, spikes, movie, noise = \
         cnmf.process_data_patches(
-            haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
+            haussio_data, mask=mask2p, p=0, nrois_init=nrois_init,
             roi_iceberg=roi_iceberg)
 
     if vrdict is not None:
