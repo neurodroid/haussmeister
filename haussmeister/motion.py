@@ -67,8 +67,11 @@ class CalBlitz(motion.MotionEstimationStrategy):
                           str(num_planes) + ' into numpy array')
                 t0 = time.time()
                 # reshape, one plane at a time
-                frames = np.array(sequence[:, plane_idx, :, :, 0]).astype(
-                    np.float32)
+                frames = np.concatenate([
+                    np.array(sequence[
+                        nframe:nframe+1000, plane_idx, :, :, 0]).astype(
+                            np.float32)
+                    for nframe in range(0, sequence.shape[0], 1000)])
                 frames = np.squeeze(frames)
                 e1 = time.time() - t0
                 if verbose:
