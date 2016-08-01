@@ -42,7 +42,7 @@ except ImportError:
     sys.stderr.write("Could not find cse module")
 
 NCPUS = mp.cpu_count()
-NCPUS_PATCHES = 8
+NCPUS_PATCHES = 16
 
 
 def get_mmap_name(basename, d1, d2, T):
@@ -118,7 +118,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
         sys.stdout.flush()
         t0 = time.time()
         fname_tot = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
-        Yr, _, _ = cse.utilities.load_memmap(fname_tot)
+        Yr, dm, Tm = cse.utilities.load_memmap(fname_tot)
+        assert(dm[0] == d1)
+        assert(dm[1] == d2)
+        assert(Tm == T)
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
 
         # how to subdivide the work among processes
@@ -267,36 +270,21 @@ def process_data_patches(
         # how to subdivide the work among processes
         n_pixels_per_process = d1*d2/NCPUS_PATCHES
 
-        options = cse.utilities.CNMFSetParms(
-            Y, NCPUS, K=np.max((int(nrois_init/NCPUS), 1)), p=p, gSig=[9, 9],
-            ssub=1, tsub=1, thr=0.8)
         sys.stdout.flush()
         cse.utilities.stop_server()
         cse.utilities.start_server()
         cl = Client()
-        dview = cl[:NCPUS]
+        dview = cl[:NCPUS_PATCHES]
 
-        options['preprocess_params']['dview'] = dview
-        options['preprocess_params'][
-            'n_pixels_per_process'] =  n_pixels_per_process
-        options['init_params']['nIter'] = 10
-        options['init_params']['maxIter'] = 10
-        options['init_params']['use_hals'] = True
-        options['spatial_params']['dview'] = dview
-        options['spatial_params'][
-            'n_pixels_per_process'] = n_pixels_per_process
-        options['temporal_params']['dview'] = dview
-        options['temporal_params'][
-            'n_pixels_per_process'] = n_pixels_per_process
-        options['temporal_params']['backend'] = 'ipyparallel'
-        rf = 16  # half-size of the patches in pixels. rf=25, patches are 50x50
-        stride = 2  # amounpl of overlap between the patches in pixels
+        rf = int(np.ceil(np.sqrt(d1*d2/4/NCPUS_PATCHES)))  # half-size of the patches in pixels. rf=25, patches are 50x50
+        sys.stdout.write("Patch size: {0} * {0} = {1}\n".format(rf*2, rf*rf*4))
+        stride = int(rf/5)  # amounpl of overlap between the patches in pixels
 
         t0 = time.time()
         sys.stdout.write("CNMF patches... ")
         sys.stdout.flush()
         options_patch = cse.utilities.CNMFSetParms(
-            Y, NCPUS, p=p, gSig=[9, 9], K=np.max((int(nrois_init/NCPUS), 1)),
+            Y, NCPUS_PATCHES, p=0, gSig=[16, 16], K=nrois_init/NCPUS_PATCHES,
             ssub=1, tsub=8, thr=0.8)
         A_tot, C_tot, b, f, sn_tot, opt_out = cse.map_reduce.run_CNMF_patches(
             fname_new, (d1, d2, T), options_patch, rf=rf, stride=stride,
@@ -304,18 +292,10 @@ def process_data_patches(
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         options = cse.utilities.CNMFSetParms(
-            Y, NCPUS, K=A_tot.shape[-1], p=p, gSig=[9, 9], ssub=1, tsub=1)
+            Y, NCPUS_PATCHES, K=A_tot.shape[-1], p=p, gSig=[16, 16], ssub=1, tsub=1)
         pix_proc = np.minimum(
-            np.int((d1*d2)/NCPUS/(T/2000.)),
-            np.int((d1*d2)/NCPUS))  # regulates the amount of memory used
-        options['preprocess_params']['n_processes'] = NCPUS
-        options['preprocess_params'][
-            'n_pixels_per_process'] =  n_pixels_per_process
-        options['init_params']['nIter'] = 10
-        options['init_params']['maxIter'] = 10
-        options['init_params']['use_hals'] = True
-        options['spatial_params']['n_processes'] = NCPUS
-        options['temporal_params']['n_processes'] = NCPUS
+            np.int((d1*d2)/NCPUS_PATCHES/(T/2000.)),
+            np.int((d1*d2)/NCPUS_PATCHES))  # regulates the amount of memory used
         options['spatial_params']['n_pixels_per_process'] = pix_proc
         options['temporal_params']['n_pixels_per_process'] = pix_proc
 
@@ -326,29 +306,51 @@ def process_data_patches(
             cse.merge_components(
                 Yr, A_tot, [], np.array(C_tot), [], np.array(C_tot), [],
                 options['temporal_params'],
-                options['spatial_params'], thr=options['merging']['thr'],
-                mx=np.Inf)
+                options['spatial_params'], dview=dview,
+                thr=options['merging']['thr'], mx=np.Inf)
+        sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
+
+        options['temporal_params']['p']=0
+        options['temporal_params']['fudge_factor']=0.96 #change ifdenoised traces time constant is wrong
+        options['temporal_params']['backend']='ipyparallel'
+        
+        t0 = time.time()
+        sys.stdout.write("Updating temporal components... ")
+        sys.stdout.flush()
+        C_m, f_m, S_m, bl_m, c1_m, neurons_sn_m, g2_m, YrA_m = \
+            cse.temporal.update_temporal_components(
+                Yr, A_m, np.atleast_2d(b).T, C_m, f, dview=dview,
+                bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
+        sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
+        # 483.41s
+        # 2016-05-24: 74.81s
+
+        t0 = time.time()
+        sys.stdout.write("Evaluating components... ")
+        sys.stdout.flush()
+        traces=C_m+YrA_m
+        idx_components, fitness, erfc = cse.utilities.evaluate_components(
+            traces, N=5,robust_std=False)
+        idx_components = idx_components[np.logical_and(True ,fitness < -10)]
+        A_m = A_m[:,idx_components]
+        C_m = C_m[idx_components,:]
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         t0 = time.time()
         sys.stdout.write("Updating spatial components... ")
         sys.stdout.flush()
         A2, b2, C2 = cse.spatial.update_spatial_components(
-            Yr, C_m, f, A_m, sn=sn_tot, **options['spatial_params'])
+            Yr, C_m, f, A_m, sn=sn_tot, dview=dview, **options['spatial_params'])
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
         # 77.16s
         # 2016-05-24: 99.22s
 
-        t0 = time.time()
-        sys.stdout.write("Updating temporal components... ")
-        sys.stdout.flush()
+        options['temporal_params']['p']=p
+        options['temporal_params']['fudge_factor']=0.96 #change ifdenoised traces time constant is wrong
         C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = \
             cse.temporal.update_temporal_components(
-                Yr, A2, b2, C2, f, bl=None, c1=None, sn=None, g=None,
-                **options['temporal_params'])
-        sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
-        # 483.41s
-        # 2016-05-24: 74.81s
+                Yr, A2, b2, C2, f, dview=dview, bl=None, c1=None, sn=None,
+                g=None,**options['temporal_params'])
 
         # A: spatial components (ROIs)
         # C: denoised [Ca2+]
