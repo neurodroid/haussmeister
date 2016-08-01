@@ -637,9 +637,12 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         ax_speed_nospike = stfio_plot.StandardAxis(
             fig, gs[0, 1:2], hasx=False, hasy=False,
             sharex=ax_nospike, sharey=ax_speed)
-        ax_speed.plot(mapdict['t_vr'][:-1]*1e-3+dtvr/2.0, mapdict['speed_vr'])
+        ax_speed.plot(
+            mapdict['t_vr'][:-1]*1e-3+dtvr/2.0,
+            mapdict['speed_vr'][:len(mapdict['t_vr'][:-1])])
         ax_speed_nospike.plot(
-            mapdict['t_vr'][:-1]*1e-3+dtvr/2.0, mapdict['speed_vr'])
+            mapdict['t_vr'][:-1]*1e-3+dtvr/2.0,
+            mapdict['speed_vr'][:len(mapdict['t_vr'][:-1])])
         ax_speed.set_ylabel("Speed (m/s)")
         ax_speed.set_ylim(mapdict['speed_vr'].min(), mapdict['speed_vr'].max())
 
