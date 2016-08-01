@@ -1721,13 +1721,16 @@ def get_rois_cnmf(
         Dictionary with processed VR data
     """
     if vrdict is not None:
-        # Remove data periods during which the animal is moving at less than
-        # 1cm/s for more than 2s:
-        mask2p = contiguous_stationary(
-            vrdict["speed2p"], vrdict["framet2p"], speed_thr, time_thr)
-        print("{0:.2f} %% stationary".format(
-            np.sum(mask2p)/float(mask2p.shape[0])*100.0))
-        print("{0} frames".format(np.sum(np.invert(mask2p))))
+        if len(vrdict["speed2p"]) > 1000:
+            # Remove data periods during which the animal is moving at less than
+            # 1cm/s for more than 2s:
+            mask2p = contiguous_stationary(
+                vrdict["speed2p"], vrdict["framet2p"], speed_thr, time_thr)
+            print("{0:.2f} %% stationary".format(
+                np.sum(mask2p)/float(mask2p.shape[0])*100.0))
+            print("{0} frames".format(np.sum(np.invert(mask2p))))
+        else:
+            mask2p = np.zeros(vrdict["speed2p"].shape).astype(np.bool)
     else:
         mask2p = None
 
@@ -1742,8 +1745,11 @@ def get_rois_cnmf(
                 ev for ev in vrdict["evlist"]
                 if ev.time <= vrdict["frametvr"][-1]*1e-3]
 
-        maskvr = contiguous_stationary(
-            vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
+        if len(vrdict["speed2p"]) > 1000:
+            maskvr = contiguous_stationary(
+                vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
+        else:
+            maskvr = np.zeros(vrdict["speedvr"].shape).astype(np.bool)
 
         vrdict["evlist"] = collapse_events(
             vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
@@ -1836,12 +1842,15 @@ def contiguous_stationary(speed, speed_time, speed_thr, time_thr):
 
     # Look for contiguous regions of unmasked (resting) values:
     contiguous_indices = np.ma.notmasked_contiguous(speed_masked)
-    for nci, ci in enumerate(contiguous_indices):
-        contiguous_duration = speed_time[ci.stop-1]-speed_time[ci.start]
-        if contiguous_duration < time_thr:
-            # If this resting period is shorter than time_thr,
-            # count it as a running period (mask=True)
-            speed_masked.mask[ci] = True
+
+    # If there are any resting periods, check if they are long enough:
+    if contiguous_indices is not None:
+        for nci, ci in enumerate(contiguous_indices):
+            contiguous_duration = speed_time[ci.stop-1]-speed_time[ci.start]
+            if contiguous_duration < time_thr:
+                # If this resting period is shorter than time_thr,
+                # count it as a running period (mask=True)
+                speed_masked.mask[ci] = True
 
     # return inverted mask (stationary: mask=True)
     return np.invert(speed_masked.mask)
