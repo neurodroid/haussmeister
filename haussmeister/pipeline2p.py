@@ -1358,6 +1358,7 @@ def create_roi_map(iroi, teleport_times, measured, spikes, vrdict):
         maskvr = np.where(
             (vrdict["frametvr"] >= start*1e3) &
             (vrdict["frametvr"] < end*1e3))[0]
+        maskvr = maskvr[maskvr < len(vrdict["speedvr"])]
         vrdict_mini = {
             "posx": vrdict["posx"][maskvr],
             "posy": vrdict["posy"][maskvr],
