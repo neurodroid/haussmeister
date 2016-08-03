@@ -1252,10 +1252,14 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
             "events_matlab": events_matlab,
             'fluomap': fluomap,
             'infermap': infermap}
-        savemat(data.data_path_comp + "_" + method + "_maps.mat", mapdict)
-        return mapdict
     else:
-        return None
+        mapdict = {
+            "DFoF_2p": measured,
+            "spikes_2p": spikes}
+
+    savemat(data.data_path_comp + "_" + method + "_maps.mat", mapdict)
+
+    return mapdict
 
 
 def thor_extract_roi(
@@ -1315,9 +1319,9 @@ def thor_extract_roi(
             roi_iceberg)
         lopass = None
 
-    if data.fnvr is not None:
-        mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
+    mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
 
+    if data.fnvr is not None:
         fnmini = data.vr_path_comp + "_" + data.seg_method + "_minimaps.pck"
         if not os.path.exists(fnmini):
             sys.stdout.write("Computing spatial maps...")
