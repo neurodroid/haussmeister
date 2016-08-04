@@ -33,6 +33,11 @@ import sima.spikes
 from sima.ROI import ROIList
 
 try:
+    import ca_source_extraction as cse
+except ImportError:
+    sys.stderr.write("Could not find cse module")
+
+try:
     from . import utils
     from . import haussio
     from . import movies
