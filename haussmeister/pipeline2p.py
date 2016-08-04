@@ -826,7 +826,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         data_path + "_rois_spikes" + pdf_suffix + ".pdf", dpi=dpi)
 
 
-def infer_spikes(dataset, signal_label):
+def infer_spikes(dataset, signal_label, measured):
     """
     Perform spike inference
 
@@ -848,6 +848,16 @@ def infer_spikes(dataset, signal_label):
         Dictionary with values for 'sigma', 'gamma', and 'baseline'.
 
     """
+    inference = []
+    fit = []
+    for measured_roi in measured:
+        c, bl, c1, g, sn, sp = cse.constrained_foopsi(measured_roi, p=2)
+        inference.append(sp)
+        fit.append(c)
+
+    return np.array(inference), np.array(fit), {
+        'sigma': sn, 'gamma': g, 'baseline': bl}
+
     try:
         res = dataset.infer_spikes(
             label=signal_label, gamma=None, share_gamma=True,
@@ -900,14 +910,14 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
 
     measured[np.isnan(measured)] = 0
 
-    assert(np.sum(np.isnan(measured)) == 0)
+    assert(np.any(np.isnan(measured)) == False)
 
     if infer:
         sys.stdout.write("Inferring spikes... ")
         sys.stdout.flush()
         t0 = time.time()
         if not os.path.exists(data.spikefn):
-            spikes, fits, parameters = infer_spikes(dataset, signal_label)
+            spikes, fits, parameters = infer_spikes(dataset, signal_label, measured)
             spikefile = open(data.spikefn, 'wb')
             pickle.dump(spikes, spikefile)
             pickle.dump(fits, spikefile)
@@ -1337,7 +1347,6 @@ def thor_extract_roi(
                 minimaps = pickle.load(pckf)
             sys.stdout.write(" done\n")
     else:
-        mapdict = None
         minimaps = None
 
     plot_rois(rois, measured, haussio_data, zproj, data.data_path_comp,
