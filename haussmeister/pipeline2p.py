@@ -585,7 +585,10 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     nrows = 8
     strow = 2
-    if mapdict is None:
+
+    has_vr = mapdict is not None and 't_vr' in mapdict.keys()
+
+    if not has_vr:
         stcol = 0
         ncols = 2
     else:
@@ -620,7 +623,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     ndiscard = 0
 
-    if mapdict is not None:
+    if has_vr:
         dtvr = np.mean(np.diff(mapdict['t_vr']))*1e-3
         ax_pos = stfio_plot.StandardAxis(
             fig, gs[1, 0:1], hasx=False, sharex=ax_spike)
@@ -685,7 +688,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         except sima.ROI.NonBooleanMask:
             print("NonBooleanMask")
 
-        if mapdict is None:
+        if not has_vr:
             trange = np.arange(len(meas_filt))*haussio_data.dt
         else:
             trange = mapdict['t_2p'][ndiscard:] * 1e-3
@@ -720,7 +723,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 "{0}".format(nroi),
                 color=colors[nroi % len(colors)], ha='right',
                 fontweight=fontweight, fontsize=fontsize)
-        if mapdict is not None:
+        if has_vr:
             fluo = norm(mapdict['fluomap'][nroi][1]) * normamp
             fluo -= fluo.min()
             ax_maps_fluo.plot(mapdict['fluomap'][nroi][0],
@@ -751,7 +754,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     fig.suptitle(haussio_data.filetrunk.replace("_", " ") + " " + regionstr,
                  fontsize=18)
-    if mapdict is not None:
+    if has_vr:
         ax_maps_fluo.set_xlim(
             mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
         ax_maps_fluo.set_xlabel("VR position (m)")
