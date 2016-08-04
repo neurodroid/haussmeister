@@ -931,9 +931,9 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
             spikes = spikes[0]
         else:
             spikefile = open(data.spikefn, 'rb')
-            spikes = pickle.load(spikefile)[0]
-            fits = pickle.load(spikefile)[0]
-            parameters = pickle.load(spikefile)[0]
+            spikes = pickle.load(spikefile)
+            fits = pickle.load(spikefile)
+            parameters = pickle.load(spikefile)
             spikefile.close()
 
         sys.stdout.write(
