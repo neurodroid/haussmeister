@@ -918,17 +918,18 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
     assert(np.any(np.isnan(measured)) == False)
 
     if infer:
-        sys.stdout.write("Inferring spikes... ")
-        sys.stdout.flush()
-        t0 = time.time()
         if not os.path.exists(data.spikefn):
+            sys.stdout.write("Inferring spikes... ")
+            sys.stdout.flush()
+            t0 = time.time()
             spikes, fits, parameters = infer_spikes(dataset, signal_label, measured)
             spikefile = open(data.spikefn, 'wb')
             pickle.dump(spikes, spikefile)
             pickle.dump(fits, spikefile)
             pickle.dump(parameters, spikefile)
             spikefile.close()
-            spikes = spikes[0]
+            sys.stdout.write(
+                "done (took %.2fs)\n" % (time.time()-t0))
         else:
             spikefile = open(data.spikefn, 'rb')
             spikes = pickle.load(spikefile)
@@ -936,8 +937,6 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
             parameters = pickle.load(spikefile)
             spikefile.close()
 
-        sys.stdout.write(
-            "done (took %.2fs)\n" % (time.time()-t0))
         spikes = np.array([spike-spike[1:].min() for spike in spikes])
     else:
         spikes = measured
