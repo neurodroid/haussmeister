@@ -328,9 +328,9 @@ def process_data_patches(
         t0 = time.time()
         sys.stdout.write("Evaluating components... ")
         sys.stdout.flush()
-        traces=C_m+YrA_m
+        traces = C_m+YrA_m
         idx_components, fitness, erfc = cse.utilities.evaluate_components(
-            traces, N=5,robust_std=False)
+            traces, N=5, robust_std=False)
         idx_components = idx_components[np.logical_and(True ,fitness < -10)]
         A_m = A_m[:,idx_components]
         C_m = C_m[idx_components,:]
@@ -350,7 +350,18 @@ def process_data_patches(
         C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = \
             cse.temporal.update_temporal_components(
                 Yr, A2, b2, C2, f, dview=dview, bl=None, c1=None, sn=None,
-                g=None,**options['temporal_params'])
+                g=None, **options['temporal_params'])
+
+        quality_threshold = -20
+        traces = C2+YrA
+        idx_components, fitness, erfc = cse.utilities.evaluate_components(
+            traces, N=5, robust_std=False)
+        idx_components = idx_components[fitness < quality_threshold]
+
+        A2 = A2.tocsc()[:, idx_components]
+        C2 = C2[idx_components, :]
+        YrA = YrA[idx_components, :]
+        S2 = S2[idx_components, :]
 
         # A: spatial components (ROIs)
         # C: denoised [Ca2+]
@@ -398,7 +409,7 @@ def contour(A, d1, d2, thr=None):
 
     d, nr = np.shape(A)
 
-    x, y = np.mgrid[:d1, :d2]
+    x, y = np.mgrid[:d1:1, :d2:1]
 
     coordinates = []
     for i in range(nr):
@@ -407,7 +418,7 @@ def contour(A, d1, d2, thr=None):
         cumEn /= cumEn[-1]
         Bvec = np.zeros(d)
         Bvec[indx] = cumEn
-        Bmat = np.reshape(Bvec, (d1, d2), order='F')
+        Bmat = np.reshape(Bvec, (d1, d2), order='C')
         cntr = _cntr.Cntr(y, x, Bmat)
         cs = cntr.trace(thr)
         if len(cs) > 0:
