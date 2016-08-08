@@ -29,6 +29,7 @@ import tables
 
 import sima
 import tifffile
+import libtiff
 
 try:
     from . import movies
@@ -85,6 +86,7 @@ class HaussIO(object):
                  width_idx=4, maxtime=None):
 
         self.raw_array = None
+        self.mptif = None
         self.maxtime = maxtime
 
         self.dirname = os.path.abspath(dirname)
@@ -114,7 +116,9 @@ class HaussIO(object):
         else:
             self.iend = None
 
-        if xml_path is None:
+        if self.mptif is not None:
+            self.nframes = self.mptif.get_depth()
+        elif xml_path is None:
             if self.rawfile is None or not os.path.exists(self.rawfile):
                 try:
                     assert(len(self.filenames) <= self.nframes)
@@ -207,7 +211,7 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        if not os.path.exists(self.rawfile):
+        if self.mptif is None and not os.path.exists(self.rawfile):
             if "?" in self.dirname:
                 normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
                 normtrunk = self.filetrunk.replace(
@@ -221,7 +225,7 @@ class HaussIO(object):
             sample = Image.open(normframe)
             arr = np.asarray(sample, dtype=np.float)
         else:
-            arr = self.read_raw()[int(len(self.filenames)/2)]
+            arr = self.read_raw()[int(self.nframes/2)]
 
         return arr
 
@@ -251,7 +255,8 @@ class HaussIO(object):
                 sys.stderr.write("Could not read from " + self.sima_dir +
                                  "regenerating sima files: " + err + "\n")
 
-        if self.rawfile is None or not os.path.exists(self.rawfile):
+        if self.mptif is None and (
+                not os.path.exists(self.rawfile) or self.rawfile is None):
             # The string paths[i][j] is a unix style expression for the
             # filenames for plane i and channel j
             sequences = [sima.Sequence.create(
@@ -327,7 +332,7 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        if os.path.exists(self.rawfile):
+        if self.mptif is not None or os.path.exists(self.rawfile):
             movie_input = self.read_raw()
         else:
             movie_input = self.ffmpeg_fn
@@ -368,6 +373,7 @@ class HaussIO(object):
                 rawfile = None
 
         if rawfile is not None:
+            sys.stdout.write("Producing movie from " + rawfile + "\n")
             shapefn = os.path.join(path_extern, THOR_RAW_FN[:-3] + "shape.npy")
             shape = np.load(shapefn)
             movie_input = raw2np(rawfile, (shape[0], shape[2], shape[3]))
@@ -746,6 +752,100 @@ class MovieHaussIO(HaussIO):
 
     def read_raw(self):
         return self.movie
+
+
+class SI4HaussIO(HaussIO):
+    """
+    Object representing 2p imaging data acquired with ScanImage 4
+    """
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4, maxtime=None, xycal=1200.0):
+        self.xycal = xycal
+        super(SI4HaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path, width_idx, maxtime)
+
+    def _get_filenames(self, xml_path, sync_path):
+        super(SI4HaussIO, self)._get_filenames(xml_path, sync_path)
+        if os.path.isfile(self.dirname):
+            self.mptif = libtiff.tiff_file.TiffFile(self.dirname)
+        else:
+            print(self.dirname[:self.dirname.rfind(".tif")+4])
+            self.mptif = libtiff.tiff_file.TiffFile(
+                self.dirname[:self.dirname.rfind(".tif")+4])
+        self.ifd = self.mptif.IFD[0].entries_dict["ImageDescription"]
+        self.SI4dict = {
+            l[:l.find('=')-1]: l[l.find('=')+2:]
+            for l in self.ifd.human().splitlines()
+            if not l[:l.find('=')-1].isspace()
+        }
+        if not os.path.isfile(self.dirname):
+            self.rawfile = os.path.join(
+                self.dirname, "Image_0001_0001.raw")
+            assert(os.path.exists(self.rawfile))
+            self.mptif.close()
+            self.mptif = None
+
+        self.xml_name = None
+
+        self.filenames = None
+
+        if "?" in self.filetrunk:
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+
+    def _get_dimensions(self):
+        if os.path.isfile(self.dirname):
+            self.xpx = int(self.SI4dict['scanimage.SI4.scanPixelsPerLine'])
+            self.ypx = int(self.SI4dict['scanimage.SI4.scanLinesPerFrame'])
+        else:
+            shapefn = os.path.join(
+                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+            shape = np.load(shapefn)
+            self.xpx, self.ypx = shape[1], shape[2]
+
+        self.xsize = self.ysize = self.xycal / float(
+            self.SI4dict['scanimage.SI4.scanZoomFactor'])
+        self.naverage = None
+
+    def _get_timing(self):
+        dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
+        if self.mptif is not None:
+            nframes = self.mptif.get_depth()
+        else:
+            shapefn = os.path.join(
+                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+            shape = np.load(shapefn)
+            nframes = shape[0]
+        self.timing = np.array([
+            dt*nframe for nframe in range(nframes)])
+
+    def _get_sync(self):
+        if self.sync_path is None:
+            return
+
+    def read_raw(self):
+        if self.raw_array is None:
+            sys.stdout.write("Converting to numpy array...")
+            sys.stdout.flush()
+            t0 = time.time()
+            if self.mptif is not None:
+                self.raw_array = np.array(self.mptif.get_tiff_array()).astype(np.int32)
+                self.raw_array -= self.raw_array.min()
+                assert(np.all(self.raw_array >= 0))
+            else:
+                shapefn = os.path.join(
+                    self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+                if os.path.exists(shapefn):
+                    shape = np.load(shapefn)
+                else:
+                    shape = (self.nframes, self.xpx, self.ypx)
+                self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
+
+            sys.stdout.write(" took {0:.2f}s\n".format(time.time()-t0))
+
+        return self.raw_array.astype(np.uint16)
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,

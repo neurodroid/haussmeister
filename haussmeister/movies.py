@@ -45,9 +45,16 @@ def get_normbright(arr, mid=16.0):
         3 points of input brightness that will be mapped to
         0, 0.5, and 1.0 output
     """
-    return(float(np.min(arr))/2**16,
-           mid*float(np.median(arr)-np.min(arr))/2**16,
-           float(np.max(arr))/2**16)
+    normtuple = (
+        float(np.min(arr))/2**16,
+        mid*float(np.median(arr)-np.min(arr))/2**16,
+        float(np.max(arr))/2**16)
+    if normtuple[1] > normtuple[2]:
+        normtuple = (
+            normtuple[0],
+            normtuple[2]/2.0,
+            normtuple[2])
+    return normtuple
 
 
 def save_scale_bar(png_name, scale_length_int, scale_length_px, xpx, ypx):
@@ -165,7 +172,9 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
         stdin = None
     else:
         assert(isinstance(tiff_input, np.ndarray))
-        assert(tiff_input.dtype == np.uint16)
+        assert(tiff_input.dtype == np.uint16 or
+               tiff_input.dtype == np.int16 or
+               tiff_input.dtype == np.int32)
         cmd += "-f image2pipe -i - "
         stdin = sp.PIPE
 

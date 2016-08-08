@@ -46,9 +46,13 @@ NCPUS_PATCHES = 16
 
 
 def get_mmap_name(basename, d1, d2, T):
-    return basename.replace('_', '') + \
+    bn = os.path.basename(os.path.normpath(basename))
+    trunk = os.path.dirname(basename)
+    new_path = os.path.join(trunk, bn.replace('_', ''))
+    return new_path + \
         '_d1_' + str(d1) + '_d2_' + str(d2) + '_d3_' + \
         str(1) + '_order_' + 'C' + '_frames_' + str(T) + '_.mmap'
+
 
 def tiffs_to_cnmf(haussio_data, mask=None, force=False):
     mmap_files = glob.glob(

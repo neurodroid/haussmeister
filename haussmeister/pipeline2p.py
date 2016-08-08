@@ -251,6 +251,18 @@ class ThorExperiment(object):
                 return haussio.MovieHaussIO(
                     self.data_path + self.mc_suffix, self.dx, self.dt,
                     chan=self.ch2p, sync_path=self.sync_path, width_idx=5)
+        elif self.ftype == "si4":
+            if not mc:
+                return haussio.SI4HaussIO(
+                    self.data_path, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4,
+                    maxtime=self.maxtime)
+            else:
+                return haussio.SI4HaussIO(
+                    self.data_path + self.mc_suffix,
+                    chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=5,
+                    maxtime=self.maxtime)
 
     def to_sima(self, mc=False, haussio_data=None):
         """
