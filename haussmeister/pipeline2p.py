@@ -1406,7 +1406,8 @@ def create_roi_map(iroi, teleport_times, measured, spikes, vrdict):
     return (iroi, minimaps_roi)
 
 
-def create_mini_maps(measured, spikes, mapdict, vrdict):
+def create_mini_maps(measured, spikes, mapdict, vrdict,
+                     field_size=10.0, fraction_aligned=0.5):
     import syncfiles
     import imp
     imp.reload(syncfiles)
@@ -1424,11 +1425,25 @@ def create_mini_maps(measured, spikes, mapdict, vrdict):
         create_roi_map, teleport_times=teleport_times, measured=measured,
         spikes=spikes, vrdict=vrdict)
     minimaps = pool.map(map_function, iroi_with_peaks)
-
     pool.close()
+
+    naligned_rois = 0
+    minimaps_aligned = []
+    for iroi, minimaps_roi in enumerate(minimaps):
+        naligned = 0
+        for minimap in minimaps_roi:
+            minimap_fluo, minimap_spikes = minimap
+            ds = np.abs(minimap_fluo[0][0][1] - minimap_fluo[0][0][0])
+            naligned += int(
+                (ds*np.abs(
+                    minimap_fluo[0][1].argmax()-
+                    mapdict['fluomap'][iroi][1].argmax())) < (field_size/2.0))
+        if (float(naligned) / len(minimaps_roi)) > fraction_aligned:
+            minimaps_aligned.append(minimaps_roi)
+
     print("")
 
-    return minimaps
+    return minimaps_aligned
 
 
 def running_mean(x, N):
