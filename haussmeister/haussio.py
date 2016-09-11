@@ -771,7 +771,7 @@ class SI4HaussIO(HaussIO):
         if "?" in self.filetrunk:
             self.mptifs = [
                 libtiff.tiff_file.TiffFile(dirname)
-                for dirname in self.dirnames[0]]
+                for dirname in self.dirnames]
         elif os.path.isfile(self.dirname):
             self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
         else:
