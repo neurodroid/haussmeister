@@ -1429,7 +1429,7 @@ def create_mini_maps(measured, spikes, mapdict, vrdict,
 
     naligned_rois = 0
     minimaps_aligned = []
-    for iroi, minimaps_roi in enumerate(minimaps):
+    for nroi, (iroi, minimaps_roi) in enumerate(minimaps):
         naligned = 0
         for minimap in minimaps_roi:
             minimap_fluo, minimap_spikes = minimap
