@@ -86,7 +86,7 @@ class HaussIO(object):
                  width_idx=4, maxtime=None):
 
         self.raw_array = None
-        self.mptif = None
+        self.mptifs = None
         self.maxtime = maxtime
 
         self.dirname = os.path.abspath(dirname)
@@ -116,8 +116,9 @@ class HaussIO(object):
         else:
             self.iend = None
 
-        if self.mptif is not None:
-            self.nframes = self.mptif.get_depth()
+        if self.mptifs is not None:
+            self.nframes = np.sum([
+                mptif.get_depth() for mptif in self.mptifs])
         elif xml_path is None:
             if self.rawfile is None or not os.path.exists(self.rawfile):
                 try:
@@ -211,7 +212,7 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        if self.mptif is None and not os.path.exists(self.rawfile):
+        if self.mptifs is None and not os.path.exists(self.rawfile):
             if "?" in self.dirname:
                 normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
                 normtrunk = self.filetrunk.replace(
@@ -255,7 +256,7 @@ class HaussIO(object):
                 sys.stderr.write("Could not read from " + self.sima_dir +
                                  "regenerating sima files: " + err + "\n")
 
-        if self.mptif is None and (
+        if self.mptifs is None and (
                 not os.path.exists(self.rawfile) or self.rawfile is None):
             # The string paths[i][j] is a unix style expression for the
             # filenames for plane i and channel j
@@ -332,7 +333,7 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        if self.mptif is not None or os.path.exists(self.rawfile):
+        if self.mptifs is not None or os.path.exists(self.rawfile):
             movie_input = self.read_raw()
         else:
             movie_input = self.ffmpeg_fn
@@ -644,10 +645,11 @@ class PrairieHaussIO(HaussIO):
                 os.makedirs(self.dirname)
             sys.stdout.write("Converting to individual tiffs... ")
             sys.stdout.flush()
-            self.mptif = tifffile.TiffFile(self.dirname + ".tif")
-            for nf, frame in enumerate(self.mptif.pages):
-                tifffile.imsave(self.filetrunk + "{0:04d}.tif".format(nf+1),
-                                frame.asarray())
+            self.mptifs = [tifffile.TiffFile(self.dirname + ".tif")]
+            for mptif in self.mptifs:
+                for nf, frame in enumerate(mptif.pages):
+                    tifffile.imsave(self.filetrunk + "{0:04d}.tif".format(nf+1),
+                                    frame.asarray())
             sys.stdout.write("done\n")
         if xml_path is None:
             self.xml_name = self.dirname + ".xml"
@@ -766,13 +768,17 @@ class SI4HaussIO(HaussIO):
 
     def _get_filenames(self, xml_path, sync_path):
         super(SI4HaussIO, self)._get_filenames(xml_path, sync_path)
-        if os.path.isfile(self.dirname):
-            self.mptif = libtiff.tiff_file.TiffFile(self.dirname)
+        if "?" in self.filetrunk:
+            self.mptifs = [
+                libtiff.tiff_file.TiffFile(dirname)
+                for dirname in self.dirnames[0]]
+        elif os.path.isfile(self.dirname):
+            self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptif = libtiff.tiff_file.TiffFile(
-                self.dirname[:self.dirname.rfind(".tif")+4])
-        self.ifd = self.mptif.IFD[0].entries_dict["ImageDescription"]
+            self.mptifs = [libtiff.tiff_file.TiffFile(
+                self.dirname[:self.dirname.rfind(".tif")+4])]
+        self.ifd = self.mptifs[0].IFD[0].entries_dict["ImageDescription"]
         self.SI4dict = {
             l[:l.find('=')-1]: l[l.find('=')+2:]
             for l in self.ifd.human().splitlines()
@@ -782,8 +788,9 @@ class SI4HaussIO(HaussIO):
             self.rawfile = os.path.join(
                 self.dirname, "Image_0001_0001.raw")
             assert(os.path.exists(self.rawfile))
-            self.mptif.close()
-            self.mptif = None
+            for mptif in self.mptifs:
+                mptif.close()
+            self.mptifs = None
 
         self.xml_name = None
 
@@ -811,8 +818,9 @@ class SI4HaussIO(HaussIO):
 
     def _get_timing(self):
         dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
-        if self.mptif is not None:
-            nframes = self.mptif.get_depth()
+        if self.mptifs is not None:
+            nframes = np.sum([
+                mptif.get_depth() for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -830,8 +838,10 @@ class SI4HaussIO(HaussIO):
             sys.stdout.write("Converting to numpy array...")
             sys.stdout.flush()
             t0 = time.time()
-            if self.mptif is not None:
-                self.raw_array = np.array(self.mptif.get_tiff_array()).astype(np.int32)
+            if self.mptifs is not None:
+                self.raw_array = np.concatenate([
+                    np.array(mptif.get_tiff_array()).astype(np.int32)
+                    for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
             else:
