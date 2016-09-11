@@ -784,7 +784,7 @@ class SI4HaussIO(HaussIO):
             for l in self.ifd.human().splitlines()
             if not l[:l.find('=')-1].isspace()
         }
-        if not os.path.isfile(self.dirname):
+        if not os.path.isfile(self.dirnames[0]):
             self.rawfile = os.path.join(
                 self.dirname, "Image_0001_0001.raw")
             assert(os.path.exists(self.rawfile))
@@ -803,7 +803,7 @@ class SI4HaussIO(HaussIO):
             self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def _get_dimensions(self):
-        if os.path.isfile(self.dirname):
+        if os.path.isfile(self.dirnames[0]):
             self.xpx = int(self.SI4dict['scanimage.SI4.scanPixelsPerLine'])
             self.ypx = int(self.SI4dict['scanimage.SI4.scanLinesPerFrame'])
         else:
