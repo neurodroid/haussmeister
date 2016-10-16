@@ -290,7 +290,7 @@ def process_data_patches(
         options_patch = cse.utilities.CNMFSetParms(
             Y, NCPUS_PATCHES, p=0, gSig=[16, 16], K=nrois_init/NCPUS_PATCHES,
             ssub=1, tsub=8, thr=0.8)
-        A_tot, C_tot, b, f, sn_tot, opt_out = cse.map_reduce.run_CNMF_patches(
+        A_tot, C_tot, YrA_tot, b, f, sn_tot, opt_out = cse.map_reduce.run_CNMF_patches(
             fname_new, (d1, d2, T), options_patch, rf=rf, stride=stride,
             dview=dview, memory_fact=4.0)
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
@@ -315,9 +315,9 @@ def process_data_patches(
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         options['temporal_params']['p']=0
-        options['temporal_params']['fudge_factor']=0.96 #change ifdenoised traces time constant is wrong
-        options['temporal_params']['backend']='ipyparallel'
-        
+        options['temporal_params']['fudge_factor'] = 0.96 #change ifdenoised traces time constant is wrong
+        options['temporal_params']['backend'] = 'ipyparallel'
+
         t0 = time.time()
         sys.stdout.write("Updating temporal components... ")
         sys.stdout.flush()
@@ -333,11 +333,26 @@ def process_data_patches(
         sys.stdout.write("Evaluating components... ")
         sys.stdout.flush()
         traces = C_m+YrA_m
-        idx_components, fitness, erfc = cse.utilities.evaluate_components(
-            traces, N=5, robust_std=False)
-        idx_components = idx_components[np.logical_and(True ,fitness < -10)]
-        A_m = A_m[:,idx_components]
-        C_m = C_m[idx_components,:]
+
+        Npeaks = 10
+        final_frate = 1.0/haussio_data.dt
+        tB = np.minimum(-2, np.floor(-5./30*final_frate))
+        tA = np.maximum(5, np.ceil(25./30*final_frate))
+        fitness_raw, fitness_delta, erfc_raw, erfc_delta, r_values, sign_sam =\
+            cse.utilities.evaluate_components(
+                Y, traces, A_m, C_m, b, f_m,
+                remove_baseline=True, N=5, robust_std=False,
+                Athresh=0.1, Npeaks=Npeaks, tB=tB, tA=tA, thresh_C=0.3)
+
+        idx_components_r = np.where(r_values >= .5)[0]
+        idx_components_raw = np.where(fitness_raw <- 20)[0]
+        idx_components_delta = np.where(fitness_delta < -10)[0]
+
+        idx_components = np.union1d(idx_components_r, idx_components_raw)
+        idx_components = np.union1d(idx_components, idx_components_delta)
+
+        A_m = A_m[:, idx_components]
+        C_m = C_m[idx_components, :]
         sys.stdout.write(' took {0:.2f} s\n'.format(time.time()-t0))
 
         t0 = time.time()
@@ -356,11 +371,17 @@ def process_data_patches(
                 Yr, A2, b2, C2, f, dview=dview, bl=None, c1=None, sn=None,
                 g=None, **options['temporal_params'])
 
-        quality_threshold = -20
         traces = C2+YrA
-        idx_components, fitness, erfc = cse.utilities.evaluate_components(
-            traces, N=5, robust_std=False)
-        idx_components = idx_components[fitness < quality_threshold]
+        fitness_raw, fitness_delta, erfc_raw, erfc_delta, r_values, sign_sam =\
+            cse.utilities.evaluate_components(
+                Y, traces, A2, C2, b2, f2, remove_baseline=True, N=5,
+                robust_std=False, Athresh=0.1, Npeaks=Npeaks, tB=tB,
+                tA=tA, thresh_C=0.3)
+        idx_components_r = np.where(r_values >= .6)[0]
+        idx_components_raw = np.where(fitness_raw < -60)[0]
+        idx_components_delta = np.where(fitness_delta < -20)[0]
+        idx_components = np.union1d(idx_components_r, idx_components_raw)
+        idx_components = np.union1d(idx_components, idx_components_delta)
 
         A2 = A2.tocsc()[:, idx_components]
         C2 = C2[idx_components, :]
