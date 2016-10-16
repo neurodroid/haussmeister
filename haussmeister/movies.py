@@ -54,6 +54,11 @@ def get_normbright(arr, mid=16.0):
             normtuple[0],
             normtuple[2]/2.0,
             normtuple[2])
+    if normtuple[0] > normtuple[1]:
+        normtuple = (
+            0,
+            normtuple[1],
+            normtuple[2])
     return normtuple
 
 
