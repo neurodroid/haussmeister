@@ -45,6 +45,7 @@ try:
     from . import spectral
     from . import cnmf
     from . import motion
+    from . import decode
 except ValueError:
     import utils
     import haussio
@@ -53,6 +54,7 @@ except ValueError:
     import spectral
     import cnmf
     import motion
+    import decode
 
 try:
     import stfio
@@ -557,7 +559,7 @@ def norm(sig):
 def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
               lopass=1.0, plot_events=False, minimaps=None, dpi=1200,
-              selected_rois=None):
+              selected_rois=None, decoded=None):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -795,55 +797,61 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     gs_spikes = gridspec.GridSpec(nrows, ncols)
 
     roi_counter = 0
-    for nroi, (iroi, minimaps_roi) in enumerate(minimaps):
-        if selected_rois is not None and iroi not in selected_rois:
-            continue
+    if len(minimaps):
+        for nroi, (iroi, minimaps_roi) in enumerate(minimaps):
+            if selected_rois is not None and iroi not in selected_rois:
+                continue
 
-        col = roi_counter % ncols
-        row = int(roi_counter/ncols)
-        ax_fluo = stfio_plot.StandardAxis(
-            fig_rois_fluo, gs_fluo[row, col],
-            hasx=nroi == len(minimaps)-1, hasy=True)
-        ax_spikes = stfio_plot.StandardAxis(
-            fig_rois_spikes, gs_spikes[row, col],
-            hasx=nroi == len(minimaps)-1, hasy=True)
-        ax_fluo.set_title(r"{0}".format(iroi))
-        ax_spikes.set_title(r"{0}".format(iroi))
-        for minimap in minimaps_roi:
-            minimap_fluo, minimap_spikes = minimap
-            try:
-                ax_fluo.plot(
-                    minimap_fluo[0][0],
-                    minimap_fluo[0][1]-minimap_fluo[0][1].min(), alpha=0.5)
-                ax_spikes.plot(
-                    minimap_spikes[0][0],
-                    minimap_spikes[0][1]-minimap_spikes[0][1].min(), alpha=0.5)
-            except:
-                pass
-        ax_fluo.plot(
-            mapdict['fluomap'][iroi][0],
-            mapdict['fluomap'][iroi][1]-mapdict['fluomap'][iroi][1].min(),
-            '-k', lw=3, alpha=0.6)
-        ax_spikes.plot(
-            mapdict['infermap'][iroi][0],
-            mapdict['infermap'][iroi][1]-mapdict['infermap'][iroi][1].min(),
-            '-k', lw=3, alpha=0.6)
-        ax_fluo.set_xlim(
-            mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
-        ax_spikes.set_xlim(
-            mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
-        ax_fluo.set_ylim(
-            0, (mapdict['fluomap'][iroi][1].max() -
-                mapdict['fluomap'][iroi][1].min())*2)
-        ax_spikes.set_ylim(
-            0, (mapdict['infermap'][iroi][1].max() -
-                mapdict['infermap'][iroi][1].min())*2)
-        roi_counter += 1
+            col = roi_counter % ncols
+            row = int(roi_counter/ncols)
+            ax_fluo = stfio_plot.StandardAxis(
+                fig_rois_fluo, gs_fluo[row, col],
+                hasx=nroi == len(minimaps)-1, hasy=True)
+            ax_spikes = stfio_plot.StandardAxis(
+                fig_rois_spikes, gs_spikes[row, col],
+                hasx=nroi == len(minimaps)-1, hasy=True)
+            ax_fluo.set_title(r"{0}".format(iroi))
+            ax_spikes.set_title(r"{0}".format(iroi))
+            for minimap in minimaps_roi:
+                minimap_fluo, minimap_spikes = minimap
+                try:
+                    ax_fluo.plot(
+                        minimap_fluo[0][0],
+                        minimap_fluo[0][1]-minimap_fluo[0][1].min(), alpha=0.5)
+                    ax_spikes.plot(
+                        minimap_spikes[0][0],
+                        minimap_spikes[0][1]-minimap_spikes[0][1].min(), alpha=0.5)
+                except:
+                    pass
+            ax_fluo.plot(
+                mapdict['fluomap'][iroi][0],
+                mapdict['fluomap'][iroi][1]-mapdict['fluomap'][iroi][1].min(),
+                '-k', lw=3, alpha=0.6)
+            ax_spikes.plot(
+                mapdict['infermap'][iroi][0],
+                mapdict['infermap'][iroi][1]-mapdict['infermap'][iroi][1].min(),
+                '-k', lw=3, alpha=0.6)
+            ax_fluo.set_xlim(
+                mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
+            ax_spikes.set_xlim(
+                mapdict['posy_vr'].min(), mapdict['posy_vr'].max())
+            ax_fluo.set_ylim(
+                0, (mapdict['fluomap'][iroi][1].max() -
+                    mapdict['fluomap'][iroi][1].min())*2)
+            ax_spikes.set_ylim(
+                0, (mapdict['infermap'][iroi][1].max() -
+                    mapdict['infermap'][iroi][1].min())*2)
+            roi_counter += 1
 
     fig_rois_fluo.savefig(
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
     fig_rois_spikes.savefig(
         data_path + "_rois_spikes" + pdf_suffix + ".pdf", dpi=dpi)
+
+    if decoded is not None:
+        fig = plt.figure()
+        print(np.max(decoded, axis=0).shape)
+        plt.plot(np.max(decoded, axis=0))
 
 
 def infer_spikes(dataset, signal_label, measured):
@@ -1368,10 +1376,32 @@ def thor_extract_roi(
     else:
         minimaps = None
 
-    plot_rois(rois, measured, haussio_data, zproj, data.data_path_comp,
-              pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
-              infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
-              minimaps=minimaps, selected_rois=selected_rois)
+    if data.fnvr is not None:
+        normamp = 20.0
+        infermap = np.array([norm(mapdict['infermap'][nroi][1]) * normamp
+                             for nroi in range(len(mapdict['infermap']))])
+
+        ndiscard = 3
+        trange = mapdict['t_2p'][ndiscard:] * 1e-3
+        mean_dt = np.diff(trange).mean()
+        new_dt = 0.25
+        new_dt_step = int(np.round(new_dt/mean_dt))
+        new_dt = mean_dt * new_dt_step
+        counts = np.round(np.array([spectral.lowpass(
+            stfio_plot.Timeseries(
+                norm(spikes[nroi][ndiscard:]) * normamp, mean_dt),
+            new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
+            for nroi in range(len(spikes))]))
+
+        decoded = decode.decodeML(infermap.T, counts.T)[:, 0, :]
+    else:
+        decoded = None
+
+    plot_rois(
+        rois, measured, haussio_data, zproj, data.data_path_comp,
+        pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
+        infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
+        minimaps=minimaps, selected_rois=selected_rois, decoded=decoded)
 
 
 def create_roi_map(iroi, teleport_times, measured, spikes, vrdict):
@@ -1439,7 +1469,7 @@ def create_mini_maps(measured, spikes, mapdict, vrdict,
                     minimap_fluo[0][1].argmax()-
                     mapdict['fluomap'][iroi][1].argmax())) < (field_size/2.0))
         if (float(naligned) / len(minimaps_roi)) > fraction_aligned:
-            minimaps_aligned.append(minimaps_roi)
+            minimaps_aligned.append((iroi, minimaps_roi))
 
     print("")
 
