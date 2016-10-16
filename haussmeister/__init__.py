@@ -12,5 +12,6 @@ from . import spectral
 from . import cnmf
 from . import thor2tiff
 from . import motion
+from . import decode
 
 __version__ = '0.2.0'
