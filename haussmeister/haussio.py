@@ -820,7 +820,7 @@ class SI4HaussIO(HaussIO):
         dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
         if self.mptifs is not None:
             nframes = np.sum([
-                mptif.get_depth() for mptif in self.mptifs])
+                mptif.get_depth()-1 for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -840,7 +840,7 @@ class SI4HaussIO(HaussIO):
             t0 = time.time()
             if self.mptifs is not None:
                 self.raw_array = np.concatenate([
-                    np.array(mptif.get_tiff_array()).astype(np.int32)
+                    np.array(mptif.get_tiff_array()).astype(np.int32)[1:]
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
