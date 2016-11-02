@@ -848,10 +848,33 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     fig_rois_spikes.savefig(
         data_path + "_rois_spikes" + pdf_suffix + ".pdf", dpi=dpi)
 
-    if decoded is not None:
-        fig = plt.figure()
-        print(np.max(decoded, axis=0).shape)
-        plt.plot(np.max(decoded, axis=0))
+
+def plot_decoded(decoded, mapdict):
+    fig = plt.figure()
+    gs = gridspec.GridSpec(1, 1)
+    ax_pos = stfio_plot.StandardAxis(
+        fig, gs[0, 0], hasx=True, hasy=True)
+    t_vr = mapdict['t_vr']*1e-3
+    pl_phys, = ax_pos.plot(t_vr, mapdict['posy_vr'])
+    t_decoded = np.linspace(t_vr.min(), t_vr.max(), decoded.shape[1])
+    pl_decod, = ax_pos.plot(t_decoded, mapdict['infermap'][0][0][np.argmax(decoded, axis=0)])
+    for ev in mapdict['events']:
+        if ev.evcode == "BB":
+            ax_pos.plot(
+                ev.time, -0.05, ev.marker, mfc='k', mec='k', ms=ev.ms)
+        elif ev.evcode == "WW":
+            ax_pos.plot(
+                ev.time, -0.05, ev.marker, mfc='w', mec='k', ms=ev.ms)
+        elif ev.evcode == "RE":
+            ax_pos.plot(
+                ev.time, -0.05, ev.marker, ms=ev.ms)
+    ax_pos.set_xlabel("Time (s)")
+    ax_pos.set_ylabel("VR position (m)")
+    ax_pos.legend([pl_phys, pl_decod],
+                  ["Physical position", "Decoded position"],
+                  frameon=False, fancybox=False)
+    # Does trial-to-trial performance correlate
+    # with the precision of the hippocampal spatial map?
 
 
 def infer_spikes(dataset, signal_label, measured):
@@ -1301,7 +1324,7 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
 
 def thor_extract_roi(
         data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None,
-        roi_iceberg=0.9):
+        roi_iceberg=0.9, decoded_only=False):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1321,6 +1344,8 @@ def thor_extract_roi(
         Indices of ROIs to be plotted. Default: None (plots all ROIs)
     roi_iceberg : float, optional
         Relative level at which CNMF ROI contours will be plotted. Default: 0.9
+    decoded_only : bool, optional
+        Only plot spatial decoding. Default: False
     """
     assert(data.seg_method in ["thunder", "sima", "ij", "cnmf"])
 
@@ -1377,25 +1402,52 @@ def thor_extract_roi(
         minimaps = None
 
     if data.fnvr is not None:
-        normamp = 20.0
-        infermap = np.array([norm(mapdict['infermap'][nroi][1]) * normamp
-                             for nroi in range(len(mapdict['infermap']))])
+        normamp = 5.0 # 5.0
+        new_dt = 1.0 # 1.0
+        irois = [iroi for (iroi, minimap) in minimaps]
+        # infermap = np.array([norm(mapdict['infermap'][nroi][1]) * normamp
+        #                      for nroi in irois])
+
+        fluomap = [
+            [norm(minimap[0][0][1]) *
+             (measured[iroi].max()-measured[iroi].min())
+             for minimap in minimaps_roi]
+            for iroi, minimaps_roi in minimaps
+        ]
+
+        # spikemap = [
+        #     [norm(minimap[1][0][1]) *
+        #      (spikes[iroi].max()-spikes[iroi].min())
+        #      for minimap in minimaps_roi]
+        #     for iroi, minimaps_roi in minimaps
+        # ]
 
         ndiscard = 3
         trange = mapdict['t_2p'][ndiscard:] * 1e-3
         mean_dt = np.diff(trange).mean()
-        new_dt = 0.25
         new_dt_step = int(np.round(new_dt/mean_dt))
         new_dt = mean_dt * new_dt_step
-        counts = np.round(np.array([spectral.lowpass(
-            stfio_plot.Timeseries(
-                norm(spikes[nroi][ndiscard:]) * normamp, mean_dt),
-            new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
-            for nroi in range(len(spikes))]))
+        # counts = np.array([spectral.lowpass(
+        #     stfio_plot.Timeseries(
+        #         norm(spikes[nroi][ndiscard:]).astype(np.float64) * normamp*2.0, mean_dt),
+        #     new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
+        #                    for nroi in irois])
 
-        decoded = decode.decodeML(infermap.T, counts.T)[:, 0, :]
+        decoded = decode.decodeMLNonparam(
+            fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
+                :, np.newaxis]).T,
+            nentries=3)
+        # decoded = decode.decodeMLNonparam(
+        #     spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
+        #         :, np.newaxis]).T,
+        #     nentries=2)
+
+        plot_decoded(decoded, mapdict)
     else:
         decoded = None
+
+    if decoded_only:
+        return
 
     plot_rois(
         rois, measured, haussio_data, zproj, data.data_path_comp,
@@ -1454,7 +1506,7 @@ def create_mini_maps(measured, spikes, mapdict, vrdict,
     map_function = partial(
         create_roi_map, teleport_times=teleport_times, measured=measured,
         spikes=spikes, vrdict=vrdict)
-    minimaps = pool.map(map_function, iroi_with_peaks)
+    minimaps = map(map_function, iroi_with_peaks)
     pool.close()
 
     naligned_rois = 0
@@ -1799,7 +1851,7 @@ def get_rois_cnmf(
         Dictionary with processed VR data
     """
     if vrdict is not None:
-        if len(vrdict["speed2p"]) > 1000:
+        if True:  # len(vrdict["speed2p"]) > 1000:
             # Remove data periods during which the animal is moving at less than
             # 1cm/s for more than 2s:
             mask2p = contiguous_stationary(
@@ -1829,6 +1881,7 @@ def get_rois_cnmf(
         else:
             maskvr = np.zeros(vrdict["speedvr"].shape).astype(np.bool)
 
+        vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
         vrdict["evlist"] = collapse_events(
             vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
         vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
