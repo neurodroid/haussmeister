@@ -55,12 +55,18 @@ def get_mmap_name(basename, d1, d2, T):
 
 
 def tiffs_to_cnmf(haussio_data, mask=None, force=False):
+    tmpdirname_comp = os.path.join(tempfile.gettempdir(),
+                                   haussio_data.dirname_comp)
+    try:
+        os.makedirs(os.path.dirname(tmpdirname_comp))
+    except OSError:
+        pass
     mmap_files = glob.glob(
-        haussio_data.dirname_comp.replace('_', '') + "*_.mmap")
+        tmpdirname_comp.replace('_', '') + "*_.mmap")
 
     if len(mmap_files) == 0 or force:
         sys.stdout.write('Converting to {0}... '.format(
-            haussio_data.dirname_comp + '_Y*.npy'))
+            tmpdirname_comp + '_Y*.npy'))
         sys.stdout.flush()
         t0 = time.time()
         if haussio_data.rawfile is None or not os.path.exists(
@@ -90,10 +96,8 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
 
         tiff_data = np.transpose(tiff_data, (1, 2, 0))
         d1, d2, T = tiff_data.shape
-        np.save(haussio_data.dirname_comp + '_Y', tiff_data)
+        np.save(tmpdirname_comp + '_Y', tiff_data)
 
-        tmpdirname_comp = tempfile.gettempdir() + os.path.sep + \
-            haussio_data.dirname_comp
         fname_tot = get_mmap_name(tmpdirname_comp, d1, d2, T)
         big_mov = np.memmap(
             fname_tot, mode='w+',
@@ -109,12 +113,18 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
 
 
 def process_data(haussio_data, mask=None, p=2, nrois_init=400):
-    fn_cnmf = haussio_data.dirname_comp + '_cnmf.mat'
+    tmpdirname_comp = os.path.join(tempfile.gettempdir(),
+                                   haussio_data.dirname_comp)
+    try:
+        os.makedirs(os.path.dirname(tmpdirname_comp))
+    except OSError:
+        pass
+    fn_cnmf = tmpdirname_comp + '_cnmf.mat'
 
     tiffs_to_cnmf(haussio_data, mask)
     sys.stdout.write('Loading from {0}... '.format(
-        haussio_data.dirname_comp + '_Y*.npy'))
-    Y = np.load(haussio_data.dirname_comp + '_Y.npy', mmap_mode='r')
+        tmpdirname_comp + '_Y*.npy'))
+    Y = np.load(tmpdirname_comp + '_Y.npy', mmap_mode='r')
     d1, d2, T = Y.shape
 
     if not os.path.exists(fn_cnmf):
@@ -123,8 +133,6 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
 
         sys.stdout.flush()
         t0 = time.time()
-        tmpdirname_comp = tempfile.gettempdir() + os.path.sep + \
-            haussio_data.dirname_comp
         fname_tot = get_mmap_name(tmpdirname_comp, d1, d2, T)
         Yr, dm, Tm = cse.utilities.load_memmap(fname_tot)
         assert(dm[0] == d1)
@@ -260,9 +268,15 @@ def process_data_patches(
     fn_cnmf = haussio_data.dirname_comp + '_cnmf.mat'
 
     tiffs_to_cnmf(haussio_data, mask)
+    tmpdirname_comp = (os.tempfile.gettempdir(),
+        haussio_data.dirname_comp)
+    try:
+        os.makedirs(os.path.dirname(tmpdirname_comp))
+    except OSError:
+        pass
     sys.stdout.write('Loading from {0}... '.format(
-        haussio_data.dirname_comp + '_Y*.npy'))
-    Y = np.load(haussio_data.dirname_comp + '_Y.npy', mmap_mode='r')
+        tmpdirname_comp + '_Y*.npy'))
+    Y = np.load(tmpdirname_comp + '_Y.npy', mmap_mode='r')
     d1, d2, T = Y.shape
 
     if not os.path.exists(fn_cnmf):
@@ -271,8 +285,6 @@ def process_data_patches(
 
         sys.stdout.flush()
         t0 = time.time()
-        tmpdirname_comp = tempfile.gettempdir() + os.path.sep + \
-            haussio_data.dirname_comp
         fname_new = get_mmap_name(tmpdirname_comp, d1, d2, T)
         Yr, _, _ = cse.utilities.load_memmap(fname_new)
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
