@@ -92,7 +92,9 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         d1, d2, T = tiff_data.shape
         np.save(haussio_data.dirname_comp + '_Y', tiff_data)
 
-        fname_tot = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
+        tmpdirname_comp = tempfile.gettempdir() + os.path.sep + \
+            haussio_data.dirname_comp
+        fname_tot = get_mmap_name(tmpdirname_comp, d1, d2, T)
         big_mov = np.memmap(
             fname_tot, mode='w+',
             dtype=np.float32, shape=(d1*d2, T), order='C')
@@ -121,7 +123,9 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400):
 
         sys.stdout.flush()
         t0 = time.time()
-        fname_tot = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
+        tmpdirname_comp = tempfile.gettempdir() + os.path.sep + \
+            haussio_data.dirname_comp
+        fname_tot = get_mmap_name(tmpdirname_comp, d1, d2, T)
         Yr, dm, Tm = cse.utilities.load_memmap(fname_tot)
         assert(dm[0] == d1)
         assert(dm[1] == d2)
@@ -267,7 +271,9 @@ def process_data_patches(
 
         sys.stdout.flush()
         t0 = time.time()
-        fname_new = get_mmap_name(haussio_data.dirname_comp, d1, d2, T)
+        tmpdirname_comp = tempfile.gettempdir() + os.path.sep + \
+            haussio_data.dirname_comp
+        fname_new = get_mmap_name(tmpdirname_comp, d1, d2, T)
         Yr, _, _ = cse.utilities.load_memmap(fname_new)
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
 
