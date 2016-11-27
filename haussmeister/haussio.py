@@ -29,7 +29,10 @@ import tables
 
 import sima
 import tifffile
-import libtiff
+try:
+    import libtiff
+except ImportError:
+    sys.stdout.write("Couldn't find libtiff\n")
 
 try:
     from . import movies
