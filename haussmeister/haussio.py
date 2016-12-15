@@ -556,6 +556,9 @@ class ThorHaussIO(HaussIO):
                     self.naverage = int(child.attrib['averageNum'])
                 else:
                     self.naverage = None
+                if 'widthUM' in child.attrib:
+                    self.xsize = float(child.attrib['widthUM'])
+                    self.ysize = float(child.attrib['heightUM'])
             elif child.tag == "Sample":
                 for grandchild in child:
                     if grandchild.tag == "Wells":
@@ -575,8 +578,17 @@ class ThorHaussIO(HaussIO):
                 self.timing = np.concatenate([
                     self.timing, np.loadtxt(timing)+self.timing[-1]])
         else:
-            self.timing = np.loadtxt(
-                os.path.dirname(self.xml_name) + "/timing.txt")
+            timingfn = os.path.dirname(self.xml_name) + "/timing.txt"
+            if os.path.exists(timingfn):
+                self.timing = np.loadtxt(timingfn)
+            else:
+                for child in self.xml_root:
+                    if child.tag == "LSM":
+                        framerate = float(child.attrib['frameRate'])
+                    if child.tag == "Streaming":
+                        nframes = int(child.attrib['frames'])
+                dt = 1.0/framerate
+                self.timing = np.arange((nframes), dtype=float) * dt
 
     def _get_sync(self):
         if self.sync_path is None:
