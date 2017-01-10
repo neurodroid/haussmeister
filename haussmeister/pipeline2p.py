@@ -376,6 +376,9 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
     if compress and os.name != 'nt':
         raw_fn += ".xz"
 
+    del(dataset)
+    del(haussio_data.raw_array)
+
     if not os.path.exists(os.path.join(data.mc_tiff_dir, os.path.basename(
             filenames_mc[-1]))) and not os.path.exists(os.path.join(
                 data.mc_tiff_dir, raw_fn)):
