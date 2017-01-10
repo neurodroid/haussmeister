@@ -538,10 +538,13 @@ class ThorHaussIO(HaussIO):
                     self.dirname_comp, self.basefile +
                     self.format_index(nf+nfno) + ".tif")
                     for nfno, fno in enumerate(filenames_orig)]
+            rawfiles = sorted(glob.glob(os.path.join(
+                dirname, "*.raw*")))
+            self.rawfile = rawfiles[0]
         else:
             self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
+            self.rawfile = os.path.join(self.dirname_comp, THOR_RAW_FN)
 
-        self.rawfile = os.path.join(self.dirname_comp, THOR_RAW_FN)
         if os.path.exists(self.rawfile + ".xz"):
             self.rawfile = self.rawfile + ".xz"
 
@@ -637,13 +640,25 @@ class ThorHaussIO(HaussIO):
 
     def read_raw(self):
         if self.raw_array is None:
-            shapefn = os.path.join(
-                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
-            if os.path.exists(shapefn):
-                shape = np.load(shapefn)
+            if os.path.exists(
+                    os.path.join(
+                        self.dirname_comp, THOR_RAW_FN)):
+                shapefn = os.path.join(
+                    self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+                if os.path.exists(shapefn):
+                    shape = np.load(shapefn)
+                else:
+                    shape = (self.nframes, self.xpx, self.ypx)
+                self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
             else:
-                shape = (self.nframes, self.xpx, self.ypx)
-            self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
+                shapes = [
+                    np.load(
+                        os.path.join(rawdir, THOR_RAW_FN[:-3] + "shape.npy"))
+                    for rawdir in sorted(glob.glob(self.dirname))]
+                self.raw_array = np.concatenate([
+                    raw2np(os.path.join(rawdir, THOR_RAW_FN), shape)
+                    for shape, rawdir in zip(
+                            shapes, sorted(glob.glob(self.dirname)))])
 
         return self.raw_array
 
@@ -928,14 +943,24 @@ def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
         sys.stdout.write("Reading files...")
         sys.stdout.flush()
         t0 = time.time()
-        arr = np.array(
-            [frame for frame in save_frames]).squeeze().astype(
-                np.uint16)
+        fn_mmap = os.path.join(path, THOR_RAW_FN + ".mmap")
+        big_mov = np.memmap(
+            fn_mmap, mode='w+', dtype=np.uint16, shape=(
+                dataset.sequences[0].shape[0],
+                dataset.sequences[0].shape[2],
+                dataset.sequences[0].shape[3]), order='C')
+        for nf, frame in enumerate(save_frames):
+            big_mov[nf, :, :] = np.array(frame[0]).squeeze().astype(np.uint16)
+
+        # big_mov[:] = np.array(
+        #     [frame for frame in save_frames]).squeeze().astype(
+        #         np.uint16)[:]
         sys.stdout.write(" done in {0:.2f}s\n".format(time.time()-t0))
         compress_np(
-            arr, path, THOR_RAW_FN, dataset.sequences[0].shape,
+            big_mov, path, THOR_RAW_FN, dataset.sequences[0].shape,
             compress=compress)
-
+        os.unlink(fn_mmap)
+        del(big_mov)
 
 def compress_np(arr, path, rawfn, shape=None, compress=True):
     if shape is None:
