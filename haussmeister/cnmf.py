@@ -268,7 +268,7 @@ def process_data_patches(
     fn_cnmf = haussio_data.dirname_comp + '_cnmf.mat'
 
     tiffs_to_cnmf(haussio_data, mask)
-    tmpdirname_comp = (tempfile.gettempdir(),
+    tmpdirname_comp = os.path.join(tempfile.gettempdir(),
         haussio_data.dirname_comp)
     try:
         os.makedirs(os.path.dirname(tmpdirname_comp))
