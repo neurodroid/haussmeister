@@ -1377,8 +1377,8 @@ def thor_extract_roi(
         rois, measured, zproj, spikes = get_rois_ij(
             data, haussio_data, infer)
     elif data.seg_method == "cnmf":
-        speed_thr = 0.01  # m/s
-        time_thr = 5000.0  # ms
+        speed_thr = None # 0.01  # m/s
+        time_thr = None # 5000.0  # ms
         rois, measured, zproj, spikes, vrdict = get_rois_cnmf(
             data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init,
             roi_iceberg)
@@ -1853,7 +1853,7 @@ def get_rois_cnmf(
     vrdict : dict
         Dictionary with processed VR data
     """
-    if vrdict is not None:
+    if vrdict is not None and speed_thr is not None and time_thr is not None:
         if True:  # len(vrdict["speed2p"]) > 1000:
             # Remove data periods during which the animal is moving at less than
             # 1cm/s for more than 2s:
@@ -1868,9 +1868,12 @@ def get_rois_cnmf(
         mask2p = None
 
     rois, measured, zproj, spikes, movie, noise = \
-        cnmf.process_data_patches(
+        cnmf.process_data(
             haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
             roi_iceberg=roi_iceberg)
+        # cnmf.process_data_patches(
+        #     haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
+        #     roi_iceberg=roi_iceberg)
 
     if vrdict is not None:
         if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
@@ -1878,22 +1881,20 @@ def get_rois_cnmf(
                 ev for ev in vrdict["evlist"]
                 if ev.time <= vrdict["frametvr"][-1]*1e-3]
 
-        if len(vrdict["speed2p"]) > 1000:
+        vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
+        if speed_thr is not None and time_thr is not None:
             maskvr = contiguous_stationary(
                 vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
-        else:
-            maskvr = np.zeros(vrdict["speedvr"].shape).astype(np.bool)
+            vrdict["evlist"] = collapse_events(
+                vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
+            vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
+            vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
+            vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
+            vrdict["posy"] = vrdict["posy"][np.invert(maskvr)]
+            vrdict["speedvr"] = vrdict["speedvr"][np.invert(maskvr)][:-1]
+            vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
+            vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
 
-        vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
-        vrdict["evlist"] = collapse_events(
-            vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
-        vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
-        vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
-        vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
-        vrdict["posy"] = vrdict["posy"][np.invert(maskvr)]
-        vrdict["speedvr"] = vrdict["speedvr"][np.invert(maskvr)][:-1]
-        vrdict["framet2p"] = collapse_time(vrdict["framet2p"], mask2p)
-        vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
 
     measured = process_data(measured, base_fraction=None, zscore=False)
 

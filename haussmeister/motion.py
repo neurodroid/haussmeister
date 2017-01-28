@@ -9,7 +9,10 @@ GPLv3
 import time
 import numpy as np
 from sima import motion
-import calblitz as cb
+try:
+    import caiman as cb
+except ImportError:
+    print("CaiMan import failed")
 
 
 class CalBlitz(motion.MotionEstimationStrategy):
