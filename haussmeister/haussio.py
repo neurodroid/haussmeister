@@ -16,10 +16,13 @@ try:
     import lzma
 except ImportError:
     import backports.lzma as lzma
-try:
-    import subprocess32 as sp
-except ImportError:
-    sys.stdout.write("Couldn't find subprocess32; using subprocess instead\n")
+if sys.version_info.major < 3:
+    try:
+        import subprocess32 as sp
+    except ImportError:
+        sys.stdout.write("Couldn't find subprocess32; using subprocess instead\n")
+        import subprocess as sp
+else:
     import subprocess as sp
 import shlex
 import numpy as np
