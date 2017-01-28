@@ -32,10 +32,11 @@ import sima.segment
 import sima.spikes
 from sima.ROI import ROIList
 
-try:
-    import ca_source_extraction as cse
-except ImportError:
-    sys.stderr.write("Could not find cse module")
+if sys.version_info.major < 3:
+    try:
+        import ca_source_extraction as cse
+    except ImportError:
+        sys.stderr.write("Could not find cse module")
 
 try:
     from . import utils
