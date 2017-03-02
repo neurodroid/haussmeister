@@ -7,6 +7,7 @@ GPLv3
 """
 
 import time
+import sys
 import numpy as np
 from sima import motion
 try:
@@ -80,7 +81,7 @@ class CalBlitz(motion.MotionEstimationStrategy):
                 if verbose:
                     print('    Loaded in: ' + str(e1) + ' s')
 
-                m = cb.movie(frames, fr=self._params['fr'])
+                m = cm.movie(frames, fr=self._params['fr'])
                 m, shifts, xcorrs, template = m.motion_correct(
                     max_shift_w=max_displacement[0],
                     max_shift_h=max_displacement[1],
