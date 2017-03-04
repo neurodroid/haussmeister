@@ -125,6 +125,9 @@ class HaussIO(object):
         if self.mptifs is not None:
             self.nframes = np.sum([
                 mptif.get_depth() for mptif in self.mptifs])
+            if self.nframes == 0:
+                self.nframes = np.sum([
+                    len(mptif.IFD) for mptif in self.mptifs])
         elif xml_path is None:
             if self.rawfile is None or not os.path.exists(self.rawfile):
                 try:
@@ -874,6 +877,106 @@ class SI4HaussIO(HaussIO):
             if self.mptifs is not None:
                 self.raw_array = np.concatenate([
                     np.array(mptif.get_tiff_array()).astype(np.int32)[1:]
+                    for mptif in self.mptifs])
+                self.raw_array -= self.raw_array.min()
+                assert(np.all(self.raw_array >= 0))
+            else:
+                shapefn = os.path.join(
+                    self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+                if os.path.exists(shapefn):
+                    shape = np.load(shapefn)
+                else:
+                    shape = (self.nframes, self.xpx, self.ypx)
+                self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
+
+            sys.stdout.write(" took {0:.2f}s\n".format(time.time()-t0))
+
+        return self.raw_array.astype(np.uint16)
+
+
+class DoricHaussIO(HaussIO):
+    """
+    Object representing 2p imaging data acquired with ScanImage 4
+    """
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4, maxtime=None, xycal=700.0):
+        self.xycal = xycal
+        super(DoricHaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path, width_idx, maxtime)
+
+    def _get_filenames(self, xml_path, sync_path):
+        super(DoricHaussIO, self)._get_filenames(xml_path, sync_path)
+        if "?" in self.filetrunk:
+            self.mptifs = [
+                libtiff.tiff_file.TiffFile(dirname)
+                for dirname in self.dirnames]
+        elif os.path.isfile(self.dirname):
+            self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
+        else:
+            print(self.dirname[:self.dirname.rfind(".tif")+4])
+            self.mptifs = [libtiff.tiff_file.TiffFile(
+                self.dirname[:self.dirname.rfind(".tif")+4])]
+        self.ifd = self.mptifs[0].IFD[0].entries_dict["ImageDescription"].human()
+        self.DoricDict = {
+            entry[:entry.find(': ')]: entry[entry.find(': ')+1:]
+            for entry in self.ifd[self.ifd.find('="')+2:self.ifd.find('",')].split(', ')
+        }
+        if not os.path.isfile(self.dirnames[0]):
+            self.rawfile = os.path.join(
+                self.dirname, "Image_0001_0001.raw")
+            assert(os.path.exists(self.rawfile))
+            for mptif in self.mptifs:
+                mptif.close()
+            self.mptifs = None
+
+        self.xml_name = None
+
+        self.filenames = None
+
+        if "?" in self.filetrunk:
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+
+    def _get_dimensions(self):
+        if os.path.isfile(self.dirnames[0]):
+            self.xpx = self.mptifs[0].IFD[0].entries_dict['ImageWidth'].value
+            self.ypx = self.mptifs[0].IFD[0].entries_dict['ImageLength'].value
+        else:
+            shapefn = os.path.join(
+                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+            shape = np.load(shapefn)
+            self.xpx, self.ypx = shape[1], shape[2]
+
+        self.xsize = self.ysize = self.xycal
+        self.naverage = None
+
+    def _get_timing(self):
+        dt = float(self.DoricDict['Exposure'][:-2])*1e-3
+        if self.mptifs is not None:
+            nframes = np.sum([
+                len(mptif.IFD) for mptif in self.mptifs])
+        else:
+            shapefn = os.path.join(
+                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+            shape = np.load(shapefn)
+            nframes = shape[0]
+        self.timing = np.array([
+            dt*nframe for nframe in range(nframes)])
+
+    def _get_sync(self):
+        if self.sync_path is None:
+            return
+
+    def read_raw(self):
+        if self.raw_array is None:
+            sys.stdout.write("Converting to numpy array...")
+            sys.stdout.flush()
+            t0 = time.time()
+            if self.mptifs is not None:
+                self.raw_array = np.concatenate([
+                    tifffile.TiffFile(mptif.filename).asarray().astype(np.int32)
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))

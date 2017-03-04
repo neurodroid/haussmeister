@@ -266,6 +266,18 @@ class ThorExperiment(object):
                     chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+        elif self.ftype == "doric":
+            if not mc:
+                return haussio.DoricHaussIO(
+                    self.data_path, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4,
+                    maxtime=self.maxtime)
+            else:
+                return haussio.DoricHaussIO(
+                    self.data_path + self.mc_suffix,
+                    chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=5,
+                    maxtime=self.maxtime)
 
     def to_sima(self, mc=False, haussio_data=None):
         """
