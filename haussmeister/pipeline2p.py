@@ -33,10 +33,11 @@ import sima.spikes
 from sima.ROI import ROIList
 
 if sys.version_info.major < 3:
+    sys.path.append(os.path.expanduser("~/CaImAn/"))
     try:
-        import ca_source_extraction as cse
+        import caiman.source_extraction.cnmf as caiman_cnmf
     except ImportError:
-        sys.stderr.write("Could not find cse module")
+        sys.stderr.write("Could not find caiman cnmf module")
 
 try:
     from . import utils
@@ -918,7 +919,7 @@ def infer_spikes(dataset, signal_label, measured):
     inference = []
     fit = []
     for measured_roi in measured:
-        c, bl, c1, g, sn, sp = cse.deconvolution.constrained_foopsi(measured_roi, p=2)
+        c, bl, c1, g, sn, sp = caiman_cnmf.deconvolution.constrained_foopsi(measured_roi, p=2)
         inference.append(sp)
         fit.append(c)
 
