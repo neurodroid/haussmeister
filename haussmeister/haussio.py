@@ -899,7 +899,7 @@ class DoricHaussIO(HaussIO):
     Object representing 2p imaging data acquired with ScanImage 4
     """
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
-                 width_idx=4, maxtime=None, xycal=700.0):
+                 width_idx=4, maxtime=None, xycal=350.0):
         self.xycal = xycal
         super(DoricHaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx, maxtime)
