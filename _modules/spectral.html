@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>spectral &mdash; haussmeister 0.2.0 documentation</title>
+    <title>spectral &#8212; haussmeister 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -19,7 +19,8 @@
         VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
@@ -30,8 +31,8 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
-    <link rel="up" title="Module code" href="index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -118,7 +119,7 @@
 <span></span><span class="kn">import</span> <span class="nn">sys</span>
 <span class="kn">import</span> <span class="nn">time</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">pyfftw</span>
     <span class="n">pyfftw</span><span class="o">.</span><span class="n">interfaces</span><span class="o">.</span><span class="n">cache</span><span class="o">.</span><span class="n">enable</span><span class="p">()</span>
@@ -126,7 +127,7 @@
     <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;pyfftw unavailable</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
 <span class="k">try</span><span class="p">:</span>
-    <span class="kn">from</span> <span class="nn">stfio</span> <span class="kn">import</span> <span class="n">plot</span> <span class="k">as</span> <span class="n">stfio_plot</span>
+    <span class="kn">from</span> <span class="nn">stfio</span> <span class="k">import</span> <span class="n">plot</span> <span class="k">as</span> <span class="n">stfio_plot</span>
 <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;stfio unavailable</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
 
@@ -150,7 +151,7 @@
     <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">exp</span><span class="p">(</span><span class="o">-</span><span class="mf">0.34657359028</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">f_c</span><span class="p">)</span><span class="o">*</span><span class="p">(</span><span class="n">x</span><span class="o">/</span><span class="n">f_c</span><span class="p">))</span></div>
 
 
-<div class="viewcode-block" id="convolve"><a class="viewcode-back" href="../usage/spectral.html#spectral.convolve">[docs]</a><span class="k">def</span> <span class="nf">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">transfer</span><span class="p">,</span> <span class="n">arglist</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="convolve"><a class="viewcode-back" href="../usage/spectral.html#spectral.convolve">[docs]</a><span class="k">def</span> <span class="nf">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">transfer</span><span class="p">,</span> <span class="n">arglist</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Convolves an array with a transfer function in the frequency domain</span>
 
@@ -204,7 +205,7 @@
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;done</span><span class="se">\n</span><span class="s2">Reverse fft (convolve)... &quot;</span><span class="p">)</span>
         <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
 
-    <span class="n">ifft</span><span class="p">(</span><span class="n">normalise_idft</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">ifft</span><span class="p">(</span><span class="n">normalise_idft</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 
     <span class="c1"># Scale</span>
     <span class="n">inputa</span> <span class="o">/=</span> <span class="nb">len</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
@@ -216,7 +217,7 @@
     <span class="k">return</span> <span class="n">stfio_plot</span><span class="o">.</span><span class="n">Timeseries</span><span class="p">(</span><span class="n">inputa</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">dt</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="gaussian_filter"><a class="viewcode-back" href="../usage/spectral.html#spectral.gaussian_filter">[docs]</a><span class="k">def</span> <span class="nf">gaussian_filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="gaussian_filter"><a class="viewcode-back" href="../usage/spectral.html#spectral.gaussian_filter">[docs]</a><span class="k">def</span> <span class="nf">gaussian_filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Gaussian filter</span>
 
@@ -237,7 +238,7 @@
     <span class="k">return</span> <span class="n">convolve</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">fgaussColqu</span><span class="p">,</span> <span class="p">[</span><span class="n">f_c</span><span class="p">,</span> <span class="p">],</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="lowpass"><a class="viewcode-back" href="../usage/spectral.html#spectral.lowpass">[docs]</a><span class="k">def</span> <span class="nf">lowpass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="lowpass"><a class="viewcode-back" href="../usage/spectral.html#spectral.lowpass">[docs]</a><span class="k">def</span> <span class="nf">lowpass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Lowpass filter</span>
 
@@ -257,7 +258,7 @@
     <span class="k">return</span> <span class="n">gaussian_filter</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="highpass"><a class="viewcode-back" href="../usage/spectral.html#spectral.highpass">[docs]</a><span class="k">def</span> <span class="nf">highpass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">):</span>
+<div class="viewcode-block" id="highpass"><a class="viewcode-back" href="../usage/spectral.html#spectral.highpass">[docs]</a><span class="k">def</span> <span class="nf">highpass</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">f_c</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Highpass filter</span>
 
@@ -291,7 +292,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.<br/>
     </p>
   </div>
 </footer>

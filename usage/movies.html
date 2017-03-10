@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>movies module &mdash; haussmeister 0.2.0 documentation</title>
+    <title>movies module &#8212; haussmeister 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -19,7 +19,8 @@
         VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
@@ -30,8 +31,8 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
-    <link rel="up" title="haussmeister" href="index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="next" title="pipeline2p module" href="pipeline2p.html" />
     <link rel="prev" title="haussio module" href="haussio.html" />
 <meta charset='utf-8'>
@@ -97,7 +98,7 @@
     </a>
   </li>
   <li>
-    <a href="pipeline2p.html" title="Next Chapter: pipeline2p module"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">pipeline2p mo... &raquo;</span>
+    <a href="pipeline2p.html" title="Next Chapter: pipeline2p module"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">pipeline2p module &raquo;</span>
     </a>
   </li>
               
@@ -107,7 +108,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="../_sources/usage/movies.txt"
+  <a href="../_sources/usage/movies.rst.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -146,8 +147,8 @@ that will be mapped to 0, 0.5, and 1.0 output</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>arr</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Frame that will be used for calibration</li>
-<li><strong>mid</strong> (<em>float, optional</em>) &#8211; Midpoint value scaling. Default: 16.0</li>
+<li><strong>arr</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><em>numpy.ndarray</em></a>) &#8211; Frame that will be used for calibration</li>
+<li><strong>mid</strong> (<em>float</em><em>, </em><em>optional</em>) &#8211; Midpoint value scaling. Default: 16.0</li>
 </ul>
 </td>
 </tr>
@@ -191,17 +192,17 @@ at given frame rate</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>tiff_trunk</strong> (<em>str or np.ndarray</em>) &#8211; File name filter (full path) used as input to ffmpeg
+<li><strong>tiff_trunk</strong> (<em>str</em><em> or </em><em>np.ndarray</em>) &#8211; File name filter (full path) used as input to ffmpeg
 (e.g. <code class="docutils literal"><span class="pre">/home/cs/data/ChanA_0001_%04d.tif</span></code>);
 or movie as np.ndarray of shape (nframes, nx, ny).</li>
 <li><strong>out_file</strong> (<em>str</em>) &#8211; Full path to movie file name</li>
 <li><strong>fps</strong> (<em>float</em>) &#8211; Acquisition rate of tiffs in frames per second</li>
-<li><strong>normbright</strong> (<em>3-tuple of floats, optional</em>) &#8211; Brightness adjustment curve; see get_normbright() for format</li>
-<li><strong>scalebarframe</strong> (<em>str, optional</em>) &#8211; Full path to png with scale bar</li>
-<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Print progress of ffmpeg</li>
-<li><strong>scale</strong> (<em>2-tuple of ints, optional</em>) &#8211; Rescale movie to given width and height in pixels. Default: None</li>
-<li><strong>crf</strong> (<em>int, optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 30</li>
-<li><strong>ffmpeg</strong> (<em>str, optional</em>) &#8211; Path to ffmpeg binary. Default: FFMPEG global variable</li>
+<li><strong>normbright</strong> (<em>3-tuple of floats</em><em>, </em><em>optional</em>) &#8211; Brightness adjustment curve; see get_normbright() for format</li>
+<li><strong>scalebarframe</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; Full path to png with scale bar</li>
+<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Print progress of ffmpeg</li>
+<li><strong>scale</strong> (<em>2-tuple of ints</em><em>, </em><em>optional</em>) &#8211; Rescale movie to given width and height in pixels. Default: None</li>
+<li><strong>crf</strong> (<em>int</em><em>, </em><em>optional</em>) &#8211; crf value to be passed to ffmpeg. Default: 30</li>
+<li><strong>ffmpeg</strong> (<em>str</em><em>, </em><em>optional</em>) &#8211; Path to ffmpeg binary. Default: FFMPEG global variable</li>
 </ul>
 </td>
 </tr>
@@ -227,7 +228,7 @@ or movie as np.ndarray of shape (nframes, nx, ny).</li>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><strong>array</strong> &#8211; Numpy array of shape (nframes, npixels_x, npixels_y)</td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)">numpy.ndarray</a></td>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)">numpy.ndarray</a></td>
 </tr>
 </tbody>
 </table>
@@ -270,7 +271,7 @@ with white label that can be added to a movie.</p>
     </p>
     <p>
         &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.<br/>
     </p>
   </div>
 </footer>

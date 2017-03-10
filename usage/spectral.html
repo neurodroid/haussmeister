@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>spectral module &mdash; haussmeister 0.2.0 documentation</title>
+    <title>spectral module &#8212; haussmeister 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -19,7 +19,8 @@
         VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
@@ -30,8 +31,8 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
-    <link rel="up" title="haussmeister" href="index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
     <link rel="prev" title="pipeline2p module" href="pipeline2p.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
@@ -92,7 +93,7 @@
               
                 
   <li>
-    <a href="pipeline2p.html" title="Previous Chapter: pipeline2p module"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; pipeline2p mo...</span>
+    <a href="pipeline2p.html" title="Previous Chapter: pipeline2p module"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; pipeline2p module</span>
     </a>
   </li>
               
@@ -102,7 +103,7 @@
             
               <li class="hidden-sm">
 <div id="sourcelink">
-  <a href="../_sources/usage/spectral.txt"
+  <a href="../_sources/usage/spectral.rst.txt"
      rel="nofollow">Source</a>
 </div></li>
             
@@ -140,7 +141,7 @@
 <li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
 <li><strong>transfer</strong> (<em>function</em>) &#8211; Transfer function</li>
 <li><strong>arglist</strong> (<em>list</em>) &#8211; Additional arguments to transfer</li>
-<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Verbose output. Default: False</li>
 </ul>
 </td>
 </tr>
@@ -164,15 +165,15 @@ np.log(2.0)/2.0 = 0.34657359028</p>
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
-<li><strong>x</strong> (<a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)"><em>numpy.ndarray</em></a>) &#8211; Frequencies</li>
-<li><strong>f_c</strong> (<em>Cutoff frequency (-3dB)</em>) &#8211; </li>
+<li><strong>x</strong> (<a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)"><em>numpy.ndarray</em></a>) &#8211; Frequencies</li>
+<li><strong>f_c</strong> (<em>Cutoff frequency</em><em> (</em><em>-3dB</em><em>)</em><em></em>) &#8211; </li>
 </ul>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>gauss</strong> &#8211; Transfer function to achieve -3dB at f_c</p>
 </td>
 </tr>
-<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.11)">numpy.ndarray</a></p>
+<tr class="field-odd field"><th class="field-name">Return type:</th><td class="field-body"><p class="first last"><a class="reference external" href="https://docs.scipy.org/doc/numpy/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.12)">numpy.ndarray</a></p>
 </td>
 </tr>
 </tbody>
@@ -190,7 +191,7 @@ np.log(2.0)/2.0 = 0.34657359028</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
 <li><strong>f_c</strong> (<em>float</em>) &#8211; Cutoff frequency in kHz (-3 dB)</li>
-<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Verbose output. Default: False</li>
 </ul>
 </td>
 </tr>
@@ -215,7 +216,7 @@ np.log(2.0)/2.0 = 0.34657359028</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
 <li><strong>f_c</strong> (<em>float</em>) &#8211; Cutoff frequency in kHz (-3 dB)</li>
-<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Verbose output. Default: False</li>
 </ul>
 </td>
 </tr>
@@ -240,7 +241,7 @@ np.log(2.0)/2.0 = 0.34657359028</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first simple">
 <li><strong>x</strong> (<em>stfio_plot.Timeseries</em>) &#8211; Input data</li>
 <li><strong>f_c</strong> (<em>float</em>) &#8211; Cutoff frequency in kHz (-3 dB)</li>
-<li><strong>verbose</strong> (<em>bool, optional</em>) &#8211; Verbose output. Default: False</li>
+<li><strong>verbose</strong> (<em>bool</em><em>, </em><em>optional</em>) &#8211; Verbose output. Default: False</li>
 </ul>
 </td>
 </tr>
@@ -269,7 +270,7 @@ np.log(2.0)/2.0 = 0.34657359028</p>
     </p>
     <p>
         &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.<br/>
     </p>
   </div>
 </footer>

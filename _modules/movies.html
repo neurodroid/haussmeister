@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>movies &mdash; haussmeister 0.2.0 documentation</title>
+    <title>movies &#8212; haussmeister 0.2.0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -19,7 +19,8 @@
         VERSION:     '0.2.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
-        HAS_SOURCE:  true
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
       };
     </script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
@@ -30,8 +31,8 @@
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
-    <link rel="top" title="haussmeister 0.2.0 documentation" href="../index.html" />
-    <link rel="up" title="Module code" href="index.html" />
+    <link rel="index" title="Index" href="../genindex.html" />
+    <link rel="search" title="Search" href="../search.html" />
 <meta charset='utf-8'>
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
@@ -124,22 +125,25 @@
 
 <span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">sys</span>
-<span class="k">try</span><span class="p">:</span>
-    <span class="kn">import</span> <span class="nn">subprocess32</span> <span class="kn">as</span> <span class="nn">sp</span>
-<span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
-    <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t find subprocess32; using subprocess instead</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="kn">import</span> <span class="nn">subprocess</span> <span class="kn">as</span> <span class="nn">sp</span>
+<span class="k">if</span> <span class="n">sys</span><span class="o">.</span><span class="n">version_info</span><span class="o">.</span><span class="n">major</span> <span class="o">&lt;</span> <span class="mi">3</span><span class="p">:</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="kn">import</span> <span class="nn">subprocess32</span> <span class="k">as</span> <span class="nn">sp</span>
+    <span class="k">except</span> <span class="ne">ImportError</span><span class="p">:</span>
+        <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;Couldn&#39;t find subprocess32; using subprocess instead</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
+        <span class="kn">import</span> <span class="nn">subprocess</span> <span class="k">as</span> <span class="nn">sp</span>
+<span class="k">else</span><span class="p">:</span>
+    <span class="kn">import</span> <span class="nn">subprocess</span> <span class="k">as</span> <span class="nn">sp</span>
 <span class="kn">import</span> <span class="nn">shlex</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">PIL</span> <span class="kn">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span><span class="p">,</span> <span class="n">ImageFont</span>
-<span class="kn">from</span> <span class="nn">base64</span> <span class="kn">import</span> <span class="n">b64encode</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">PIL</span> <span class="k">import</span> <span class="n">Image</span><span class="p">,</span> <span class="n">ImageDraw</span><span class="p">,</span> <span class="n">ImageFont</span>
+<span class="kn">from</span> <span class="nn">base64</span> <span class="k">import</span> <span class="n">b64encode</span>
 <span class="k">try</span><span class="p">:</span>
     <span class="kn">import</span> <span class="nn">cv2</span>
 <span class="k">except</span><span class="p">:</span>
     <span class="n">sys</span><span class="o">.</span><span class="n">stderr</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="s2">&quot;cv2 module not found</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">)</span>
-    <span class="n">HAS_CV2</span> <span class="o">=</span> <span class="bp">False</span>
+    <span class="n">HAS_CV2</span> <span class="o">=</span> <span class="kc">False</span>
 <span class="k">else</span><span class="p">:</span>
-    <span class="n">HAS_CV2</span> <span class="o">=</span> <span class="bp">True</span>
+    <span class="n">HAS_CV2</span> <span class="o">=</span> <span class="kc">True</span>
 
 <span class="n">FFMPEG</span> <span class="o">=</span> <span class="s2">&quot;ffmpeg&quot;</span>
 
@@ -162,9 +166,21 @@
 <span class="sd">        3 points of input brightness that will be mapped to</span>
 <span class="sd">        0, 0.5, and 1.0 output</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">return</span><span class="p">(</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span>
-           <span class="n">mid</span><span class="o">*</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span>
-           <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span></div>
+    <span class="n">normtuple</span> <span class="o">=</span> <span class="p">(</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span>
+        <span class="n">mid</span><span class="o">*</span><span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">median</span><span class="p">(</span><span class="n">arr</span><span class="p">)</span><span class="o">-</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">,</span>
+        <span class="nb">float</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">arr</span><span class="p">))</span><span class="o">/</span><span class="mi">2</span><span class="o">**</span><span class="mi">16</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">normtuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">normtuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]:</span>
+        <span class="n">normtuple</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="n">normtuple</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+            <span class="n">normtuple</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span>
+            <span class="n">normtuple</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">normtuple</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="n">normtuple</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
+        <span class="n">normtuple</span> <span class="o">=</span> <span class="p">(</span>
+            <span class="mi">0</span><span class="p">,</span>
+            <span class="n">normtuple</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+            <span class="n">normtuple</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+    <span class="k">return</span> <span class="n">normtuple</span></div>
 
 
 <div class="viewcode-block" id="save_scale_bar"><a class="viewcode-back" href="../usage/movies.html#movies.save_scale_bar">[docs]</a><span class="k">def</span> <span class="nf">save_scale_bar</span><span class="p">(</span><span class="n">png_name</span><span class="p">,</span> <span class="n">scale_length_int</span><span class="p">,</span> <span class="n">scale_length_px</span><span class="p">,</span> <span class="n">xpx</span><span class="p">,</span> <span class="n">ypx</span><span class="p">):</span>
@@ -189,7 +205,7 @@
 
     <span class="n">margin_x</span> <span class="o">=</span> <span class="n">xpx</span><span class="o">/</span><span class="mf">50.0</span>
 
-    <span class="n">scale_text</span> <span class="o">=</span> <span class="s2">u&quot;{0:0d} </span><span class="se">\u03BC</span><span class="s2">m&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">scale_length_int</span><span class="p">))</span>
+    <span class="n">scale_text</span> <span class="o">=</span> <span class="sa">u</span><span class="s2">&quot;</span><span class="si">{0:0d}</span><span class="s2"> </span><span class="se">\u03BC</span><span class="s2">m&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">int</span><span class="p">(</span><span class="n">scale_length_int</span><span class="p">))</span>
 
     <span class="n">im</span> <span class="o">=</span> <span class="n">Image</span><span class="o">.</span><span class="n">new</span><span class="p">(</span><span class="s2">&quot;RGBA&quot;</span><span class="p">,</span> <span class="p">(</span><span class="n">xpx</span><span class="o">*</span><span class="n">aa</span><span class="p">,</span> <span class="n">ypx</span><span class="o">*</span><span class="n">aa</span><span class="p">))</span>
     <span class="n">draw</span> <span class="o">=</span> <span class="n">ImageDraw</span><span class="o">.</span><span class="n">Draw</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
@@ -200,7 +216,7 @@
 
     <span class="c1"># get a font</span>
     <span class="n">fnt</span> <span class="o">=</span> <span class="n">ImageFont</span><span class="o">.</span><span class="n">truetype</span><span class="p">(</span>
-        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">__file__</span><span class="p">)),</span>
+        <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">dirname</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="vm">__file__</span><span class="p">)),</span>
                      <span class="s1">&#39;data/FreeSansBold.ttf&#39;</span><span class="p">),</span> <span class="mi">24</span><span class="o">*</span><span class="n">aa</span><span class="p">)</span>
     <span class="n">w</span><span class="p">,</span> <span class="n">h</span> <span class="o">=</span> <span class="n">draw</span><span class="o">.</span><span class="n">textsize</span><span class="p">(</span><span class="n">scale_text</span><span class="p">,</span> <span class="n">font</span><span class="o">=</span><span class="n">fnt</span><span class="p">)</span>
     <span class="n">draw</span><span class="o">.</span><span class="n">text</span><span class="p">(((</span><span class="n">xpx</span> <span class="o">-</span> <span class="n">margin_x</span> <span class="o">-</span> <span class="n">scale_length_px</span><span class="o">/</span><span class="mf">2.0</span><span class="p">)</span><span class="o">*</span><span class="n">aa</span> <span class="o">-</span> <span class="n">w</span><span class="o">/</span><span class="mf">2.0</span><span class="p">,</span>
@@ -211,8 +227,8 @@
     <span class="n">im</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">png_name</span><span class="p">)</span></div>
 
 
-<div class="viewcode-block" id="make_movie"><a class="viewcode-back" href="../usage/movies.html#movies.make_movie">[docs]</a><span class="k">def</span> <span class="nf">make_movie</span><span class="p">(</span><span class="n">tiff_trunk</span><span class="p">,</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">normbright</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">scalebarframe</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-               <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">ffmpeg</span><span class="o">=</span><span class="n">FFMPEG</span><span class="p">):</span>
+<div class="viewcode-block" id="make_movie"><a class="viewcode-back" href="../usage/movies.html#movies.make_movie">[docs]</a><span class="k">def</span> <span class="nf">make_movie</span><span class="p">(</span><span class="n">tiff_trunk</span><span class="p">,</span> <span class="n">out_file</span><span class="p">,</span> <span class="n">fps</span><span class="p">,</span> <span class="n">normbright</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">scalebarframe</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+               <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">scale</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">crf</span><span class="o">=</span><span class="mi">30</span><span class="p">,</span> <span class="n">ffmpeg</span><span class="o">=</span><span class="n">FFMPEG</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Produce a movie from a directory with individual tiffs</span>
 <span class="sd">    at given frame rate</span>
@@ -247,52 +263,54 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 
     <span class="n">addin</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> <span class="n">normbright</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span> <span class="ow">or</span> \
-       <span class="n">scalebarframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">normbright</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> \
+       <span class="n">scalebarframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">sfilter</span> <span class="o">=</span> <span class="s2">&quot;-filter_complex &quot;</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="n">sfilter</span> <span class="o">=</span> <span class="s2">&quot;&quot;</span>
 
     <span class="n">prev</span> <span class="o">=</span> <span class="s2">&quot;[0:v]&quot;</span>
-    <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">sfilter</span> <span class="o">+=</span> <span class="n">prev</span> <span class="o">+</span> <span class="s2">&quot;scale={0}:{1}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">scale</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">sfilter</span> <span class="o">+=</span> <span class="n">prev</span> <span class="o">+</span> <span class="s2">&quot;scale=</span><span class="si">{0}</span><span class="s2">:</span><span class="si">{1}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scale</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">scale</span><span class="p">[</span><span class="mi">1</span><span class="p">])</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="s2">&quot;[scale];[scale]&quot;</span>
 
-    <span class="k">if</span> <span class="n">normbright</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">normbright</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">normbright</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">normbright</span><span class="p">[</span><span class="mi">1</span><span class="p">]:</span>
             <span class="n">normbright1</span> <span class="o">=</span> <span class="n">normbright</span><span class="p">[</span><span class="mi">2</span><span class="p">]</span><span class="o">/</span><span class="mf">2.0</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">normbright1</span> <span class="o">=</span> <span class="n">normbright</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
-        <span class="n">sfilter</span> <span class="o">+=</span> <span class="n">prev</span> <span class="o">+</span> <span class="s2">&quot;curves=all=&#39;{0}/0 {1}/0.5 {2}/1&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="n">sfilter</span> <span class="o">+=</span> <span class="n">prev</span> <span class="o">+</span> <span class="s2">&quot;curves=all=&#39;</span><span class="si">{0}</span><span class="s2">/0 </span><span class="si">{1}</span><span class="s2">/0.5 </span><span class="si">{2}</span><span class="s2">/1&#39;&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">normbright</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">normbright1</span><span class="p">,</span> <span class="n">normbright</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
         <span class="n">prev</span> <span class="o">=</span> <span class="s2">&quot;[bright];[bright]&quot;</span>
 
-    <span class="k">if</span> <span class="n">scalebarframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="bp">None</span><span class="p">:</span>
-        <span class="n">addin</span> <span class="o">=</span> <span class="s2">&quot;-i {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scalebarframe</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">scalebarframe</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">addin</span> <span class="o">=</span> <span class="s2">&quot;-i </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">scalebarframe</span><span class="p">)</span>
         <span class="n">sfilter</span> <span class="o">+=</span> <span class="n">prev</span> <span class="o">+</span> <span class="s2">&quot;[1:v]overlay=0:0&quot;</span>
 
     <span class="n">tiff_input</span> <span class="o">=</span> <span class="n">tiff_trunk</span>
 
-    <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;{0} -y -r {1} &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ffmpeg</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span>
+    <span class="n">cmd</span> <span class="o">=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> -y -r </span><span class="si">{1}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">ffmpeg</span><span class="p">,</span> <span class="n">fps</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">tiff_input</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
         <span class="k">if</span> <span class="s2">&quot;?&quot;</span> <span class="ow">in</span> <span class="n">tiff_input</span><span class="p">:</span>
             <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;-pattern_type glob &quot;</span>
-        <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;-i {0} &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tiff_input</span><span class="p">)</span>
-        <span class="n">stdin</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;-i </span><span class="si">{0}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">tiff_input</span><span class="p">)</span>
+        <span class="n">stdin</span> <span class="o">=</span> <span class="kc">None</span>
     <span class="k">else</span><span class="p">:</span>
         <span class="k">assert</span><span class="p">(</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">tiff_input</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">))</span>
-        <span class="k">assert</span><span class="p">(</span><span class="n">tiff_input</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span><span class="p">)</span>
+        <span class="k">assert</span><span class="p">(</span><span class="n">tiff_input</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">uint16</span> <span class="ow">or</span>
+               <span class="n">tiff_input</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">int16</span> <span class="ow">or</span>
+               <span class="n">tiff_input</span><span class="o">.</span><span class="n">dtype</span> <span class="o">==</span> <span class="n">np</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
         <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;-f image2pipe -i - &quot;</span>
         <span class="n">stdin</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">PIPE</span>
 
-    <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;{0} {1} &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;</span><span class="si">{0}</span><span class="s2"> </span><span class="si">{1}</span><span class="s2"> &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">addin</span><span class="p">,</span> <span class="n">sfilter</span><span class="p">)</span>
 
     <span class="n">cmd</span> <span class="o">+=</span> \
-        <span class="s2">&quot;-an -vcodec libx264 -preset slow -crf {0} -pix_fmt yuv420p &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="s2">&quot;-an -vcodec libx264 -preset slow -crf </span><span class="si">{0}</span><span class="s2"> -pix_fmt yuv420p &quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">crf</span><span class="p">)</span>
-    <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;-metadata author=</span><span class="se">\&quot;</span><span class="s2">(c) 2016 Christoph Schmidt-Hieber</span><span class="se">\&quot;</span><span class="s2"> {0}&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+    <span class="n">cmd</span> <span class="o">+=</span> <span class="s2">&quot;-metadata author=</span><span class="se">\&quot;</span><span class="s2">(c) 2016 Christoph Schmidt-Hieber</span><span class="se">\&quot;</span><span class="s2"> </span><span class="si">{0}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
         <span class="n">out_file</span><span class="p">)</span>
 
     <span class="k">if</span> <span class="n">os</span><span class="o">.</span><span class="n">name</span> <span class="o">==</span> <span class="s1">&#39;nt&#39;</span><span class="p">:</span>
@@ -306,7 +324,7 @@
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
         <span class="n">stdout</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">PIPE</span>
     <span class="k">else</span><span class="p">:</span>
-        <span class="n">stdout</span> <span class="o">=</span> <span class="bp">None</span>
+        <span class="n">stdout</span> <span class="o">=</span> <span class="kc">None</span>
 
     <span class="n">P</span> <span class="o">=</span> <span class="n">sp</span><span class="o">.</span><span class="n">Popen</span><span class="p">(</span><span class="n">cmd_split</span><span class="p">,</span> <span class="n">stdout</span><span class="o">=</span><span class="n">stdout</span><span class="p">,</span> <span class="n">stderr</span><span class="o">=</span><span class="n">sp</span><span class="o">.</span><span class="n">STDOUT</span><span class="p">,</span> <span class="n">stdin</span><span class="o">=</span><span class="n">stdin</span><span class="p">)</span>
 
@@ -318,7 +336,7 @@
         <span class="n">P</span><span class="o">.</span><span class="n">stdin</span><span class="o">.</span><span class="n">close</span><span class="p">()</span>
 
     <span class="k">if</span> <span class="n">verbose</span><span class="p">:</span>
-        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">,</span> <span class="n">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
+        <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="nb">iter</span><span class="p">(</span><span class="n">P</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">readline</span><span class="p">,</span> <span class="sa">b</span><span class="s1">&#39;&#39;</span><span class="p">):</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">write</span><span class="p">(</span><span class="n">line</span><span class="p">)</span>
             <span class="n">sys</span><span class="o">.</span><span class="n">stdout</span><span class="o">.</span><span class="n">flush</span><span class="p">()</span>
 
@@ -348,7 +366,7 @@
     <span class="n">video</span> <span class="o">=</span> <span class="nb">open</span><span class="p">(</span><span class="n">fn</span><span class="p">,</span> <span class="s2">&quot;rb&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
     <span class="n">video_encoded</span> <span class="o">=</span> <span class="n">b64encode</span><span class="p">(</span><span class="n">video</span><span class="p">)</span>
     <span class="n">video_tag</span> <span class="o">=</span> \
-        <span class="s1">&#39;&lt;video controls alt=&quot;test&quot; src=&quot;data:video/mp4;base64,{0}&quot;&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
+        <span class="s1">&#39;&lt;video controls alt=&quot;test&quot; src=&quot;data:video/mp4;base64,</span><span class="si">{0}</span><span class="s1">&quot;&gt;&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
             <span class="n">video_encoded</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="n">video_tag</span></div>
@@ -372,7 +390,7 @@
     <span class="n">cap</span> <span class="o">=</span> <span class="n">cv2</span><span class="o">.</span><span class="n">VideoCapture</span><span class="p">(</span><span class="n">fn</span><span class="p">)</span>
 
     <span class="n">np_movie</span> <span class="o">=</span> <span class="p">[]</span>
-    <span class="k">while</span> <span class="bp">True</span><span class="p">:</span>
+    <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">ret</span><span class="p">,</span> <span class="n">img</span> <span class="o">=</span> <span class="n">cap</span><span class="o">.</span><span class="n">read</span><span class="p">()</span>
         <span class="k">if</span> <span class="n">ret</span><span class="p">:</span>
             <span class="n">np_movie</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">cv2</span><span class="o">.</span><span class="n">cvtColor</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">cv2</span><span class="o">.</span><span class="n">COLOR_BGR2GRAY</span><span class="p">))</span>
@@ -396,7 +414,7 @@
     </p>
     <p>
         &copy; Copyright 2016, Christoph Schmidt-Hieber.<br/>
-      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4.4.<br/>
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.5.3.<br/>
     </p>
   </div>
 </footer>
