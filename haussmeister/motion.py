@@ -7,9 +7,12 @@ GPLv3
 """
 
 import time
+import sys
+import os
 import numpy as np
 from sima import motion
 try:
+    sys.path.append(os.path.expanduser("~/CaImAn/"))
     import caiman as cb
 except ImportError:
     print("CaiMan import failed")
@@ -90,7 +93,7 @@ class CalBlitz(motion.MotionEstimationStrategy):
 
                 frame_shifts[:, plane_idx] = shifts
 
-            displacements.append(frame_shifts)
+            displacements.append(np.round(frame_shifts).astype(np.int))
 
             total_time = time.time() - t0
             if verbose:

@@ -38,15 +38,15 @@ except ValueError:
     import utils
 
 if sys.version_info.major < 3:
-    sys.path.append('../SPGL1_python_port')
+    sys.path.append(os.path.expanduser("~/CaImAn/"))
     try:
         import caiman as cm
         from caiman.components_evaluation import evaluate_components
-        from caiman.utils.visualization import plot_contours,view_patches_bar,nb_plot_contour,nb_view_patches
+        from caiman.utils.visualization import plot_contours,view_patches_bar
         from caiman.base.rois import extract_binary_masks_blob
-        import caiman.source_extraction.cnmf as cnmf
+        import caiman.source_extraction.cnmf as caiman_cnmf
     except ImportError:
-        sys.stderr.write("Could not find cse module")
+        sys.stderr.write("Could not find caiman module")
 
 NCPUS = mp.cpu_count()
 NCPUS_PATCHES = 16
@@ -134,40 +134,41 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         d1, d2 = shape[1], shape[2]
         fn_mmap = get_mmap_name('Yr', shape[1], shape[2], shape[0])
     fn_mmap = os.path.join(haussio_data.dirname_comp, fn_mmap)
-    print(fn_mmap, os.path.exists(fn_mmap))
+    print(fn_mmap, os.path.exists(fn_mmap), d1, d2)
 
     if not os.path.exists(fn_cnmf):
-        fn_raw = os.path.join(haussio_data.dirname_comp, haussio.THOR_RAW_FN)
+        # fn_raw = os.path.join(haussio_data.dirname_comp, haussio.THOR_RAW_FN)
+        fn_sima = haussio_data.dirname_comp + '.sima'
+        fnames = [fn_sima, ]
+        fnames.sort()
+        print(fnames)
+        fnames = fnames
 
-        fnames = [fn_raw, ]
         final_frate = 1.0/haussio_data.dt
         downsample_factor = 1 # use .2 or .1 if file is large and you want a quick answer
         final_frate *= downsample_factor
 
-        try:
-            c.close()
-        except:
-            sys.stdout.write('C was not existing, creating one\n')
-        cm.stop_server()
-        cm.start_server()
-        c=Client()
-        sys.stdout.write('Using '+ str(len(c)) + ' processes\n')
-        dview=c[:len(c)]
+        c, dview, n_processes = cm.cluster.setup_cluster(
+            backend='local', n_processes=None, single_thread=False)
 
-        idx_xy=None
-        base_name='Yr'
+        idx_xy = None
+        base_name = 'Yr'
         name_new = cm.save_memmap_each(
             fnames, dview=dview, base_name=base_name,
             resize_fact=(1, 1, downsample_factor), remove_init=0, idx_xy=idx_xy)
         name_new.sort()
-
-        fname_new = cm.save_memmap_join(
-            name_new, base_name='Yr', n_chunks=12, dview=dview)
+        print(name_new)
+        
+        if len(name_new) > 1:
+            fname_new = cm.save_memmap_join(
+                name_new, base_name='Yr', n_chunks=12, dview=dview)
+        else:
+            sys.stdout.write('One file only, not saving\n')
+            fname_new = name_new[0]
 
         print("fname_new: " + fname_new)
 
         Yr, dims, T = cm.load_memmap(fname_new)
-        dims = dims[1:]
         Y = np.reshape(Yr, dims+(T,), order='F')
         Cn = cm.local_correlations(Y)
 
@@ -175,31 +176,31 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         gSig = [15, 15] # expected half size of neurons
         merge_thresh = 0.8 # merging threshold, max correlation allowed
         p=2 #order of the autoregressive system
-        options = cnmf.utilities.CNMFSetParms(
+        options = caiman_cnmf.utilities.CNMFSetParms(
             Y, NCPUS, p=p, gSig=gSig, K=K, ssub=2, tsub=2)
 
-        Yr, sn, g, psx = cnmf.pre_processing.preprocess_data(
+        Yr, sn, g, psx = caiman_cnmf.pre_processing.preprocess_data(
             Yr, dview=dview, **options['preprocess_params'])
-        Atmp, Ctmp, b_in, f_in, center = cnmf.initialization.initialize_components(
+        Atmp, Ctmp, b_in, f_in, center = caiman_cnmf.initialization.initialize_components(
             Y, normalize=True, **options['init_params'])
 
         Ain, Cin = Atmp, Ctmp
-        A,b,Cin = cnmf.spatial.update_spatial_components(
+        A,b,Cin = caiman_cnmf.spatial.update_spatial_components(
             Yr, Cin, f_in, Ain, sn=sn, dview=dview, **options['spatial_params'])
 
         options['temporal_params']['p'] = 0 # set this to zero for fast updating without deconvolution
-        C, f, S, bl, c1, neurons_sn, g, YrA = cnmf.temporal.update_temporal_components(
+        C, f, S, bl, c1, neurons_sn, g, YrA = caiman_cnmf.temporal.update_temporal_components(
             Yr, A, b, Cin, f_in, bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
 
-        A_m, C_m, nr_m, merged_ROIs, S_m, bl_m, c1_m, sn_m, g_m = cnmf.merging.merge_components(
+        A_m, C_m, nr_m, merged_ROIs, S_m, bl_m, c1_m, sn_m, g_m = caiman_cnmf.merging.merge_components(
             Yr, A, b, C, f, S, sn, options['temporal_params'],
             options['spatial_params'], dview=dview, bl=bl, c1=c1, sn=neurons_sn,
             g=g, thr=merge_thresh, mx=50, fast_merge=True)
 
-        A2, b2, C2 = cnmf.spatial.update_spatial_components(
+        A2, b2, C2 = caiman_cnmf.spatial.update_spatial_components(
             Yr, C_m, f, A_m, sn=sn, dview=dview, **options['spatial_params'])
         options['temporal_params']['p'] = p # set it back to original value to perform full deconvolution
-        C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = cnmf.temporal.update_temporal_components(
+        C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = caiman_cnmf.temporal.update_temporal_components(
             Yr, A2, b2, C2, f, dview=dview, bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
 
         tB = np.minimum(-2,np.floor(-5./30*final_frate))

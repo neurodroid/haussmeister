@@ -33,10 +33,11 @@ import sima.spikes
 from sima.ROI import ROIList
 
 if sys.version_info.major < 3:
+    sys.path.append(os.path.expanduser("~/CaImAn/"))
     try:
-        import ca_source_extraction as cse
+        import caiman.source_extraction.cnmf as caiman_cnmf
     except ImportError:
-        sys.stderr.write("Could not find cse module")
+        sys.stderr.write("Could not find caiman cnmf module")
 
 try:
     from . import utils
@@ -262,6 +263,18 @@ class ThorExperiment(object):
                     maxtime=self.maxtime)
             else:
                 return haussio.SI4HaussIO(
+                    self.data_path + self.mc_suffix,
+                    chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=5,
+                    maxtime=self.maxtime)
+        elif self.ftype == "doric":
+            if not mc:
+                return haussio.DoricHaussIO(
+                    self.data_path, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4,
+                    maxtime=self.maxtime)
+            else:
+                return haussio.DoricHaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=5,
@@ -907,7 +920,7 @@ def infer_spikes(dataset, signal_label, measured):
     inference = []
     fit = []
     for measured_roi in measured:
-        c, bl, c1, g, sn, sp = cse.deconvolution.constrained_foopsi(measured_roi, p=2)
+        c, bl, c1, g, sn, sp = caiman_cnmf.deconvolution.constrained_foopsi(measured_roi, p=2)
         inference.append(sp)
         fit.append(c)
 
