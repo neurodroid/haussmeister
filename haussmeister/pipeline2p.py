@@ -861,7 +861,8 @@ def plot_decoded(decoded, mapdict):
     t_vr = mapdict['t_vr']*1e-3
     pl_phys, = ax_pos.plot(t_vr, mapdict['posy_vr'])
     t_decoded = np.linspace(t_vr.min(), t_vr.max(), decoded.shape[1])
-    pl_decod, = ax_pos.plot(t_decoded, mapdict['infermap'][0][0][np.argmax(decoded, axis=0)])
+    pl_decod = ax_pos.plot(t_decoded, mapdict['infermap'][0][0][np.argmax(decoded, axis=0)])
+    pl_decod = pl_decod[0]
     for ev in mapdict['events']:
         if ev.evcode == "BB":
             ax_pos.plot(
@@ -1407,10 +1408,10 @@ def thor_extract_roi(
 
     if data.fnvr is not None:
         normamp = 5.0 # 5.0
-        new_dt = 1.0 # 1.0
+        new_dt = 2.0 # 1.0
         irois = [iroi for (iroi, minimap) in minimaps]
-        # infermap = np.array([norm(mapdict['infermap'][nroi][1]) * normamp
-        #                      for nroi in irois])
+        infermap = np.array([norm(mapdict['infermap'][nroi][1]) * normamp
+                             for nroi in irois])
 
         fluomap = [
             [norm(minimap[0][0][1]) *
@@ -1419,32 +1420,34 @@ def thor_extract_roi(
             for iroi, minimaps_roi in minimaps
         ]
 
-        # spikemap = [
-        #     [norm(minimap[1][0][1]) *
-        #      (spikes[iroi].max()-spikes[iroi].min())
-        #      for minimap in minimaps_roi]
-        #     for iroi, minimaps_roi in minimaps
-        # ]
+        spikemap = [
+            [norm(minimap[1][0][1]) *
+             (spikes[iroi].max()-spikes[iroi].min())
+             for minimap in minimaps_roi]
+            for iroi, minimaps_roi in minimaps
+        ]
 
         ndiscard = 3
         trange = mapdict['t_2p'][ndiscard:] * 1e-3
         mean_dt = np.diff(trange).mean()
         new_dt_step = int(np.round(new_dt/mean_dt))
         new_dt = mean_dt * new_dt_step
-        # counts = np.array([spectral.lowpass(
-        #     stfio_plot.Timeseries(
-        #         norm(spikes[nroi][ndiscard:]).astype(np.float64) * normamp*2.0, mean_dt),
-        #     new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
-        #                    for nroi in irois])
+        counts = np.array([spectral.lowpass(
+            stfio_plot.Timeseries(
+                norm(spikes[nroi][ndiscard:]).astype(np.float64) * normamp*2.0, mean_dt),
+            new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
+                           for nroi in irois])
 
         decoded = decode.decodeMLNonparam(
-            fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
+            spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
                 :, np.newaxis]).T,
-            nentries=3)
+            nentries=10)
         # decoded = decode.decodeMLNonparam(
-        #     spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
+        #     fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
         #         :, np.newaxis]).T,
         #     nentries=2)
+        # decoded = decode.decodeMLPoisson(
+        #     infermap.T, counts.T).squeeze()
 
         plot_decoded(decoded, mapdict)
     else:
