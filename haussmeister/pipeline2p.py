@@ -741,19 +741,19 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             mapdict['speed_vr'][:len(mapdict['t_vr'][:-1])])
         ax_speed.set_ylabel("Speed (m/s)")
         ax_speed.set_ylim(mapdict['speed_vr'].min(), mapdict['speed_vr'].max())
+        ax_maps_fluo = stfio_plot.StandardAxis(
+            fig, gs[strow:, 2:3], hasx=True, hasy=False, sharey=ax_spike)
+        if spikes is not None:
+            ax_maps_infer = stfio_plot.StandardAxis(
+                fig, gs[strow:, 3:4], hasx=True, hasy=False, sharey=ax_spike)
 
     elif has_track:
         ax_track = stfio_plot.StandardAxis(
             fig, gs[0:2, 0:1], hasx=False, hasy=False)
 
         ax_track.plot(trackdict['posx'], trackdict['posy'])
-
-    if has_vr:
-        ax_maps_fluo = stfio_plot.StandardAxis(
-            fig, gs[strow:, 2:3], hasx=True, hasy=False, sharey=ax_spike)
-        if spikes is not None:
-            ax_maps_infer = stfio_plot.StandardAxis(
-                fig, gs[strow:, 3:4], hasx=True, hasy=False, sharey=ax_spike)
+        ax_track.set_aspect('equal', adjustable='datalim')
+        ax_track.set_xlim(trackdict['posx'].min(), trackdict['posx'].max())
 
     normamp = None
     for nroi, roi in enumerate(rois):
