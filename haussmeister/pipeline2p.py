@@ -23,6 +23,9 @@ from scipy.io import savemat
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
+import matplotlib.cm as cm
+import matplotlib.collections as mcoll
+import matplotlib.path as mpath
 
 import cv2
 
@@ -101,6 +104,8 @@ class ThorExperiment(object):
         Thorsync directory name. Default: None
     fnvr : str, optional
         VR file name trunk. Default: None
+    fntrack : str, optional
+        Open field track file name trunk. Default: None
     roi_subset : str, optional
         String appended to roi label to distinguish between roi subsets.
         Default: ""
@@ -126,7 +131,7 @@ class ThorExperiment(object):
         Whether to ignore mismatch between imaging and VR recording file
         lengths. Default: False
     """
-    def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
+    def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None, fntrack=None,
                  roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
                  roi_translate=None, root_path="", ftype="thor",
                  dx=None, dt=None, seg_method="cnmf", maxtime=None,
@@ -136,6 +141,7 @@ class ThorExperiment(object):
         self.area2p = area2p
         self.fnsync = fnsync
         self.fnvr = fnvr
+        self.fntrack = fntrack
         self.roi_subset = roi_subset
         self.roi_translate = roi_translate
         self.root_path = root_path
@@ -165,6 +171,14 @@ class ThorExperiment(object):
             self.vr_path = None
             self.vr_path_comp = None
 
+        if self.fntrack is not None:
+            self.track_path = os.path.dirname(self.data_path) + "/" + \
+                self.fntrack
+            self.track_path_comp = self.track_path.replace("?", "n")
+        else:
+            self.track_path = None
+            self.track_path_comp = None
+            
         self.mc_method = mc_method
         self.mc_suffix = "_mc_" + self.mc_method
         if self.mc_method == "hmmc":
@@ -573,10 +587,52 @@ def norm(sig):
     return (sig-sig.min())/(sig.max()-sig.min())
 
 
+def make_segments(x, y):
+    """
+    Create list of line segments from x and y coordinates, in the correct format
+    for LineCollection: an array of the form numlines x (points per line) x 2 (x
+    and y) array
+    """
+
+    points = np.array([x, y]).T.reshape(-1, 1, 2)
+    segments = np.concatenate([points[:-1], points[1:]], axis=1)
+    return segments
+
+
+def colorline(
+        ax, x, y, z=None, cmap=plt.get_cmap('jet'), norm=plt.Normalize(0.0, 1.0),
+        linewidth=3, alpha=1.0):
+    """
+    http://nbviewer.ipython.org/github/dpsanders/matplotlib-examples/blob/master/colorline.ipynb
+    http://matplotlib.org/examples/pylab_examples/multicolored_line.html
+    Plot a colored line with coordinates x and y
+    Optionally specify colors in the array z
+    Optionally specify a colormap, a norm function and a line width
+    """
+
+    # Default colors equally spaced on [0,1]:
+    if z is None:
+        z = np.linspace(0.0, 1.0, len(x))
+
+    # Special case if a single number:
+    if not hasattr(z, "__iter__"):  # to check for numerical input -- this is a hack
+        z = np.array([z])
+
+    z = np.asarray(z)
+
+    segments = make_segments(x, y)
+    lc = mcoll.LineCollection(segments, array=z, cmap=cmap, norm=norm,
+                              linewidth=linewidth, alpha=alpha)
+
+    ax.add_collection(lc)
+
+    return lc
+
+
 def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
               lopass=1.0, plot_events=False, minimaps=None, dpi=1200,
-              selected_rois=None, decoded=None):
+              selected_rois=None, decoded=None, trackdict=None):
 
     """
     Plot ROIs on top of z-projected image, extracted fluorescence, spike
@@ -618,7 +674,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     strow = 2
 
     has_vr = mapdict is not None and 't_vr' in mapdict.keys()
-
+    has_track = trackdict is not None
     if not has_vr:
         stcol = 0
         ncols = 2
@@ -630,10 +686,11 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     ax_nospike = fig.add_subplot(gs[strow:, 1:2])
     plt.axis('off')
 
-    ax_blank = fig.add_subplot(gs[:strow, stcol:stcol+1])
-    ax_blank.imshow(zproj, cmap='gray')
-    haussio_data.plot_scale_bar(ax_blank)
-    plt.axis('off')
+    if not has_track:
+        ax_blank = fig.add_subplot(gs[:strow, stcol:stcol+1])
+        ax_blank.imshow(zproj, cmap='gray')
+        haussio_data.plot_scale_bar(ax_blank)
+        plt.axis('off')
 
     ax2 = fig.add_subplot(gs[:strow, stcol+1:])
     ax2.imshow(zproj, cmap='gray')
@@ -685,6 +742,13 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         ax_speed.set_ylabel("Speed (m/s)")
         ax_speed.set_ylim(mapdict['speed_vr'].min(), mapdict['speed_vr'].max())
 
+    elif has_track:
+        ax_track = stfio_plot.StandardAxis(
+            fig, gs[0:2, 0:1], hasx=False, hasy=False)
+
+        ax_track.plot(trackdict['posx'], trackdict['posy'])
+
+    if has_vr:
         ax_maps_fluo = stfio_plot.StandardAxis(
             fig, gs[strow:, 2:3], hasx=True, hasy=False, sharey=ax_spike)
         if spikes is not None:
@@ -719,10 +783,10 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         except sima.ROI.NonBooleanMask:
             print("NonBooleanMask")
 
-        if not has_vr:
-            trange = np.arange(len(meas_filt))*haussio_data.dt
-        else:
+        if has_vr:
             trange = mapdict['t_2p'][ndiscard:] * 1e-3
+        else:
+            trange = np.arange(len(meas_filt))*haussio_data.dt
 
         ax = ax_spike
         pos = pos_spike
@@ -766,6 +830,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 ax_maps_infer.plot(mapdict['infermap'][nroi][0],
                                    infer + pos,
                                    colors[nroi % len(colors)])
+
         if infer_threshold is None:
             pos_spike += meas_filt.max()-meas_filt.min()+1.0
         elif len(event_ts):
@@ -799,12 +864,15 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     plt.savefig(data_path + "_rois3" + pdf_suffix + ".pdf", dpi=dpi)
     sys.stdout.write("done\n")
 
-    if minimaps is None:
+    if minimaps is None and not has_track:
         return
 
     fig_rois_fluo = plt.figure(figsize=(24, 24))
     fig_rois_spikes = plt.figure(figsize=(24, 24))
-    if selected_rois is None:
+    if has_track:
+        ncols = int(np.ceil(np.sqrt(len(rois))))
+        nrows = int(np.ceil(len(rois)/float(ncols)))
+    elif selected_rois is None:
         ncols = int(np.ceil(np.sqrt(len(minimaps))))
         nrows = int(np.ceil(len(minimaps)/float(ncols)))
     else:
@@ -814,7 +882,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     gs_spikes = gridspec.GridSpec(nrows, ncols)
 
     roi_counter = 0
-    if len(minimaps):
+    if minimaps is not None and len(minimaps):
         for nroi, (iroi, minimaps_roi) in enumerate(minimaps):
             if selected_rois is not None and iroi not in selected_rois:
                 continue
@@ -859,6 +927,44 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 0, (mapdict['infermap'][iroi][1].max() -
                     mapdict['infermap'][iroi][1].min())*2)
             roi_counter += 1
+
+    elif has_track:
+        posx = trackdict['posx']-trackdict['posx'].min()
+        posy = trackdict['posy']-trackdict['posy'].min()
+        for nroi, roi in enumerate(rois):
+            col = nroi % ncols
+            row = int(nroi/ncols)
+            ax_fluo = stfio_plot.StandardAxis(
+                fig_rois_fluo, gs_fluo[row, col],
+                hasx=False, hasy=False)
+            ax_spikes = stfio_plot.StandardAxis(
+                fig_rois_spikes, gs_spikes[row, col],
+                hasx=False, hasy=False)
+            # ax_fluo.set_aspect('equal')
+            # ax_spikes.set_aspect('equal')
+            if lopass is not None:
+                measured_float = measured[nroi, :].astype(np.float)
+                meas_filt = spectral.lowpass(
+                    stfio_plot.Timeseries(measured_float, haussio_data.dt),
+                    lopass, verbose=False).data[ndiscard:]
+            else:
+                meas_filt = measured[nroi, ndiscard:]
+            meas_filt -= meas_filt.min()
+
+
+            norm_meas = norm(meas_filt)
+            norm_meas -= norm_meas.min()
+            colorline(ax_fluo, posx, posy, norm_meas)
+            if spikes is not None:
+                norm_spikes = norm(spikes[nroi][1:])
+                norm_spikes -= norm_spikes.min()
+                colorline(ax_spikes, posx, posy, norm_spikes)
+
+            for ax in [ax_fluo, ax_spikes]:
+                ax.set_aspect('equal', adjustable='datalim')
+                ax.set_title(r"{0}".format(nroi))
+                ax.set_xlim(posx.min(), posx.max())
+                # ax.set_ylim(posy.min(), posy.max())
 
     fig_rois_fluo.savefig(
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
@@ -1375,10 +1481,14 @@ def thor_extract_roi(
     if data.fnvr is not None:
         vrdict, haussio_data = syncfiles.read_files_2p(data)
         vrspeed = vrdict["speed2p"]
+        trackdict = None
+    elif data.fntrack is not None:
+        vrdict, vrspeed = None, None
+        trackdict, haussio_data = syncfiles.read_files_track(data)
     else:
-        vrdict = None
+        vrdict, vrspeed = None, None
+        trackdict = None
         haussio_data = data.to_haussio(mc=True)
-        vrspeed = None
 
     lopass = 1.0
     if data.seg_method == "thunder":
@@ -1400,7 +1510,7 @@ def thor_extract_roi(
         lopass = None
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
-
+    
     if data.fnvr is not None:
         fnmini = data.vr_path_comp + "_" + data.seg_method + "_minimaps.pck"
         if not os.path.exists(fnmini):
@@ -1416,10 +1526,7 @@ def thor_extract_roi(
             with open(fnmini, 'rb') as pckf:
                 minimaps = pickle.load(pckf)
             sys.stdout.write(" done\n")
-    else:
-        minimaps = None
 
-    if data.fnvr is not None:
         normamp = 5.0 # 5.0
         new_dt = 2.0 # 1.0
         irois = [iroi for (iroi, minimap) in minimaps]
@@ -1464,6 +1571,7 @@ def thor_extract_roi(
 
         plot_decoded(decoded, mapdict)
     else:
+        minimaps = None
         decoded = None
 
     if decoded_only:
@@ -1473,7 +1581,8 @@ def thor_extract_roi(
         rois, measured, haussio_data, zproj, data.data_path_comp,
         pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
         infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
-        minimaps=minimaps, selected_rois=selected_rois, decoded=decoded)
+        minimaps=minimaps, selected_rois=selected_rois, decoded=decoded,
+        trackdict=trackdict)
 
 
 def create_roi_map(iroi, teleport_times, measured, spikes, vrdict):
