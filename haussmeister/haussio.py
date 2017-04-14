@@ -1077,6 +1077,7 @@ def compress_np(arr, path, rawfn, shape=None, compress=True):
 
     shapefn = os.path.join(path, THOR_RAW_FN[:-3] + "shape.npy")
     np.save(shapefn, shape)
+    np.savetxt(shapefn + ".txt", shape)
 
     rawfn = os.path.join(path, rawfn)
 
