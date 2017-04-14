@@ -111,7 +111,7 @@ class ThorExperiment(object):
         Default: ""
     mc_method : str, optional
         Motion correction method. One of "hmmc", "dft", "hmmcres", "hmmcframe",
-        "hmmcpx", "calblitz". Default: "hmmc"
+        "hmmcpx", "calblitz", "normcorr". Default: "hmmc"
     detrend : bool, optional
         Whether to detrend fluorescence traces. Default: False
     nrois_init : int, optional
@@ -206,6 +206,10 @@ class ThorExperiment(object):
             self.mc_approach = motion.CalBlitz(
                 max_displacement=[20, 30], fr=self.to_haussio().fps,
                 verbose=True)
+        elif self.mc_method == "normcorr":
+            self.mc_approach = motion.NormCorr(
+                max_displacement=[20, 30], fr=self.to_haussio().fps,
+                verbose=True, savedir=self.data_path_comp + ".sima")
         elif self.mc_method == "none":
             self.mc_suffix = ""
             self.mc_approach = None
@@ -378,6 +382,8 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
     else:
         dataset = data.to_sima(mc=False, haussio_data=haussio_data)
 
+    print(dataset.savedir)
+    assert(dataset.savedir is not None)
     if not os.path.exists(data.sima_mc_dir):
         t0 = time.time()
         dataset_mc = data.mc_approach.correct(dataset, data.sima_mc_dir)
