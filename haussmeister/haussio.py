@@ -124,7 +124,7 @@ class HaussIO(object):
 
         if self.mptifs is not None:
             self.nframes = np.sum([
-                mptif.get_depth() for mptif in self.mptifs])
+                len(mptif.pages) for mptif in self.mptifs])
             if self.nframes == 0:
                 self.nframes = np.sum([
                     len(mptif.IFD) for mptif in self.mptifs])
@@ -908,19 +908,15 @@ class DoricHaussIO(HaussIO):
         super(DoricHaussIO, self)._get_filenames(xml_path, sync_path)
         if "?" in self.filetrunk:
             self.mptifs = [
-                libtiff.tiff_file.TiffFile(dirname)
+                tifffile.TiffFile(dirname)
                 for dirname in self.dirnames]
         elif os.path.isfile(self.dirname):
-            self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
+            self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptifs = [libtiff.tiff_file.TiffFile(
+            self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].IFD[0].entries_dict["ImageDescription"].human()
-        self.DoricDict = {
-            entry[:entry.find(': ')]: entry[entry.find(': ')+1:]
-            for entry in self.ifd[self.ifd.find('="')+2:self.ifd.find('",')].split(', ')
-        }
+        self.ifd = self.mptifs[0].info()
         if not os.path.isfile(self.dirnames[0]):
             self.rawfile = os.path.join(
                 self.dirname, "Image_0001_0001.raw")
@@ -941,8 +937,13 @@ class DoricHaussIO(HaussIO):
 
     def _get_dimensions(self):
         if os.path.isfile(self.dirnames[0]):
-            self.xpx = self.mptifs[0].IFD[0].entries_dict['ImageWidth'].value
-            self.ypx = self.mptifs[0].IFD[0].entries_dict['ImageLength'].value
+            sizestr = self.ifd[self.ifd.find('Series '):][
+                self.ifd[self.ifd.find('Series '):].find(':')+1:][
+                    :self.ifd[self.ifd.find('Series '):][
+                        self.ifd[self.ifd.find('Series '):].find(':')+1:].find(', ')]
+            framesize = sizestr[sizestr.find('x')+1:]
+            self.xpx = int(framesize[:framesize.find('x')])
+            self.ypx = int(framesize[framesize.find('x')+1:])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -953,10 +954,12 @@ class DoricHaussIO(HaussIO):
         self.naverage = None
 
     def _get_timing(self):
-        dt = float(self.DoricDict['Exposure'][:-2])*1e-3
+        dt = float(
+            self.ifd[self.ifd.find('Exposure: ') + len('Exposure: '):][
+                :self.ifd[self.ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
         if self.mptifs is not None:
             nframes = np.sum([
-                len(mptif.IFD) for mptif in self.mptifs])
+                len(mptif.pages) for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -976,7 +979,7 @@ class DoricHaussIO(HaussIO):
             t0 = time.time()
             if self.mptifs is not None:
                 self.raw_array = np.concatenate([
-                    tifffile.TiffFile(mptif.filename).asarray().astype(np.int32)
+                    mptif.asarray().astype(np.int32)
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
