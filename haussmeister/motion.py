@@ -10,6 +10,7 @@ import time
 import sys
 import os
 import numpy as np
+import tempfile
 from sima import motion
 try:
     sys.path.append(os.path.expanduser("~/CaImAn/"))
@@ -55,7 +56,7 @@ class CalBlitz(motion.MotionEstimationStrategy):
         else:
             max_displacement = self._params['max_displacement']
 
-        frame_step = 100
+        frame_step = 1000
         displacements = []
         for sequence in dataset:
             num_frames = sequence.shape[0]
@@ -75,12 +76,13 @@ class CalBlitz(motion.MotionEstimationStrategy):
                           str(num_planes) + ' into numpy array')
                 t0 = time.time()
                 # reshape, one plane at a time
-                frames = np.concatenate([
-                    np.array(sequence[
-                        nframe:nframe+frame_step, plane_idx, :, :, 0]).astype(
-                            np.float32)
-                    for nframe in range(0, sequence.shape[0], frame_step)])
-                frames = np.squeeze(frames)
+                memmap_file = tempfile.NamedTemporaryFile()
+                frames = np.memmap(
+                    memmap_file.name, dtype=np.float32, mode='w+', shape=(
+                        sequence.shape[0], sequence.shape[2], sequence.shape[3]))
+                for nframe in range(0, sequence.shape[0], frame_step):
+                    frames[nframe:nframe+frame_step] = np.array(sequence[
+                        nframe:nframe+frame_step, plane_idx, :, :, 0]).astype(np.float32).squeeze()
                 e1 = time.time() - t0
                 if verbose:
                     print('    Loaded in: ' + str(e1) + ' s')
@@ -94,6 +96,7 @@ class CalBlitz(motion.MotionEstimationStrategy):
                     method='opencv')
 
                 frame_shifts[:, plane_idx] = shifts
+                memmap_file.close()
 
             displacements.append(np.round(frame_shifts).astype(np.int))
 
