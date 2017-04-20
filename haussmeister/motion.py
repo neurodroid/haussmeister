@@ -55,6 +55,7 @@ class CalBlitz(motion.MotionEstimationStrategy):
         else:
             max_displacement = self._params['max_displacement']
 
+        frame_step = 100
         displacements = []
         for sequence in dataset:
             num_frames = sequence.shape[0]
@@ -76,9 +77,9 @@ class CalBlitz(motion.MotionEstimationStrategy):
                 # reshape, one plane at a time
                 frames = np.concatenate([
                     np.array(sequence[
-                        nframe:nframe+1000, plane_idx, :, :, 0]).astype(
+                        nframe:nframe+frame_step, plane_idx, :, :, 0]).astype(
                             np.float32)
-                    for nframe in range(0, sequence.shape[0], 1000)])
+                    for nframe in range(0, sequence.shape[0], frame_step)])
                 frames = np.squeeze(frames)
                 e1 = time.time() - t0
                 if verbose:
