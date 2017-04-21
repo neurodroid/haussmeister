@@ -373,9 +373,9 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
         raw_movie = movies.html_movie(haussio_data.movie_fn)
     else:
         try:
-            raw_movie = haussio_data.make_movie(norm=14.0, crf=28)
+            raw_movie = haussio_data.make_movie(norm=14.0, crf=25)
         except IOError:
-            raw_movie = haussio_data.make_movie(norm=False, crf=28)
+            raw_movie = haussio_data.make_movie(norm=False, crf=25)
 
     if not os.path.exists(haussio_data.sima_dir):
         dataset = haussio_data.tosima(stopIdx=None)
@@ -425,7 +425,7 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
         corr_movie = movies.html_movie(data.movie_mc_fn)
     else:
         corr_movie = haussio_data.make_movie_extern(
-            data.mc_tiff_dir, norm=14.0, crf=28, width_idx=5)
+            data.mc_tiff_dir, norm=14.0, crf=25, width_idx=5)
 
     return dataset_mc
 
