@@ -190,7 +190,7 @@ def make_movie(tiff_trunk, out_file, fps, normbright=None, scalebarframe=None,
         addin, sfilter)
 
     cmd += \
-        "-an -vcodec libx264 -preset slow -crf {0} -pix_fmt yuv420p ".format(
+        "-an -vcodec libx265 -preset slow -crf {0} -pix_fmt yuv420p ".format(
             crf)
     cmd += "-metadata author=\"(c) 2016 Christoph Schmidt-Hieber\" {0}".format(
         out_file)
