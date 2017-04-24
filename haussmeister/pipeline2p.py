@@ -979,7 +979,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 meas_filt = measured[nroi, ndiscard:]
             meas_filt -= meas_filt.min()
 
-            MIN_SPEED = 5.0
+            MIN_SPEED = 1.0
             norm_meas = norm(meas_filt)
             norm_meas -= norm_meas.min()
             norm_meas += 1.0
@@ -990,7 +990,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             colorline(
                 ax_fluo, posx[track_speed > MIN_SPEED],
                 posy[track_speed > MIN_SPEED],
-                norm_meas[track_speed > MIN_SPEED])
+                norm_meas[track_speed > MIN_SPEED], alpha=0.5)
             if spikes is not None:
                 norm_spikes = norm(spikes[nroi][1:])
                 norm_spikes -= norm_spikes.min()
@@ -1002,7 +1002,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 colorline(
                     ax_spikes, posx[track_speed > MIN_SPEED],
                     posy[track_speed > MIN_SPEED],
-                    norm_spikes[track_speed > MIN_SPEED])
+                    norm_spikes[track_speed > MIN_SPEED], alpha=0.5)
 
             for ax in [ax_fluo, ax_spikes]:
                 ax.set_aspect('equal', adjustable='datalim')
