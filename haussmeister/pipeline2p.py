@@ -1007,9 +1007,9 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                     (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
                     (track_speed > MIN_SPEED)], 'or', ms=6)
             ax_check_track.plot(norm_meas, '-k')
-            ax_check_track.plot(norm_meas[
-                (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
-                (track_speed > MIN_SPEED)], '-r')
+            ax_check_track.plot(np.ma.array(
+                norm_meas, mask=(norm_meas <= norm_meas.mean()+STD_SCALE*norm_meas.std()) |
+                (track_speed <= MIN_SPEED)), '-r')
             if spikes is not None:
                 norm_spikes = spikes[nroi].copy()
                 ax_spikes.plot(
