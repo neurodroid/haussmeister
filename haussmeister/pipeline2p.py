@@ -627,16 +627,18 @@ def colorline(
 
     # Default colors equally spaced on [0,1]:
     if z is None:
-        z = np.linspace(0.0, 1.0, len(x))
+        zc = np.linspace(0.0, 1.0, len(x))
+    else:
+        zc = z.copy()
 
     # Special case if a single number:
-    if not hasattr(z, "__iter__"):  # to check for numerical input -- this is a hack
-        z = np.array([z])
+    if not hasattr(zc, "__iter__"):  # to check for numerical input -- this is a hack
+        zc = np.array([zc])
 
-    z = np.asarray(z)
+    zc = np.asarray(zc)
 
     segments = make_segments(x, y)
-    lc = mcoll.LineCollection(segments, array=z, cmap=cmap, norm=norm,
+    lc = mcoll.LineCollection(segments, array=zc, cmap=cmap, norm=norm,
                               linewidth=linewidth, alpha=alpha)
 
     ax.add_collection(lc)
@@ -774,6 +776,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             (np.diff(trackdict['posx_frames'])**2 +
              np.diff(trackdict['posy_frames'])**2)
         )  / haussio_data.dt * CM_PER_PX
+        track_speed = np.concatenate([[track_speed[0], ], track_speed])
         track_speed = spectral.lowpass(
             stfio_plot.Timeseries(track_speed, haussio_data.dt),
             0.1, verbose=False).data
@@ -957,6 +960,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             roi_counter += 1
 
     elif has_track:
+        fig_check = plt.figure()
         posx = trackdict['posx_frames']-trackdict['posx_frames'].min()
         posy = trackdict['posy_frames']-trackdict['posy_frames'].min()
         for nroi, roi in enumerate(rois):
@@ -965,9 +969,19 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             ax_fluo = stfio_plot.StandardAxis(
                 fig_rois_fluo, gs_fluo[row, col],
                 hasx=False, hasy=False)
+            ax_check_track = stfio_plot.StandardAxis(
+                fig_check, len(rois), 1, nroi+1,
+                hasx=False, hasy=False)
             ax_spikes = stfio_plot.StandardAxis(
                 fig_rois_spikes, gs_spikes[row, col],
                 hasx=False, hasy=False)
+
+            for ax in [ax_fluo, ax_spikes]:
+                ax.set_aspect('equal', adjustable='datalim')
+                ax.set_title(r"{0}".format(nroi))
+                ax.set_xlim(posx.min(), posx.max())
+                ax.set_ylim(posy.min(), posy.max())
+
             # ax_fluo.set_aspect('equal')
             # ax_spikes.set_aspect('equal')
             if lopass is not None:
@@ -980,35 +994,35 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             meas_filt -= meas_filt.min()
 
             MIN_SPEED = 1.0
-            norm_meas = norm(meas_filt)
-            norm_meas -= norm_meas.min()
-            norm_meas += 1.0
-            norm_meas = np.log(norm_meas)
-            norm_meas[
-                meas_filt <= meas_filt.mean()+meas_filt.std()] = norm_meas.min()
-            norm_meas[track_speed <= MIN_SPEED] = norm_meas.min()
-            colorline(
-                ax_fluo, posx[track_speed > MIN_SPEED],
-                posy[track_speed > MIN_SPEED],
-                norm_meas[track_speed > MIN_SPEED], alpha=0.5)
+            STD_SCALE = 2.0
+            norm_meas = measured[nroi, ndiscard:].copy()
+            ax_fluo.plot(
+                np.ma.array(posx, mask=track_speed < MIN_SPEED),
+                np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k')
+            ax_fluo.plot(
+                posx[
+                    (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
+                    (track_speed > MIN_SPEED)],
+                posy[
+                    (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
+                    (track_speed > MIN_SPEED)], 'or', ms=6)
+            ax_check_track.plot(norm_meas, '-k')
+            ax_check_track.plot(norm_meas[
+                (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
+                (track_speed > MIN_SPEED)], '-r')
             if spikes is not None:
-                norm_spikes = norm(spikes[nroi][1:])
-                norm_spikes -= norm_spikes.min()
-                norm_spikes += 1.0
-                norm_spikes = np.log(norm_spikes)
-                norm_spikes[
-                    spikes[nroi][1:] <= spikes[nroi][1:].mean()+spikes[nroi][1:].std()] = norm_spikes.min()
-                norm_spikes[track_speed <= MIN_SPEED] = norm_spikes.min()
-                colorline(
-                    ax_spikes, posx[track_speed > MIN_SPEED],
-                    posy[track_speed > MIN_SPEED],
-                    norm_spikes[track_speed > MIN_SPEED], alpha=0.5)
+                norm_spikes = spikes[nroi].copy()
+                ax_spikes.plot(
+                    np.ma.array(posx, mask=track_speed < MIN_SPEED),
+                    np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k')
+                ax_spikes.plot(
+                    posx[
+                        (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
+                        (track_speed > MIN_SPEED)],
+                    posy[
+                        (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
+                        (track_speed > MIN_SPEED)], 'or', ms=6)
 
-            for ax in [ax_fluo, ax_spikes]:
-                ax.set_aspect('equal', adjustable='datalim')
-                ax.set_title(r"{0}".format(nroi))
-                ax.set_xlim(posx.min(), posx.max())
-                ax.set_ylim(posy.min(), posy.max())
 
     fig_rois_fluo.savefig(
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
