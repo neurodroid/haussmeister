@@ -20,6 +20,7 @@ import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
 from scipy.io import savemat
+from scipy.optimize import brent
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -34,6 +35,8 @@ import sima.motion
 import sima.segment
 import sima.spikes
 from sima.ROI import ROIList
+
+import shapely
 
 if sys.version_info.major < 3:
     sys.path.append(os.path.expanduser("~/CaImAn/"))
@@ -114,6 +117,9 @@ class ThorExperiment(object):
         "hmmcpx", "calblitz", "normcorr". Default: "hmmc"
     detrend : bool, optional
         Whether to detrend fluorescence traces. Default: False
+    subtract_halo : float, optional
+        Relative size of halo to subtract from each ROI.
+        No halo subtraction is applied for values <= 1.0. Default: 1.0
     nrois_init : int, optional
         Estimate of the number of ROIs. Default: 200
     roi_translate : 2-tuple of ints, optional
@@ -131,11 +137,12 @@ class ThorExperiment(object):
         Whether to ignore mismatch between imaging and VR recording file
         lengths. Default: False
     """
-    def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None, fntrack=None,
-                 roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
-                 roi_translate=None, root_path="", ftype="thor",
-                 dx=None, dt=None, seg_method="cnmf", maxtime=None,
-                 ignore_sync_errors=False):
+    def __init__(
+            self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
+            fntrack=None, roi_subset="", mc_method="hmmc", detrend=False,
+            subtract_halo=1.0, nrois_init=200, roi_translate=None, root_path="",
+            ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
+            ignore_sync_errors=False):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -235,6 +242,8 @@ class ThorExperiment(object):
             self.spikefn += "_detrend.pkl"
         else:
             self.spikefn += ".pkl"
+
+        self.subtract_halo = subtract_halo
 
         self.proj_fn = self.data_path_comp + self.mc_suffix + "_proj.npy"
 
@@ -755,11 +764,24 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     elif has_track:
         ax_track = stfio_plot.StandardAxis(
-            fig, gs[0:2, 0:1], hasx=False, hasy=False)
+            fig, gs[0:1, 0:1], hasx=False, hasy=False)
 
         ax_track.plot(trackdict['posx'], trackdict['posy'])
         ax_track.set_aspect('equal', adjustable='datalim')
         ax_track.set_xlim(trackdict['posx'].min(), trackdict['posx'].max())
+        CM_PER_PX = 0.11
+        track_speed = np.sqrt(
+            (np.diff(trackdict['posx_frames'])**2 +
+             np.diff(trackdict['posy_frames'])**2)
+        )  / haussio_data.dt * CM_PER_PX
+        track_speed = spectral.lowpass(
+            stfio_plot.Timeseries(track_speed, haussio_data.dt),
+            0.1, verbose=False).data
+        ax_track_speed = stfio_plot.StandardAxis(
+            fig, gs[1:2, 0:1], hasx=False, hasy=True, sharex=ax_spike)
+        ax_track_speed.plot(
+            np.arange(track_speed.shape[0])*haussio_data.dt,
+            track_speed)
 
     normamp = None
     for nroi, roi in enumerate(rois):
@@ -935,8 +957,8 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             roi_counter += 1
 
     elif has_track:
-        posx = trackdict['posx']-trackdict['posx'].min()
-        posy = trackdict['posy']-trackdict['posy'].min()
+        posx = trackdict['posx_frames']-trackdict['posx_frames'].min()
+        posy = trackdict['posy_frames']-trackdict['posy_frames'].min()
         for nroi, roi in enumerate(rois):
             col = nroi % ncols
             row = int(nroi/ncols)
@@ -957,20 +979,36 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 meas_filt = measured[nroi, ndiscard:]
             meas_filt -= meas_filt.min()
 
-
+            MIN_SPEED = 5.0
             norm_meas = norm(meas_filt)
             norm_meas -= norm_meas.min()
-            colorline(ax_fluo, posx, posy, norm_meas)
+            norm_meas += 1.0
+            norm_meas = np.log(norm_meas)
+            norm_meas[
+                meas_filt <= meas_filt.mean()+meas_filt.std()] = norm_meas.min()
+            norm_meas[track_speed <= MIN_SPEED] = norm_meas.min()
+            colorline(
+                ax_fluo, posx[track_speed > MIN_SPEED],
+                posy[track_speed > MIN_SPEED],
+                norm_meas[track_speed > MIN_SPEED])
             if spikes is not None:
                 norm_spikes = norm(spikes[nroi][1:])
                 norm_spikes -= norm_spikes.min()
-                colorline(ax_spikes, posx, posy, norm_spikes)
+                norm_spikes += 1.0
+                norm_spikes = np.log(norm_spikes)
+                norm_spikes[
+                    spikes[nroi][1:] <= spikes[nroi][1:].mean()+spikes[nroi][1:].std()] = norm_spikes.min()
+                norm_spikes[track_speed <= MIN_SPEED] = norm_spikes.min()
+                colorline(
+                    ax_spikes, posx[track_speed > MIN_SPEED],
+                    posy[track_speed > MIN_SPEED],
+                    norm_spikes[track_speed > MIN_SPEED])
 
             for ax in [ax_fluo, ax_spikes]:
                 ax.set_aspect('equal', adjustable='datalim')
                 ax.set_title(r"{0}".format(nroi))
                 ax.set_xlim(posx.min(), posx.max())
-                # ax.set_ylim(posy.min(), posy.max())
+                ax.set_ylim(posy.min(), posy.max())
 
     fig_rois_fluo.savefig(
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
@@ -1799,15 +1837,50 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
     """
     if signal_label in dataset.signals().keys():
         signals = dataset.signals()[signal_label]
-        if not compare_rois(dataset.signals()[signal_label]['rois'],
-                            rois):
+        if not compare_rois(
+                dataset.signals()[signal_label]['rois'], rois):
             signals = dataset.extract(rois, label=signal_label,
-                                      save_summary=False, n_processes=NCPUS)
+                                      save_summary=False, n_processes=int(NCPUS/4))
     else:
         signals = dataset.extract(rois, label=signal_label,
-                                  save_summary=False, n_processes=NCPUS)
+                                  save_summary=False, n_processes=int(NCPUS/4))
 
-    measured = process_data(signals['raw'][0], detrend=data.detrend)
+    if data.subtract_halo >= 1.0:
+        halo_rois = []
+        for roi in rois:
+            halo_polygons = []
+            for polygon in roi.polygons:
+                scaled_polygon = shapely.affinity.scale(
+                    polygon,
+                    xfact=data.subtract_halo, yfact=data.subtract_halo,
+                    origin='centroid')
+                scale2 = data.subtract_halo/2.0 + 0.5
+                scaled_polygon2 = shapely.affinity.scale(
+                    polygon,
+                    xfact=scale2, yfact=scale2,
+                    origin='centroid')
+                halo_polygons.append(
+                    scaled_polygon.difference(scaled_polygon2))
+            halo_roi = sima.ROI.ROI(
+                polygons=shapely.geometry.MultiPolygon(halo_polygons),
+                im_shape=roi.im_shape)
+            halo_roi.label = roi.label
+            halo_roi.id = roi.id
+            halo_roi.tags = roi.tags
+            halo_rois.append(halo_roi)
+
+        signals_halo = dataset.extract(
+            sima.ROI.ROIList(rois=halo_rois), label=signal_label + '_halo',
+            save_summary=False, n_processes=int(NCPUS/4))
+
+        # find best scale between halo and center:
+        fmin = lambda scale: np.sum((signals['raw'][0]-scale*(signals_halo['raw'][0]))**2)
+        min_scale = brent(fmin)
+        measured = signals['raw'][0]-min_scale*signals_halo['raw'][0]
+    else:
+        measured = signals['raw'][0]
+
+    measured = process_data(measured, detrend=data.detrend)
 
     if not os.path.exists(data.proj_fn):
         zproj = utils.zproject(haussio_data.read_raw().squeeze())
