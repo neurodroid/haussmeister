@@ -690,6 +690,9 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     nrows = 8
     strow = 2
 
+    MIN_SPEED = 1.0
+    STD_SCALE = 2.0
+
     has_vr = mapdict is not None and 't_vr' in mapdict.keys()
     has_track = trackdict is not None
     if not has_vr:
@@ -832,19 +835,37 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                     pos = pos_nospike
             else:
                 spikes_filt -= spikes_filt.min()
+                trange_adj = trange[1:1+len(spikes_filt)]
+                spikes_adj = spikes_filt[
+                    ndiscard:ndiscard+len(trange[1:])] / spikes_filt[
+                        ndiscard:ndiscard+len(trange[1:])].max() * normamp + pos
                 ax_nospike.plot(
-                    trange[1:1+len(spikes_filt)], spikes_filt[
-                        ndiscard:ndiscard+len(trange[1:])] /
-                    spikes_filt[
-                        ndiscard:ndiscard+len(trange[1:])].max() *
-                    normamp + pos,
+                    trange_adj, spikes_adj,
                     colors[nroi % len(colors)])
+                if has_track:
+                    ax_nospike.plot(
+                        np.ma.array(
+                            trange_adj, mask=(spikes_adj <= spikes_adj.mean()+STD_SCALE*spikes_adj.std()) |
+                            (track_speed[1:] <= MIN_SPEED)),
+                        np.ma.array(
+                            spikes_adj, mask=(spikes_adj <= spikes_adj.mean()+STD_SCALE*spikes_adj.std()) |
+                            (track_speed[1:] <= MIN_SPEED)),
+                        '-r', lw=4, alpha=0.8)
         fontweight = 'normal'
         fontsize = 14
+        trange_adj = trange[:len(meas_filt)]
+        meas_filt_adj = meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos
         ax.plot(
-            trange[:len(meas_filt)],
-            meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos,
-            colors[nroi % len(colors)])
+            trange_adj, meas_filt_adj, colors[nroi % len(colors)])
+        if has_track:
+            ax.plot(
+                np.ma.array(
+                    trange_adj, mask=(meas_filt_adj <= meas_filt_adj.mean()+STD_SCALE*meas_filt_adj.std()) |
+                    (track_speed <= MIN_SPEED)),
+                np.ma.array(
+                    meas_filt_adj, mask=(meas_filt_adj <= meas_filt_adj.mean()+STD_SCALE*meas_filt_adj.std()) |
+                    (track_speed <= MIN_SPEED)),
+                '-r', lw=4, alpha=0.8)
         ax.text(0, (meas_filt-meas_filt.min()+pos).mean(),
                 "{0}".format(nroi),
                 color=colors[nroi % len(colors)], ha='right',
@@ -993,8 +1014,6 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 meas_filt = measured[nroi, ndiscard:]
             meas_filt -= meas_filt.min()
 
-            MIN_SPEED = 1.0
-            STD_SCALE = 2.0
             norm_meas = measured[nroi, ndiscard:].copy()
             ax_fluo.plot(
                 np.ma.array(posx, mask=track_speed < MIN_SPEED),
