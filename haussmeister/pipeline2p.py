@@ -646,6 +646,31 @@ def colorline(
     return lc
 
 
+def find_events(posx, posy, norm_meas, track_speed, min_speed, std_scale):
+    above = np.zeros(norm_meas.shape)
+    above[(norm_meas > norm_meas.mean()+std_scale*norm_meas.std()) &
+          (track_speed > min_speed)] = 1
+    transitions_up = np.where(np.diff(above) == 1)[0]
+    if transitions_up.shape[0] == 0:
+        return [], np.array([])
+
+    transitions_down = np.where(np.diff(above) == -1)[0]
+    if transitions_down.shape[0] == 0:
+        transitions_down = np.array([norm_meas.shape[0]-1, ])
+    if transitions_up[0] > transitions_down[0]:
+        transitions_up = transitions_up[1]
+    transitions_down = transitions_down[:transitions_up.shape[0]]
+    if transitions_down.shape[0] < transitions_up.shape[0]:
+        transitions_down = np.concatenate((transitions_down, norm_meas.shape[0]-1))
+
+    ipeaks = []
+    amp_events = []
+    for tu, td in zip(transitions_up, transitions_down):
+        ipeaks.append(np.argmax(norm_meas[tu:td]) + tu)
+        amp_events.append(np.sum(norm_meas[tu:td]))
+
+    return ipeaks, np.array(amp_events)
+
 def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
               lopass=1.0, plot_events=False, minimaps=None, dpi=1200,
@@ -1015,32 +1040,47 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             meas_filt -= meas_filt.min()
 
             norm_meas = measured[nroi, ndiscard:].copy()
+
+            # Find event peaks:
+            ievents, amp_events = find_events(
+                posx, posy, norm_meas, track_speed, MIN_SPEED, STD_SCALE)
             ax_fluo.plot(
                 np.ma.array(posx, mask=track_speed < MIN_SPEED),
                 np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k')
-            ax_fluo.plot(
-                posx[
-                    (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
-                    (track_speed > MIN_SPEED)],
-                posy[
-                    (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
-                    (track_speed > MIN_SPEED)], 'or', ms=6)
+            # ax_fluo.plot(
+            #     posx[
+            #         (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
+            #         (track_speed > MIN_SPEED)],
+            #     posy[
+            #         (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
+            #         (track_speed > MIN_SPEED)], 'or', ms=6)
+            mscale = lambda x: np.log10(norm(x)+5.0)*1e3
+            if len(ievents) > 0:
+                ax_fluo.scatter(
+                    posx[ievents], posy[ievents], c='r', s=mscale(amp_events),
+                    alpha=0.5, edgecolors='none')
             ax_check_track.plot(norm_meas, '-k')
             ax_check_track.plot(np.ma.array(
                 norm_meas, mask=(norm_meas <= norm_meas.mean()+STD_SCALE*norm_meas.std()) |
                 (track_speed <= MIN_SPEED)), '-r')
             if spikes is not None:
                 norm_spikes = spikes[nroi].copy()
+                ievents, amp_events = find_events(
+                    posx, posy, norm_spikes, track_speed, MIN_SPEED, STD_SCALE)
                 ax_spikes.plot(
                     np.ma.array(posx, mask=track_speed < MIN_SPEED),
                     np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k')
-                ax_spikes.plot(
-                    posx[
-                        (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
-                        (track_speed > MIN_SPEED)],
-                    posy[
-                        (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
-                        (track_speed > MIN_SPEED)], 'or', ms=6)
+                # ax_spikes.plot(
+                #     posx[
+                #         (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
+                #         (track_speed > MIN_SPEED)],
+                #     posy[
+                #         (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
+                #         (track_speed > MIN_SPEED)], 'or', ms=6)
+                if len(ievents) > 0:
+                    ax_spikes.scatter(
+                        posx[ievents], posy[ievents], c='r',
+                        s=mscale(amp_events), alpha=0.5, edgecolors='none')
 
 
     fig_rois_fluo.savefig(
