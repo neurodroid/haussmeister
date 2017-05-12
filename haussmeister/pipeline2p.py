@@ -813,6 +813,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         ax_track_speed.plot(
             np.arange(track_speed.shape[0])*haussio_data.dt,
             track_speed)
+        ax_track_speed.set_ylabel("Speed (cm/s)")
 
     normamp = None
     for nroi, roi in enumerate(rois):
@@ -916,9 +917,11 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             pos_nospike += meas_filt.max()-meas_filt.min()+1.0
 
     sys.stdout.write("\n")
-    scalebars.add_scalebar(ax_spike)
+    # scalebars.add_scalebar(ax_spike, hidex=False, hidey=False)
+    stfio_plot.plot_scalebars(ax_spike, xunits="s", yunits="DF/F")
     if infer_threshold is not None:
-        scalebars.add_scalebar(ax_nospike)
+        scalebars.add_scalebar(ax_nospike, hidex=False, hidey=False)
+        stfio_plot.plot_scalebars(ax_nospike, xunits="s", yunits="AU")
 
     if region is None:
         regionstr = "undefined region"
