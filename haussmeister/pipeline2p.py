@@ -1009,6 +1009,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         fig_check = plt.figure()
         posx = trackdict['posx_frames']-trackdict['posx_frames'].min()
         posy = trackdict['posy_frames']-trackdict['posy_frames'].min()
+        mscale = lambda x: np.log10(norm(x)+np.sqrt(2))*1e3
         for nroi, roi in enumerate(rois):
             col = nroi % ncols
             row = int(nroi/ncols)
@@ -1028,8 +1029,6 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 ax.set_xlim(posx.min(), posx.max())
                 ax.set_ylim(posy.min(), posy.max())
 
-            # ax_fluo.set_aspect('equal')
-            # ax_spikes.set_aspect('equal')
             if lopass is not None:
                 measured_float = measured[nroi, :].astype(np.float)
                 meas_filt = spectral.lowpass(
@@ -1046,19 +1045,11 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 posx, posy, norm_meas, track_speed, MIN_SPEED, STD_SCALE)
             ax_fluo.plot(
                 np.ma.array(posx, mask=track_speed < MIN_SPEED),
-                np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k')
-            # ax_fluo.plot(
-            #     posx[
-            #         (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
-            #         (track_speed > MIN_SPEED)],
-            #     posy[
-            #         (norm_meas > norm_meas.mean()+STD_SCALE*norm_meas.std()) &
-            #         (track_speed > MIN_SPEED)], 'or', ms=6)
-            mscale = lambda x: np.log10(norm(x)+5.0)*1e3
+                np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k', alpha=0.3)
             if len(ievents) > 0:
                 ax_fluo.scatter(
                     posx[ievents], posy[ievents], c='r', s=mscale(amp_events),
-                    alpha=0.5, edgecolors='none')
+                    alpha=0.8, edgecolors='none')
             ax_check_track.plot(norm_meas, '-k')
             ax_check_track.plot(np.ma.array(
                 norm_meas, mask=(norm_meas <= norm_meas.mean()+STD_SCALE*norm_meas.std()) |
@@ -1069,7 +1060,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                     posx, posy, norm_spikes, track_speed, MIN_SPEED, STD_SCALE)
                 ax_spikes.plot(
                     np.ma.array(posx, mask=track_speed < MIN_SPEED),
-                    np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k')
+                    np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k', alpha=0.3)
                 # ax_spikes.plot(
                 #     posx[
                 #         (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
@@ -1080,7 +1071,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 if len(ievents) > 0:
                     ax_spikes.scatter(
                         posx[ievents], posy[ievents], c='r',
-                        s=mscale(amp_events), alpha=0.5, edgecolors='none')
+                        s=mscale(amp_events), alpha=0.8, edgecolors='none')
 
 
     fig_rois_fluo.savefig(
