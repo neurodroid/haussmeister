@@ -189,7 +189,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
             Yr, Cin, f_in, Ain, sn=sn, dview=dview, **options['spatial_params'])
 
         options['temporal_params']['p'] = 0 # set this to zero for fast updating without deconvolution
-        C, f, S, bl, c1, neurons_sn, g, YrA = caiman_cnmf.temporal.update_temporal_components(
+        C, A, b, f, S, bl, c1, neurons_sn, g, YrA = caiman_cnmf.temporal.update_temporal_components(
             Yr, A, b, Cin, f_in, bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
 
         A_m, C_m, nr_m, merged_ROIs, S_m, bl_m, c1_m, sn_m, g_m = caiman_cnmf.merging.merge_components(
@@ -200,7 +200,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         A2, b2, C2, f = caiman_cnmf.spatial.update_spatial_components(
             Yr, C_m, f, A_m, sn=sn, dview=dview, **options['spatial_params'])
         options['temporal_params']['p'] = p # set it back to original value to perform full deconvolution
-        C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = caiman_cnmf.temporal.update_temporal_components(
+        C2, A2, b2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = caiman_cnmf.temporal.update_temporal_components(
             Yr, A2, b2, C2, f, dview=dview, bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
 
         tB = np.minimum(-2,np.floor(-5./30*final_frate))
