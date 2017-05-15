@@ -185,7 +185,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
             Y, **options['init_params'])
 
         Ain, Cin = Atmp, Ctmp
-        A,b,Cin = caiman_cnmf.spatial.update_spatial_components(
+        A, b, Cin, f_in = caiman_cnmf.spatial.update_spatial_components(
             Yr, Cin, f_in, Ain, sn=sn, dview=dview, **options['spatial_params'])
 
         options['temporal_params']['p'] = 0 # set this to zero for fast updating without deconvolution
@@ -197,7 +197,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
             options['spatial_params'], dview=dview, bl=bl, c1=c1, sn=neurons_sn,
             g=g, thr=merge_thresh, mx=50, fast_merge=True)
 
-        A2, b2, C2 = caiman_cnmf.spatial.update_spatial_components(
+        A2, b2, C2, f = caiman_cnmf.spatial.update_spatial_components(
             Yr, C_m, f, A_m, sn=sn, dview=dview, **options['spatial_params'])
         options['temporal_params']['p'] = p # set it back to original value to perform full deconvolution
         C2, f2, S2, bl2, c12, neurons_sn2, g21, YrA = caiman_cnmf.temporal.update_temporal_components(
