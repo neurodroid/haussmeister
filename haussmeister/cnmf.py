@@ -182,7 +182,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         Yr, sn, g, psx = caiman_cnmf.pre_processing.preprocess_data(
             Yr, dview=dview, **options['preprocess_params'])
         Atmp, Ctmp, b_in, f_in, center = caiman_cnmf.initialization.initialize_components(
-            Y, normalize=True, **options['init_params'])
+            Y, **options['init_params'])
 
         Ain, Cin = Atmp, Ctmp
         A,b,Cin = caiman_cnmf.spatial.update_spatial_components(
