@@ -1061,7 +1061,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             if spikes is not None:
                 norm_spikes = spikes[nroi].copy()
                 ievents, amp_events = find_events(
-                    posx, posy, norm_spikes, track_speed, MIN_SPEED, STD_SCALE)
+                    norm_spikes, track_speed, MIN_SPEED, STD_SCALE)
                 ax_spikes.plot(
                     np.ma.array(posx, mask=track_speed < MIN_SPEED),
                     np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k', alpha=0.3)
