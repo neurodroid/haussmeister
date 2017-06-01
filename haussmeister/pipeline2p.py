@@ -88,6 +88,9 @@ NCPUS = int(mp.cpu_count()/2)
 # out of memory (128 GB)
 MAXFRAMES_ICA = 1600
 
+MIN_SPEED = 1.0
+STD_SCALE = 2.0
+
 
 class ThorExperiment(object):
     """
@@ -646,7 +649,7 @@ def colorline(
     return lc
 
 
-def find_events(posx, posy, norm_meas, track_speed, min_speed, std_scale):
+def find_events(norm_meas, track_speed, min_speed, std_scale):
     above = np.zeros(norm_meas.shape)
     above[(norm_meas > norm_meas.mean()+std_scale*norm_meas.std()) &
           (track_speed > min_speed)] = 1
@@ -714,9 +717,6 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     nrows = 8
     strow = 2
-
-    MIN_SPEED = 1.0
-    STD_SCALE = 2.0
 
     has_vr = mapdict is not None and 't_vr' in mapdict.keys()
     has_track = trackdict is not None
@@ -1013,6 +1013,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         posx = trackdict['posx_frames']-trackdict['posx_frames'].min()
         posy = trackdict['posy_frames']-trackdict['posy_frames'].min()
         mscale = lambda x: np.log10(norm(x)+np.sqrt(2))*1e3
+        measured_filt = []
         for nroi, roi in enumerate(rois):
             col = nroi % ncols
             row = int(nroi/ncols)
@@ -1042,10 +1043,10 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             meas_filt -= meas_filt.min()
 
             norm_meas = measured[nroi, ndiscard:].copy()
-
+            measured_filt.append(norm_meas)
             # Find event peaks:
             ievents, amp_events = find_events(
-                posx, posy, norm_meas, track_speed, MIN_SPEED, STD_SCALE)
+                norm_meas, track_speed, MIN_SPEED, STD_SCALE)
             ax_fluo.plot(
                 np.ma.array(posx, mask=track_speed < MIN_SPEED),
                 np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k', alpha=0.3)
@@ -1081,6 +1082,9 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
     fig_rois_spikes.savefig(
         data_path + "_rois_spikes" + pdf_suffix + ".pdf", dpi=dpi)
+
+    if has_track:
+        return track_speed, measured_filt, spikes, haussio_data.dt
 
 
 def plot_decoded(decoded, mapdict):
@@ -1688,7 +1692,7 @@ def thor_extract_roi(
     if decoded_only:
         return
 
-    plot_rois(
+    return plot_rois(
         rois, measured, haussio_data, zproj, data.data_path_comp,
         pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
         infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
