@@ -525,6 +525,7 @@ def process_data(data, detrend=False, base_fraction=0.2, zscore=True):
     # Fmu and Fsig should be of shape (nrois)
     # data and ret_data should be of shape (nrois, nframes)
     ret_data = ((data.T-Fmu)/Fsig).T * 100.0
+    ret_data[np.isnan(ret_data)] = 0
 
     if detrend:
         ret_data = np.array([
