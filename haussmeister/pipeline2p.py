@@ -344,7 +344,7 @@ class ThorExperiment(object):
             try:
                 dataset.channel_names.index(self.ch2p)
                 dataset.sequences
-            except (ValueError, IOError):
+            except (ValueError, IOError, EOFError):
                 restore = True
 
         if restore:
