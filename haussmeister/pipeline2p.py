@@ -1414,7 +1414,7 @@ def get_rois_thunder(
 
         print("Running thunder ICA... ")
         t0 = time.time()
-        W, sigs, A = ICA(
+        sigs, A = ICA(
             k=int(nrois_init/2), k_pca=nrois_init, svd_method='em').fit(
                 data_series)
         print("Thunder ICA took {0:.2f} s".format(time.time()-t0))
