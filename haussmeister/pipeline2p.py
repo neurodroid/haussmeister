@@ -1419,8 +1419,6 @@ def get_rois_thunder(
                 data_series)
         print("Thunder ICA took {0:.2f} s".format(time.time()-t0))
 
-        imgs = sigs.toarray()
-
         np.save(thunder_roiraw_fn, imgs)
 
     else:
