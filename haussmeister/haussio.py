@@ -840,20 +840,33 @@ class SI4HaussIO(HaussIO):
 
     def _get_dimensions(self):
         if os.path.isfile(self.dirnames[0]):
-            self.xpx = int(self.SI4dict['scanimage.SI4.scanPixelsPerLine'])
-            self.ypx = int(self.SI4dict['scanimage.SI4.scanLinesPerFrame'])
+            if 'scanimage.SI4.scanPixelsPerLine' in self.SI4dict.keys():
+                self.xpx = int(self.SI4dict['scanimage.SI4.scanPixelsPerLine'])
+                self.ypx = int(self.SI4dict['scanimage.SI4.scanLinesPerFrame'])
+            else:
+                self.xpx = int(self.SI4dict['scanimage.SI.hRoiManager.pixelsPerLine'])
+                self.ypx = int(self.SI4dict['scanimage.SI.hRoiManager.linesPerFrame'])
+
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
             shape = np.load(shapefn)
             self.xpx, self.ypx = shape[1], shape[2]
 
-        self.xsize = self.ysize = self.xycal / float(
-            self.SI4dict['scanimage.SI4.scanZoomFactor'])
+        if 'scanimage.SI4.scanZoomFactor' in self.SI4dict.keys():
+            self.xsize = self.ysize = self.xycal / float(
+                self.SI4dict['scanimage.SI4.scanZoomFactor'])
+        else:
+            self.xsize = self.ysize = self.xycal / float(
+                self.SI4dict['scanimage.SI.hRoiManager.scanZoomFactor'])
+
         self.naverage = None
 
     def _get_timing(self):
-        dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
+        if 'scanimage.SI4.scanFramePeriod' in self.SI4dict.keys():
+            dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
+        else:
+            dt = float(self.SI4dict['scanimage.SI.hRoiManager.scanFramePeriod'])
         if self.mptifs is not None:
             nframes = np.sum([
                 mptif.get_depth()-1 for mptif in self.mptifs])
