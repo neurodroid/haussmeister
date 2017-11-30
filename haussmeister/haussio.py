@@ -806,18 +806,18 @@ class SI4HaussIO(HaussIO):
         super(SI4HaussIO, self)._get_filenames(xml_path, sync_path)
         if "?" in self.filetrunk:
             self.mptifs = [
-                libtiff.tiff_file.TiffFile(dirname)
+                tifffile.TiffFile(dirname)
                 for dirname in self.dirnames]
         elif os.path.isfile(self.dirname):
-            self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
+            self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptifs = [libtiff.tiff_file.TiffFile(
+            self.mptifs = [tiffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].IFD[0].entries_dict["ImageDescription"]
+        self.ifd = self.mptifs[0].info()
         self.SI4dict = {
             l[:l.find('=')-1]: l[l.find('=')+2:]
-            for l in self.ifd.human().splitlines()
+            for l in self.ifd.splitlines()
             if not l[:l.find('=')-1].isspace()
         }
         if not os.path.isfile(self.dirnames[0]):
@@ -869,7 +869,7 @@ class SI4HaussIO(HaussIO):
             dt = float(self.SI4dict['scanimage.SI.hRoiManager.scanFramePeriod'])
         if self.mptifs is not None:
             nframes = np.sum([
-                mptif.get_depth()-1 for mptif in self.mptifs])
+                len(mptif.pages) for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -889,7 +889,7 @@ class SI4HaussIO(HaussIO):
             t0 = time.time()
             if self.mptifs is not None:
                 self.raw_array = np.concatenate([
-                    np.array(mptif.get_tiff_array()).astype(np.int32)[1:]
+                    mptif.asarray().astype(np.int32)[1:]
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
