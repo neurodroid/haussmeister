@@ -124,7 +124,7 @@ class HaussIO(object):
 
         if self.mptifs is not None:
             self.nframes = np.sum([
-                len(mptif.pages) for mptif in self.mptifs])
+                len(mptif.pages)-1 for mptif in self.mptifs])
             if self.nframes == 0:
                 self.nframes = np.sum([
                     len(mptif.IFD) for mptif in self.mptifs])
@@ -812,7 +812,7 @@ class SI4HaussIO(HaussIO):
             self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptifs = [tiffile.TiffFile(
+            self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
         self.ifd = self.mptifs[0].info()
         self.SI4dict = {
@@ -869,7 +869,7 @@ class SI4HaussIO(HaussIO):
             dt = float(self.SI4dict['scanimage.SI.hRoiManager.scanFramePeriod'])
         if self.mptifs is not None:
             nframes = np.sum([
-                len(mptif.pages) for mptif in self.mptifs])
+                len(mptif.pages)-1 for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -972,7 +972,7 @@ class DoricHaussIO(HaussIO):
                 :self.ifd[self.ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
         if self.mptifs is not None:
             nframes = np.sum([
-                len(mptif.pages) for mptif in self.mptifs])
+                len(mptif.pages)-1 for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
