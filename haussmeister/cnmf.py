@@ -176,8 +176,9 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         gSig = [15, 15] # expected half size of neurons
         merge_thresh = 0.8 # merging threshold, max correlation allowed
         p=2 #order of the autoregressive system
+        n_pixels_per_process = d1*d2/NCPUS_PATCHES
         options = caiman_cnmf.utilities.CNMFSetParms(
-            Y, NCPUS, p=p, gSig=gSig, K=K, ssub=2, tsub=2)
+            Y, NCPUS, p=p, gSig=gSig, K=K, ssub=2, tsub=2, n_pixels_per_process=n_pixels_per_process)
 
         Yr, sn, g, psx = caiman_cnmf.pre_processing.preprocess_data(
             Yr, dview=dview, **options['preprocess_params'])
