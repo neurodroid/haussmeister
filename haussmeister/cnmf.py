@@ -52,12 +52,12 @@ NCPUS = mp.cpu_count()
 NCPUS_PATCHES = 16
 
 
-def get_mmap_name(basename, d1, d2, T):
+def get_mmap_name(basename, d1, d2, T, d0=1):
     bn = os.path.basename(os.path.normpath(basename))
     trunk = os.path.dirname(basename)
     new_path = os.path.join(trunk, bn.replace('_', ''))
     return new_path + \
-        '_d1_' + str(1) + '_d2_' + str(d1) + '_d3_' + \
+        '_d1_' + str(d0) + '_d2_' + str(d1) + '_d3_' + \
         str(d2) + '_order_' + 'C' + '_frames_' + str(T) + '_.mmap'
 
 
@@ -129,10 +129,9 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
     shape = np.load(shapefn)
     if len(shape) == 5:
         d1, d2 = shape[2], shape[3]
-        fn_mmap = get_mmap_name('Yr', shape[2], shape[3], shape[0])
     else:
         d1, d2 = shape[1], shape[2]
-        fn_mmap = get_mmap_name('Yr', shape[1], shape[2], shape[0])
+    fn_mmap = get_mmap_name('Yr', d1, d2, shape[0])
     fn_mmap = os.path.join(haussio_data.dirname_comp, fn_mmap)
     print(fn_mmap, os.path.exists(fn_mmap), d1, d2)
 
@@ -247,8 +246,12 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         YrA = resdict["YrA"]
         S2 = resdict["S"]
         bl2 = resdict["bl"]
-        Yr, dims, T = cm.load_memmap(fn_mmap)
-        dims = dims[1:]
+        if not os.path.exists(fn_mmap):
+            fn_mmap = get_mmap_name('Yr0000', d1=d2, d2=1, T=shape[0], d0=d1)
+            Yr, dims, T = cm.load_memmap(fn_mmap)
+        else:
+            Yr, dims, T = cm.load_memmap(fn_mmap)
+            dims = dims[1:]
         Y = np.reshape(Yr, dims+(T,), order='F')
 
     proj_fn = haussio_data.dirname_comp + "_proj.npy"

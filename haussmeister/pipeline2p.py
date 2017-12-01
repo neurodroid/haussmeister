@@ -2171,7 +2171,7 @@ def get_rois_cnmf(
             vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
 
 
-    measured = process_data(measured, base_fraction=None, zscore=False)
+    measured = process_data(measured+noise, base_fraction=None, zscore=False)
 
     return rois, measured, zproj, spikes, vrdict
 
