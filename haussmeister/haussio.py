@@ -199,17 +199,8 @@ class HaussIO(object):
         self.movie_fn = self.dirname_comp + ".mp4"
         self.scale_png = self.dirname_comp + "_scale.png"
         self.sima_dir = self.dirname_comp + ".sima"
-        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
         self.rawfile = None
-        self.filetrunk = os.path.join(self.dirname, self.basefile)
         self.sync_path = sync_path
-        if "?" in self.filetrunk:
-            self.dirnames = sorted(glob.glob(self.dirname))
-            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
-                "?") + ".tif'"
-        else:
-            self.dirnames = [self.dirname]
-            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def get_normframe(self):
         """
@@ -221,7 +212,7 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        if self.mptifs is None and not os.path.exists(self.rawfile):
+        if self.mptifs is None and (self.rawfile is None or not os.path.exists(self.rawfile)):
             if "?" in self.dirname:
                 normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
                 normtrunk = self.filetrunk.replace(
@@ -266,7 +257,7 @@ class HaussIO(object):
                                  "regenerating sima files: " + err + "\n")
 
         if self.mptifs is None and (
-                not os.path.exists(self.rawfile) or self.rawfile is None):
+                self.rawfile is None or not os.path.exists(self.rawfile)):
             # The string paths[i][j] is a unix style expression for the
             # filenames for plane i and channel j
             sequences = [sima.Sequence.create(
@@ -342,7 +333,8 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        if self.mptifs is not None or os.path.exists(self.rawfile):
+        if self.mptifs is not None or (
+                self.rawfile is not None and os.path.exists(self.rawfile)):
             movie_input = self.read_raw()
         else:
             movie_input = self.ffmpeg_fn
@@ -528,6 +520,16 @@ class ThorHaussIO(HaussIO):
     """
     def _get_filenames(self, xml_path, sync_path):
         super(ThorHaussIO, self)._get_filenames(xml_path, sync_path)
+        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
+        if "?" in self.filetrunk:
+            self.dirnames = sorted(glob.glob(self.dirname))
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.dirnames = [self.dirname]
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+
         if xml_path is None:
             self.xml_name = self.dirname + "/Experiment.xml"
         else:
@@ -676,21 +678,15 @@ class PrairieHaussIO(HaussIO):
 
     def _get_filenames(self, xml_path, sync_path):
         super(PrairieHaussIO, self)._get_filenames(xml_path, sync_path)
-        if not os.path.exists(self.filetrunk + "{0:04d}.tif".format(1)):
-            if not os.path.exists(self.dirname):
-                os.makedirs(self.dirname)
-            sys.stdout.write("Converting to individual tiffs... ")
-            sys.stdout.flush()
-            self.mptifs = [tifffile.TiffFile(self.dirname + ".tif")]
-            for mptif in self.mptifs:
-                for nf, frame in enumerate(mptif.pages):
-                    tifffile.imsave(self.filetrunk + "{0:04d}.tif".format(nf+1),
-                                    frame.asarray())
-            sys.stdout.write("done\n")
+        basename = os.path.basename(self.dirname)
+        self.basefile = basename + "_Cycle00001_Ch{0}_".format(self.chan)
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
         if xml_path is None:
-            self.xml_name = self.dirname + ".xml"
+            self.xml_name = os.path.join(self.dirname, basename + ".xml")
         else:
             self.xml_name = xml_path
+        print(self.xml_name)
+        assert(os.path.exists(self.xml_name))
         # This needs to be done *after* the individual tiffs have been written
         self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
@@ -720,9 +716,14 @@ class PrairieHaussIO(HaussIO):
         self.naverage = None
 
     def _get_timing(self):
-        self.timing = np.array([float(fi.attrib['relativeTime'])
-                                for fi in self.xml_root.find(
-                                    "Sequence").findall("Frame")])
+        pvsvduplets = [frame.find('PVStateShard').findall('PVStateValue')
+                       for frame in self.xml_root.find('Sequence').findall('Frame')]
+        timings = [
+            [float(pvsventry.attrib['value'])
+             for pvsventry in pvsvduplet
+             if pvsventry.attrib['key']=='framePeriod']
+            for pvsvduplet in pvsvduplets]
+        self.timing = np.cumsum(np.array(timings).flatten())
 
     def _get_sync(self):
         if self.sync_path is None:
@@ -735,6 +736,9 @@ class PrairieHaussIO(HaussIO):
     def read_raw(self):
         raise NotImplementedError(
             "Raw file reading not implemented for Prairie files yet")
+
+    def format_index(self, n, width_idx=None):
+        return super(PrairieHaussIO, self).format_index(n, 6) + ".ome"
 
 
 class MovieHaussIO(HaussIO):
@@ -919,11 +923,7 @@ class DoricHaussIO(HaussIO):
 
     def _get_filenames(self, xml_path, sync_path):
         super(DoricHaussIO, self)._get_filenames(xml_path, sync_path)
-        if "?" in self.filetrunk:
-            self.mptifs = [
-                tifffile.TiffFile(dirname)
-                for dirname in self.dirnames]
-        elif os.path.isfile(self.dirname):
+        if os.path.isfile(self.dirname):
             self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
@@ -942,11 +942,7 @@ class DoricHaussIO(HaussIO):
 
         self.filenames = None
 
-        if "?" in self.filetrunk:
-            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
-                "?") + ".tif'"
-        else:
-            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+        self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def _get_dimensions(self):
         if os.path.isfile(self.dirnames[0]):

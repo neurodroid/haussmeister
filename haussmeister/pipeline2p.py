@@ -309,6 +309,20 @@ class ThorExperiment(object):
                     chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+        elif self.ftype == "prairie":
+            if not mc:
+                return haussio.PrairieHaussIO(
+                    self.data_path, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4,
+                    maxtime=self.maxtime)
+            else:
+                basename = os.path.basename(self.data_path)
+                return haussio.PrairieHaussIO(
+                    self.data_path + self.mc_suffix,
+                    chan=self.ch2p,
+                    xml_path=os.path.join(self.data_path, basename+'.xml'),
+                    sync_path=self.sync_path, width_idx=5,
+                    maxtime=self.maxtime)
 
     def to_sima(self, mc=False, haussio_data=None):
         """
