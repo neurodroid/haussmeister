@@ -923,6 +923,15 @@ class DoricHaussIO(HaussIO):
 
     def _get_filenames(self, xml_path, sync_path):
         super(DoricHaussIO, self)._get_filenames(xml_path, sync_path)
+        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
+        if "?" in self.filetrunk:
+            self.dirnames = sorted(glob.glob(self.dirname))
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.dirnames = [self.dirname]
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
         if os.path.isfile(self.dirname):
             self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
