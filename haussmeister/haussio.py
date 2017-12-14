@@ -124,7 +124,7 @@ class HaussIO(object):
 
         if self.mptifs is not None:
             self.nframes = np.sum([
-                len(mptif.pages)-1 for mptif in self.mptifs])
+                len(mptif.pages)-self.pagesoffset for mptif in self.mptifs])
             if self.nframes == 0:
                 self.nframes = np.sum([
                     len(mptif.IFD) for mptif in self.mptifs])
@@ -518,6 +518,13 @@ class ThorHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with ThorImageLS
     """
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4, maxtime=None):
+        self.pagesoffset = 1
+        super(ThorHaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path,
+            width_idx, maxtime)
+
     def _get_filenames(self, xml_path, sync_path):
         super(ThorHaussIO, self)._get_filenames(xml_path, sync_path)
         self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
@@ -675,6 +682,12 @@ class PrairieHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with Prairie scopes
     """
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4, maxtime=None):
+        self.pagesoffset = 1
+        super(PrairieHaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path,
+            width_idx, maxtime)
 
     def _get_filenames(self, xml_path, sync_path):
         super(PrairieHaussIO, self)._get_filenames(xml_path, sync_path)
@@ -751,6 +764,7 @@ class MovieHaussIO(HaussIO):
         self.dt = dt
         print(dirname + ".mp4")
         self.movie = movies.numpy_movie(dirname + ".mp4")
+        self.pagesoffset = 1
         super(MovieHaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx)
 
@@ -803,6 +817,7 @@ class SI4HaussIO(HaussIO):
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
                  width_idx=4, maxtime=None, xycal=1200.0):
         self.xycal = xycal
+        self.pagesoffset = 1
         super(SI4HaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx, maxtime)
 
@@ -918,6 +933,7 @@ class DoricHaussIO(HaussIO):
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
                  width_idx=4, maxtime=None, xycal=350.0):
         self.xycal = xycal
+        self.pagesoffset = 0
         super(DoricHaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx, maxtime)
 
