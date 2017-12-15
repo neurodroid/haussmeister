@@ -131,7 +131,7 @@ class ThorExperiment(object):
         Root directory leading to fn2p. Default: ""
     seg_method : str, optional
         One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
-        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used), 
+        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used),
         "cnmf" (constrained non-negative matrix factorization).
         Default: "cnmf"
     maxtime : float, optional
@@ -188,7 +188,7 @@ class ThorExperiment(object):
         else:
             self.track_path = None
             self.track_path_comp = None
-            
+
         self.mc_method = mc_method
         self.mc_suffix = "_mc_" + self.mc_method
         if self.mc_method == "hmmc":
@@ -1638,7 +1638,7 @@ def thor_extract_roi(
         lopass = None
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
-    
+
     if data.fnvr is not None:
         fnmini = data.vr_path_comp + "_" + data.seg_method + "_minimaps.pck"
         if not os.path.exists(fnmini):
@@ -1929,7 +1929,7 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
         signals = dataset.extract(rois, label=signal_label,
                                   save_summary=False, n_processes=int(NCPUS/4))
 
-    if data.subtract_halo >= 1.0:
+    if data.subtract_halo > 1.0:
         halo_rois = []
         for roi in rois:
             halo_polygons = []
@@ -2024,7 +2024,7 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
             ax.bar(pos, data.mean, width=bar_width, color=data.color,
                    edgecolor='k')
         if data.data is not None:
-            ax.plot([pos+boffset for dat in data.data], 
+            ax.plot([pos+boffset for dat in data.data],
                     data.data, 'o', ms=ms, mew=0, lw=1.0, alpha=0.5,
                     mfc='grey', color='grey')
             if paired:
