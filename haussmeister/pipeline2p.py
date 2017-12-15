@@ -1959,7 +1959,8 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
 
         # find best scale between halo and center:
         fmin = lambda scale: np.sum((signals['raw'][0]-scale*(signals_halo['raw'][0]))**2)
-        min_scale = brent(fmin)
+        min_scale = brent(fmin, brack=(0, 100))
+        print("min_scale:", min_scale)
         measured = signals['raw'][0]-min_scale*signals_halo['raw'][0]
     else:
         measured = signals['raw'][0]
