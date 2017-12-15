@@ -20,7 +20,7 @@ import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
 from scipy.io import savemat
-from scipy.optimize import brent
+from scipy.optimize import fminbound
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -1959,7 +1959,7 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
 
         # find best scale between halo and center:
         fmin = lambda scale: np.sum((signals['raw'][0]-scale*(signals_halo['raw'][0]))**2)
-        min_scale = brent(fmin, brack=(0, 100))
+        min_scale = fminbound(fmin, 0, 10)
         print("min_scale:", min_scale)
         measured = signals['raw'][0]-min_scale*signals_halo['raw'][0]
     else:
