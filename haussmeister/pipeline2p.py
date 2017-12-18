@@ -679,7 +679,11 @@ def find_events(norm_meas, track_speed, min_speed, std_scale):
         transitions_up = transitions_up[1]
     transitions_down = transitions_down[:transitions_up.shape[0]]
     if transitions_down.shape[0] < transitions_up.shape[0]:
-        transitions_down = np.concatenate((transitions_down, norm_meas.shape[0]-1))
+        try:
+            transitions_down = np.concatenate((transitions_down, [norm_meas.shape[0]-1,]))
+        except ValueError as err:
+            print(transitions_up.shape, transitions_down.shape, norm_meas.shape[0])
+            raise err
 
     ipeaks = []
     amp_events = []
