@@ -118,6 +118,8 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
         # 888s
 
+        return fname_tot
+
 
 def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
     if mask is not None:
