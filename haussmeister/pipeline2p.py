@@ -975,12 +975,18 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     fig_rois_spikes = plt.figure(figsize=(24, 24))
     if has_track:
         ncols = int(np.ceil(np.sqrt(len(rois))))
+        if ncols == 0:
+            ncols = 1
         nrows = int(np.ceil(len(rois)/float(ncols)))
     elif selected_rois is None:
         ncols = int(np.ceil(np.sqrt(len(minimaps))))
+        if ncols == 0:
+            ncols = 1
         nrows = int(np.ceil(len(minimaps)/float(ncols)))
     else:
         ncols = int(np.ceil(np.sqrt(len(selected_rois))))
+        if ncols == 0:
+            ncols = 1
         nrows = int(np.ceil(len(selected_rois)/float(ncols)))
     gs_fluo = gridspec.GridSpec(nrows, ncols)
     gs_spikes = gridspec.GridSpec(nrows, ncols)
@@ -1695,18 +1701,21 @@ def thor_extract_roi(
             new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
                            for nroi in irois])
 
-        decoded = decode.decodeMLNonparam(
-            spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
-                :, np.newaxis]).T,
-            nentries=10)
-        # decoded = decode.decodeMLNonparam(
-        #     fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
-        #         :, np.newaxis]).T,
-        #     nentries=2)
-        # decoded = decode.decodeMLPoisson(
-        #     infermap.T, counts.T).squeeze()
+        if len(spikemap):
+            decoded = decode.decodeMLNonparam(
+                spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
+                    :, np.newaxis]).T,
+                nentries=10)
+            # decoded = decode.decodeMLNonparam(
+            #     fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
+            #         :, np.newaxis]).T,
+            #     nentries=2)
+            # decoded = decode.decodeMLPoisson(
+            #     infermap.T, counts.T).squeeze()
 
-        plot_decoded(decoded, mapdict)
+            plot_decoded(decoded, mapdict)
+        else:
+            decoded = None
     else:
         minimaps = None
         decoded = None
