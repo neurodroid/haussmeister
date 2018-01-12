@@ -167,23 +167,28 @@ class ThorExperiment(object):
         assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
         self.seg_method = seg_method
 
+        if self.ftype == "prairie":
+            datatrunk = self.data_path
+        else:
+            datatrunk = datatrunk
+
         if self.fnsync is not None:
-            self.sync_path = os.path.dirname(self.data_path) + "/" + \
-                self.fnsync
+            self.sync_path = os.path.join(
+                datatrunk, self.fnsync)
         else:
             self.sync_path = None
 
         if self.fnvr is not None:
-            self.vr_path = os.path.dirname(self.data_path) + "/" + \
-                self.fnvr
+            self.vr_path = os.path.join(
+                datatrunk, self.fnvr)
             self.vr_path_comp = self.vr_path.replace("?", "n")
         else:
             self.vr_path = None
             self.vr_path_comp = None
 
         if self.fntrack is not None:
-            self.track_path = os.path.dirname(self.data_path) + "/" + \
-                self.fntrack
+            self.track_path = os.path.join(
+                datatrunk, self.fntrack)
             self.track_path_comp = self.track_path.replace("?", "n")
         else:
             self.track_path = None

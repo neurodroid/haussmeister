@@ -29,6 +29,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
 import tables
+from scipy.io import loadmat, savemat
 
 import sima
 import tifffile
@@ -709,6 +710,10 @@ class PrairieHaussIO(HaussIO):
         else:
             self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
+        self.rawfile = os.path.join(self.dirname_comp, THOR_RAW_FN)
+        if not os.path.exists(self.rawfile):
+            self.rawfile = None
+
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
         self.xpx, self.ypx = None, None
@@ -729,26 +734,58 @@ class PrairieHaussIO(HaussIO):
         self.naverage = None
 
     def _get_timing(self):
-        pvsvduplets = [frame.find('PVStateShard').findall('PVStateValue')
-                       for frame in self.xml_root.find('Sequence').findall('Frame')]
-        timings = [
-            [float(pvsventry.attrib['value'])
-             for pvsventry in pvsvduplet
-             if pvsventry.attrib['key']=='framePeriod']
-            for pvsvduplet in pvsvduplets]
-        self.timing = np.cumsum(np.array(timings).flatten())
+        self.timing = np.array(
+            [float(frame.attrib['absoluteTime'])
+             for frame in self.xml_root.find('Sequence').findall('Frame')])
 
     def _get_sync(self):
         if self.sync_path is None:
             return
 
+        self.sync_xml = sorted(glob.glob(self.sync_path + ".xml"))
+        self.sync_csv = sorted(glob.glob(self.sync_path + ".csv"))
+        print(self.sync_path + ".csv")
+
     def read_sync(self):
-        raise NotImplementedError(
-            "Synchronization readout not implemented for Prairie files yet")
+        sync_data = []
+        sync_dt = []
+        for csv in self.sync_csv:
+            csv2mat = csv.replace('csv', 'mat')
+            if os.path.exists(csv2mat):
+                trace = loadmat(csv2mat)['trace']
+            else:
+                trace = np.loadtxt(csv, delimiter=',', skiprows=1) # shape (npt, 2)
+                savemat(csv2mat, {'trace': trace})
+            sync_data.append({'VR frames D': trace[:,1] > 2.5})
+            sync_dt.append({
+                'VR frames T': trace[:,0],
+                'Frame In T': self.timing})
+
+        return sync_data, sync_dt
 
     def read_raw(self):
-        raise NotImplementedError(
-            "Raw file reading not implemented for Prairie files yet")
+        if self.raw_array is None:
+            if os.path.exists(
+                    os.path.join(
+                        self.dirname_comp, THOR_RAW_FN)):
+                shapefn = os.path.join(
+                    self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+                if os.path.exists(shapefn):
+                    shape = np.load(shapefn)
+                else:
+                    shape = (self.nframes, self.xpx, self.ypx)
+                self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
+            else:
+                shapes = [
+                    np.load(
+                        os.path.join(rawdir, THOR_RAW_FN[:-3] + "shape.npy"))
+                    for rawdir in sorted(glob.glob(self.dirname))]
+                self.raw_array = np.concatenate([
+                    raw2np(os.path.join(rawdir, THOR_RAW_FN), shape)
+                    for shape, rawdir in zip(
+                            shapes, sorted(glob.glob(self.dirname)))])
+
+        return self.raw_array
 
     def format_index(self, n, width_idx=None):
         return super(PrairieHaussIO, self).format_index(n, 6) + ".ome"
