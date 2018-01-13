@@ -42,6 +42,7 @@ if sys.version_info.major < 3:
     try:
         import caiman as cm
         from caiman.components_evaluation import evaluate_components
+        from caiman.components_evaluation import estimate_components_quality_auto
         from caiman.utils.visualization import plot_contours,view_patches_bar
         from caiman.base.rois import extract_binary_masks_blob
         import caiman.source_extraction.cnmf as caiman_cnmf
@@ -57,24 +58,14 @@ def get_mmap_name(basename, d1, d2, T, d0=1):
     trunk = os.path.dirname(basename)
     new_path = os.path.join(trunk, bn.replace('_', ''))
     return new_path + \
-        '_d1_' + str(d0) + '_d2_' + str(d1) + '_d3_' + \
-        str(d2) + '_order_' + 'C' + '_frames_' + str(T) + '_.mmap'
+        '_d1_' + str(d1) + '_d2_' + str(d2) + '_d3_' + \
+        str(d0) + '_order_' + 'C' + '_frames_' + str(T) + '_.mmap'
 
 
 def tiffs_to_cnmf(haussio_data, mask=None, force=False):
-    tmpdirname_comp = os.path.join(tempfile.gettempdir(),
-                                   haussio_data.dirname_comp)
-    try:
-        os.makedirs(os.path.dirname(tmpdirname_comp))
-    except OSError:
-        pass
-    mmap_files = glob.glob(
-        tmpdirname_comp.replace('_', '') + "*_.mmap")
+    mmap_files = glob.glob(haussio_data.dirname_comp + os.path.sep + "Yr*.mmap")
 
     if len(mmap_files) == 0 or force:
-        sys.stdout.write('Converting to {0}... '.format(
-            tmpdirname_comp + '_Y*.npy'))
-        sys.stdout.flush()
         t0 = time.time()
         if haussio_data.rawfile is None or not os.path.exists(
                 haussio_data.rawfile):
@@ -103,12 +94,12 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
 
         tiff_data = np.transpose(tiff_data, (1, 2, 0))
         d1, d2, T = tiff_data.shape
-        np.save(tmpdirname_comp + '_Y', tiff_data)
+        # np.save(tmpdirname_comp + '_Y', tiff_data)
+        fname_tot = get_mmap_name(haussio_data.dirname_comp + os.path.sep + 'Yr', d1, d2, T)
 
-        fname_tot = get_mmap_name(tmpdirname_comp, d1, d2, T)
         big_mov = np.memmap(
             fname_tot, mode='w+',
-            dtype=np.float32, shape=(d1*d2, T), order='F')
+            dtype=np.float32, shape=(d1*d2, T), order='C')
         big_mov[:] = np.reshape(tiff_data, (d1*d2, T), order='F')[:]
         big_mov.flush()
 
@@ -117,8 +108,6 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
 
         sys.stdout.write('took {0:.2f} s\n'.format(time.time()-t0))
         # 888s
-
-        return fname_tot
 
 
 def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
@@ -133,113 +122,70 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         d1, d2 = shape[2], shape[3]
     else:
         d1, d2 = shape[1], shape[2]
-    fn_mmap = get_mmap_name('Yr', d1, d2, shape[0])
-    fn_mmap = os.path.join(haussio_data.dirname_comp, fn_mmap)
-    print(fn_mmap, os.path.exists(fn_mmap), d1, d2)
-
+    fn_mmap = get_mmap_name(haussio_data.dirname_comp + os.path.sep + 'Yr', d1, d2, shape[0])
+    
+    tiffs_to_cnmf(haussio_data)
     if not os.path.exists(fn_cnmf):
-        # fn_raw = os.path.join(haussio_data.dirname_comp, haussio.THOR_RAW_FN)
-        fn_sima = haussio_data.dirname_comp + '.sima'
-        fnames = [fn_sima, ]
-        fnames.sort()
-        print(fnames)
-        fnames = fnames
-
-        final_frate = 1.0/haussio_data.dt
-        downsample_factor = 1 # use .2 or .1 if file is large and you want a quick answer
-        final_frate *= downsample_factor
 
         c, dview, n_processes = cm.cluster.setup_cluster(
-            backend='local', n_processes=None, single_thread=False)
+            backend='multiprocessing', n_processes=None, single_thread=False)
 
-        idx_xy = None
-        base_name = 'Yr'
-        name_new = cm.save_memmap_each(
-            fnames, dview=dview, base_name=base_name,
-            resize_fact=(1, 1, downsample_factor), remove_init=0, idx_xy=idx_xy)
-        name_new.sort()
-        print(name_new)
+        Yr, dims, T = cm.load_memmap(fn_mmap, 'r+')
+        print(fn_mmap, dims, T)
+        d1, d2 = dims
+        images = np.reshape(Yr.T, [T] + list(dims), order='F')
+
+        fr = 1.0/haussio_data.dt    # imaging rate in frames per second\n",
+        decay_time = 0.4                    # length of a typical transient in seconds\n",
+
+        # parameters for source extraction and deconvolution\n",
+        bord_px_els = 32            # maximum shift to be used for trimming against NaNs
+        p = 1                       # order of the autoregressive system\n",
+        gnb = 2                     # number of global background components\n",
+        merge_thresh = 0.8          # merging threshold, max correlation allowed\n",
+        rf = 15                     # half-size of the patches in pixels. e.g., if rf=25, patches are 50x50\n",
+        stride_cnmf = 6             # amount of overlap between the patches in pixels\n",
+        K = nrois_init/n_processes  # number of components per patch\n",
+        gSig = [8, 8]               # expected half size of neurons\n",
+        init_method = 'greedy_roi'  # initialization method (if analyzing dendritic data using 'sparse_nmf')\n",
+        is_dendrites = False        # flag for analyzing dendritic data\n",
+        alpha_snmf = None           # sparsity penalty for dendritic data analysis through sparse NMF\n",
+
+        # parameters for component evaluation\n",
+        min_SNR = 2.5               # signal to noise ratio for accepting a component\n",
+        rval_thr = 0.8              # space correlation threshold for accepting a component\n",
+        cnn_thr = 0.8               # threshold for CNN based classifier"
+
+        cnm = caiman_cnmf.CNMF(n_processes=1, k=K, gSig=gSig, merge_thresh=merge_thresh,
+                        p=0, dview=dview, rf=rf, stride=stride_cnmf, memory_fact=1,
+                        method_init=init_method, alpha_snmf=alpha_snmf,
+                        only_init_patch = False, gnb = gnb, border_pix = bord_px_els)
+        cnm = cnm.fit(images)
+
+        idx_components, idx_components_bad, SNR_comp, r_values, cnn_preds = \
+            estimate_components_quality_auto(images, cnm.A, cnm.C, cnm.b, cnm.f,
+                                             cnm.YrA, fr, decay_time, gSig, dims,
+                                             dview = dview, min_SNR=min_SNR,
+                                             r_values_min = rval_thr, use_cnn = False,
+                                             thresh_cnn_lowest = cnn_thr)
+        A_in, C_in, b_in, f_in = cnm.A[:,idx_components], cnm.C[idx_components], cnm.b, cnm.f
+        cnm2 = caiman_cnmf.CNMF(n_processes=1, k=A_in.shape[-1], gSig=gSig, p=p, dview=dview,
+                         merge_thresh=merge_thresh,  Ain=A_in, Cin=C_in, b_in = b_in,
+                         f_in=f_in, rf = None, stride = None, gnb = gnb,
+                         method_deconvolution='oasis', check_nan = True)
+        cnm2 = cnm2.fit(images)
         
-        if len(name_new) > 1:
-            fname_new = cm.save_memmap_join(
-                name_new, base_name='Yr', n_chunks=12, dview=dview)
-        else:
-            sys.stdout.write('One file only, not saving\n')
-            fname_new = name_new[0]
-
-        print("fname_new: " + fname_new)
-
-        Yr, dims, T = cm.load_memmap(fname_new)
-        Y = np.reshape(Yr, dims+(T,), order='F')
-        Cn = cm.local_correlations(Y)
-
-        K = nrois_init # number of neurons expected per patch
-        gSig = [15, 15] # expected half size of neurons
-        merge_thresh = 0.8 # merging threshold, max correlation allowed
-        p=2 #order of the autoregressive system
-        n_pixels_per_process = d1*d2/NCPUS_PATCHES
-        options = caiman_cnmf.utilities.CNMFSetParms(
-            Y, NCPUS, p=p, gSig=gSig, K=K, ssub=2, tsub=2, n_pixels_per_process=n_pixels_per_process)
-
-        Yr, sn, g, psx = caiman_cnmf.pre_processing.preprocess_data(
-            Yr, dview=dview, **options['preprocess_params'])
-        Atmp, Ctmp, b_in, f_in, center = caiman_cnmf.initialization.initialize_components(
-            Y, **options['init_params'])
-
-        Ain, Cin = Atmp, Ctmp
-        A, b, Cin, f_in = caiman_cnmf.spatial.update_spatial_components(
-            Yr, Cin, f_in, Ain, sn=sn, dview=dview, **options['spatial_params'])
-
-        options['temporal_params']['p'] = 0 # set this to zero for fast updating without deconvolution
-        options['temporal_params']['block_size'] = d1*d2/NCPUS_PATCHES 
-
-        C, A, b, f, S, bl, c1, neurons_sn, g, YrA, lam = caiman_cnmf.temporal.update_temporal_components(
-            Yr, A, b, Cin, f_in, bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
-
-        A_m, C_m, nr_m, merged_ROIs, S_m, bl_m, c1_m, sn_m, g_m = caiman_cnmf.merging.merge_components(
-            Yr, A, b, C, f, S, sn, options['temporal_params'],
-            options['spatial_params'], dview=dview, bl=bl, c1=c1, sn=neurons_sn,
-            g=g, thr=merge_thresh, mx=50, fast_merge=True)
-
-        A2, b2, C2, f = caiman_cnmf.spatial.update_spatial_components(
-            Yr, C_m, f, A_m, sn=sn, dview=dview, **options['spatial_params'])
-        options['temporal_params']['p'] = p # set it back to original value to perform full deconvolution
-        C2, A2, b2, f2, S2, bl2, c12, neurons_sn2, g21, YrA, lam = caiman_cnmf.temporal.update_temporal_components(
-            Yr, A2, b2, C2, f, dview=dview, bl=None, c1=None, sn=None, g=None, **options['temporal_params'])
-
-        tB = np.minimum(-2,np.floor(-5./30*final_frate))
-        tA = np.maximum(5,np.ceil(25./30*final_frate))
-        Npeaks = 10
-        traces = C2+YrA
-        fitness_raw, fitness_delta, erfc_raw, erfc_delta, r_values, significant_samples = \
-            evaluate_components(
-                Y, traces, A2, C2, b2, f2, final_frate, remove_baseline=True, N=5,
-                robust_std=False, Athresh=0.1, Npeaks=Npeaks, thresh_C=0.3)
-
-        idx_components_r=np.where(r_values >= .6)[0]
-        idx_components_raw=np.where(fitness_raw < -60)[0]
-        idx_components_delta=np.where(fitness_delta < -20)[0]
-
-        min_radius=gSig[0]-2
-        masks_ws, idx_blobs, idx_non_blobs = extract_binary_masks_blob(
-            A2.tocsc(), min_radius, dims, num_std_threshold=1,
-            minCircularity= 0.6, minInertiaRatio = 0.2,minConvexity =.8)
-
-        idx_components = np.union1d(idx_components_r, idx_components_raw)
-        idx_components = np.union1d(idx_components, idx_components_delta)
-        idx_blobs = np.intersect1d(idx_components, idx_blobs)
-        idx_components_bad = np.setdiff1d(range(len(traces)), idx_components)
-
-        A2 = A2.tocsc()[:, idx_components]
-        C2 = C2[idx_components, :]
-        YrA = YrA[idx_components, :]
-        S2 = S2[idx_components, :]
+        A2 = cnm2.A.tocsc()
+        C2 = cnm2.C
+        YrA = cnm2.YrA
+        S2 = cnm2.S
 
         # A: spatial components (ROIs)
         # C: denoised [Ca2+]
         # YrA: residuals ("noise", i.e. traces = C+YrA)
         # S: Spikes
-        savemat(fn_cnmf, {"A": A2, "C": C2, "YrA": YrA, "S": S2, "bl": bl2})
+        print(dir(cnm2))
+        savemat(fn_cnmf, {"A": cnm2.A.tocsc(), "C": cnm2.C, "YrA": cnm2.YrA, "S": cnm2.S, "bl": cnm2.b})
 
     else:
         resdict = loadmat(fn_cnmf)
@@ -248,17 +194,11 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         YrA = resdict["YrA"]
         S2 = resdict["S"]
         bl2 = resdict["bl"]
-        if not os.path.exists(fn_mmap):
-            fn_mmap = get_mmap_name('Yr0000', d1=d2, d2=1, T=shape[0], d0=d1)
-            Yr, dims, T = cm.load_memmap(fn_mmap)
-        else:
-            Yr, dims, T = cm.load_memmap(fn_mmap)
-            dims = dims[1:]
-        Y = np.reshape(Yr, dims+(T,), order='F')
+        images = haussio_data.read_raw().squeeze()
 
     proj_fn = haussio_data.dirname_comp + "_proj.npy"
     if not os.path.exists(proj_fn):
-        zproj = utils.zproject(np.transpose(Y, (2, 0, 1)))
+        zproj = utils.zproject(images)
         np.save(proj_fn, zproj)
     else:
         zproj = np.load(proj_fn)
@@ -273,10 +213,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
 
     cm.stop_server()
 
-    polygons = contour(A2, Y.shape[0], Y.shape[1], thr=roi_iceberg)
+    polygons = contour(A2, images.shape[1], images.shape[2], thr=roi_iceberg)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
 
-    return rois, C2, zproj, S2, Y, YrA
+    return rois, C2, zproj, S2, images, YrA
 
 
 def process_data_patches(
