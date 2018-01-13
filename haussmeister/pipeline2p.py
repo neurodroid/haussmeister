@@ -927,11 +927,12 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                               fluo + pos,
                               colors[nroi % len(colors)])
             if spikes is not None:
-                infer = norm(mapdict['infermap'][nroi][1]) * normamp
-                infer -= infer.min()
-                ax_maps_infer.plot(mapdict['infermap'][nroi][0],
-                                   infer + pos,
-                                   colors[nroi % len(colors)])
+                if len(mapdict['infermap']) > nroi and len(mapdict['infermap'][nroi]):
+                    infer = norm(mapdict['infermap'][nroi][1]) * normamp
+                    infer -= infer.min()
+                    ax_maps_infer.plot(mapdict['infermap'][nroi][0],
+                                       infer + pos,
+                                       colors[nroi % len(colors)])
 
         if infer_threshold is None:
             pos_spike += meas_filt.max()-meas_filt.min()+1.0
@@ -2184,17 +2185,19 @@ def get_rois_cnmf(
         #     roi_iceberg=roi_iceberg)
 
     if vrdict is not None:
-        if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
-            vrdict["evlist"] = [
-                ev for ev in vrdict["evlist"]
-                if ev.time <= vrdict["frametvr"][-1]*1e-3]
+        if len(vrdict["evlist"]):
+            if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
+                vrdict["evlist"] = [
+                    ev for ev in vrdict["evlist"]
+                    if ev.time <= vrdict["frametvr"][-1]*1e-3]
 
-        vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
+            vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
         if speed_thr is not None and time_thr is not None:
             maskvr = contiguous_stationary(
                 vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
-            vrdict["evlist"] = collapse_events(
-                vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
+            if len(vrdict["evlist"]):
+                vrdict["evlist"] = collapse_events(
+                    vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
             vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
             vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
             vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
