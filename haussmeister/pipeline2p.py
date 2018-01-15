@@ -1796,7 +1796,7 @@ def create_mini_maps(measured, spikes, mapdict, vrdict,
                 (ds*np.abs(
                     minimap_fluo[0][1].argmax()-
                     mapdict['fluomap'][iroi][1].argmax())) < (field_size/2.0))
-        if (float(naligned) / len(minimaps_roi)) > fraction_aligned:
+        if len(minimaps_roi) and ((float(naligned) / len(minimaps_roi)) > fraction_aligned):
             minimaps_aligned.append((iroi, minimaps_roi))
 
     print("")
