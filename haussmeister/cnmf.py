@@ -213,6 +213,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
 
     cm.stop_server()
 
+    logfiles = glob.glob("*LOG*")
+    for logfile in logfiles:
+        os.unlink(logfile)
+
     polygons = contour(A2, images.shape[1], images.shape[2], thr=roi_iceberg)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
 
