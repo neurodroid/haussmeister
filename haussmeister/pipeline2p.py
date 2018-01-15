@@ -170,7 +170,7 @@ class ThorExperiment(object):
         if self.ftype == "prairie":
             datatrunk = self.data_path
         else:
-            datatrunk = datatrunk
+            datatrunk = os.path.dirname(self.data_path)
 
         if self.fnsync is not None:
             self.sync_path = os.path.join(
