@@ -759,7 +759,7 @@ class PrairieHaussIO(HaussIO):
             sync_data.append({'VR frames D': trace[:,1] > 2.5})
             sync_dt.append({
                 'VR frames T': trace[:,0],
-                'Frame In T': self.timing})
+                'Frame In T': self.timing*1e3})
 
         return sync_data, sync_dt
 
