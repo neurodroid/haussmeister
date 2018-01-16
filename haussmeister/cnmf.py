@@ -145,7 +145,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         merge_thresh = 0.8          # merging threshold, max correlation allowed\n",
         rf = 15                     # half-size of the patches in pixels. e.g., if rf=25, patches are 50x50\n",
         stride_cnmf = 6             # amount of overlap between the patches in pixels\n",
-        K = nrois_init/n_processes  # number of components per patch\n",
+        K = int(np.ceil(nrois_init/n_processes))  # number of components per patch\n",
         gSig = [8, 8]               # expected half size of neurons\n",
         init_method = 'greedy_roi'  # initialization method (if analyzing dendritic data using 'sparse_nmf')\n",
         is_dendrites = False        # flag for analyzing dendritic data\n",
