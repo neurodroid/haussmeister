@@ -126,12 +126,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
     
     tiffs_to_cnmf(haussio_data)
     if not os.path.exists(fn_cnmf):
-
         c, dview, n_processes = cm.cluster.setup_cluster(
-            backend='multiprocessing', n_processes=None, single_thread=False)
+            backend='multiprocessing', n_processes=NCPUS, single_thread=False)
 
         Yr, dims, T = cm.load_memmap(fn_mmap, 'r+')
-        print(fn_mmap, dims, T)
         d1, d2 = dims
         images = np.reshape(Yr.T, [T] + list(dims), order='F')
 
@@ -143,12 +141,15 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         p = 1                       # order of the autoregressive system\n",
         gnb = 2                     # number of global background components\n",
         merge_thresh = 0.8          # merging threshold, max correlation allowed\n",
-        rf = 15                     # half-size of the patches in pixels. e.g., if rf=25, patches are 50x50\n",
+        rf = int(np.round(np.sqrt(d1*d2)/nrois_init)) # half-size of the patches in pixels. e.g., if rf=25, patches are 50x50\n",
+        if rf < 16:
+            rf = 16
         stride_cnmf = 6             # amount of overlap between the patches in pixels\n",
-        K = nrois_init/n_processes  # number of components per patch\n",
+        npatches = np.round(d1/(rf*2) * d2/(rf*2))
+        K = nrois_init/npatches     # number of components per patch\n",
         if K < 2:
             K = 2
-            
+        print(rf, npatches, K)
         gSig = [8, 8]               # expected half size of neurons\n",
         init_method = 'greedy_roi'  # initialization method (if analyzing dendritic data using 'sparse_nmf')\n",
         is_dendrites = False        # flag for analyzing dendritic data\n",
@@ -187,7 +188,6 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         # C: denoised [Ca2+]
         # YrA: residuals ("noise", i.e. traces = C+YrA)
         # S: Spikes
-        print(dir(cnm2))
         savemat(fn_cnmf, {"A": cnm2.A.tocsc(), "C": cnm2.C, "YrA": cnm2.YrA, "S": cnm2.S, "bl": cnm2.b})
 
     else:
