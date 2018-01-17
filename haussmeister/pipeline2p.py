@@ -681,7 +681,7 @@ def find_events(norm_meas, track_speed, min_speed, std_scale):
     if transitions_down.shape[0] == 0:
         transitions_down = np.array([norm_meas.shape[0]-1, ])
     if transitions_up[0] > transitions_down[0]:
-        transitions_up = transitions_up[1]
+        transitions_down = transitions_down[1:]
     transitions_down = transitions_down[:transitions_up.shape[0]]
     if transitions_down.shape[0] < transitions_up.shape[0]:
         try:
