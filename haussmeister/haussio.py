@@ -29,6 +29,7 @@ import numpy as np
 import xml.etree.ElementTree as ET
 from PIL import Image
 import tables
+from scipy.io import loadmat, savemat
 
 import sima
 import tifffile
@@ -124,7 +125,7 @@ class HaussIO(object):
 
         if self.mptifs is not None:
             self.nframes = np.sum([
-                mptif.get_depth() for mptif in self.mptifs])
+                len(mptif.pages)-self.pagesoffset for mptif in self.mptifs])
             if self.nframes == 0:
                 self.nframes = np.sum([
                     len(mptif.IFD) for mptif in self.mptifs])
@@ -199,17 +200,8 @@ class HaussIO(object):
         self.movie_fn = self.dirname_comp + ".mp4"
         self.scale_png = self.dirname_comp + "_scale.png"
         self.sima_dir = self.dirname_comp + ".sima"
-        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
         self.rawfile = None
-        self.filetrunk = os.path.join(self.dirname, self.basefile)
         self.sync_path = sync_path
-        if "?" in self.filetrunk:
-            self.dirnames = sorted(glob.glob(self.dirname))
-            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
-                "?") + ".tif'"
-        else:
-            self.dirnames = [self.dirname]
-            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def get_normframe(self):
         """
@@ -221,7 +213,7 @@ class HaussIO(object):
         arr : numpy.ndarray
             Frame converted to numpy.ndarray
         """
-        if self.mptifs is None and not os.path.exists(self.rawfile):
+        if self.mptifs is None and (self.rawfile is None or not os.path.exists(self.rawfile)):
             if "?" in self.dirname:
                 normdir = self.dirnames[int(np.round(len(self.dirnames)/2.0))]
                 normtrunk = self.filetrunk.replace(
@@ -266,7 +258,7 @@ class HaussIO(object):
                                  "regenerating sima files: " + err + "\n")
 
         if self.mptifs is None and (
-                not os.path.exists(self.rawfile) or self.rawfile is None):
+                self.rawfile is None or not os.path.exists(self.rawfile)):
             # The string paths[i][j] is a unix style expression for the
             # filenames for plane i and channel j
             sequences = [sima.Sequence.create(
@@ -342,7 +334,8 @@ class HaussIO(object):
         else:
             scalebarframe = None
 
-        if self.mptifs is not None or os.path.exists(self.rawfile):
+        if self.mptifs is not None or (
+                self.rawfile is not None and os.path.exists(self.rawfile)):
             movie_input = self.read_raw()
         else:
             movie_input = self.ffmpeg_fn
@@ -526,8 +519,25 @@ class ThorHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with ThorImageLS
     """
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4, maxtime=None):
+        self.pagesoffset = 1
+        super(ThorHaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path,
+            width_idx, maxtime)
+
     def _get_filenames(self, xml_path, sync_path):
         super(ThorHaussIO, self)._get_filenames(xml_path, sync_path)
+        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
+        if "?" in self.filetrunk:
+            self.dirnames = sorted(glob.glob(self.dirname))
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.dirnames = [self.dirname]
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+
         if xml_path is None:
             self.xml_name = self.dirname + "/Experiment.xml"
         else:
@@ -673,24 +683,24 @@ class PrairieHaussIO(HaussIO):
     """
     Object representing 2p imaging data acquired with Prairie scopes
     """
+    def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
+                 width_idx=4, maxtime=None):
+        self.pagesoffset = 1
+        super(PrairieHaussIO, self).__init__(
+            dirname, chan, xml_path, sync_path,
+            width_idx, maxtime)
 
     def _get_filenames(self, xml_path, sync_path):
         super(PrairieHaussIO, self)._get_filenames(xml_path, sync_path)
-        if not os.path.exists(self.filetrunk + "{0:04d}.tif".format(1)):
-            if not os.path.exists(self.dirname):
-                os.makedirs(self.dirname)
-            sys.stdout.write("Converting to individual tiffs... ")
-            sys.stdout.flush()
-            self.mptifs = [tifffile.TiffFile(self.dirname + ".tif")]
-            for mptif in self.mptifs:
-                for nf, frame in enumerate(mptif.pages):
-                    tifffile.imsave(self.filetrunk + "{0:04d}.tif".format(nf+1),
-                                    frame.asarray())
-            sys.stdout.write("done\n")
+        basename = os.path.basename(self.dirname)
+        self.basefile = basename + "_Cycle00001_Ch{0}_".format(self.chan)
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
         if xml_path is None:
-            self.xml_name = self.dirname + ".xml"
+            self.xml_name = os.path.join(self.dirname, basename + ".xml")
         else:
             self.xml_name = xml_path
+        print(self.xml_name)
+        assert(os.path.exists(self.xml_name))
         # This needs to be done *after* the individual tiffs have been written
         self.filenames = sorted(glob.glob(self.filetrunk + "*.tif"))
 
@@ -699,6 +709,10 @@ class PrairieHaussIO(HaussIO):
                 "?") + ".tif'"
         else:
             self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+
+        self.rawfile = os.path.join(self.dirname_comp, THOR_RAW_FN)
+        if not os.path.exists(self.rawfile):
+            self.rawfile = None
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
@@ -720,21 +734,61 @@ class PrairieHaussIO(HaussIO):
         self.naverage = None
 
     def _get_timing(self):
-        self.timing = np.array([float(fi.attrib['relativeTime'])
-                                for fi in self.xml_root.find(
-                                    "Sequence").findall("Frame")])
+        self.timing = np.array(
+            [float(frame.attrib['absoluteTime'])
+             for frame in self.xml_root.find('Sequence').findall('Frame')])
 
     def _get_sync(self):
         if self.sync_path is None:
             return
 
+        self.sync_xml = sorted(glob.glob(self.sync_path + ".xml"))
+        self.sync_csv = sorted(glob.glob(self.sync_path + ".csv"))
+        print(self.sync_path + ".csv")
+
     def read_sync(self):
-        raise NotImplementedError(
-            "Synchronization readout not implemented for Prairie files yet")
+        sync_data = []
+        sync_dt = []
+        for csv in self.sync_csv:
+            csv2mat = csv.replace('csv', 'mat')
+            if os.path.exists(csv2mat):
+                trace = loadmat(csv2mat)['trace']
+            else:
+                trace = np.loadtxt(csv, delimiter=',', skiprows=1) # shape (npt, 2)
+                savemat(csv2mat, {'trace': trace})
+            sync_data.append({'VR frames D': trace[:,1] > 2.5})
+            sync_dt.append({
+                'VR frames T': trace[:,0],
+                'Frame In T': self.timing*1e3})
+
+        return sync_data, sync_dt
 
     def read_raw(self):
-        raise NotImplementedError(
-            "Raw file reading not implemented for Prairie files yet")
+        if self.raw_array is None:
+            if os.path.exists(
+                    os.path.join(
+                        self.dirname_comp, THOR_RAW_FN)):
+                shapefn = os.path.join(
+                    self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+                if os.path.exists(shapefn):
+                    shape = np.load(shapefn)
+                else:
+                    shape = (self.nframes, self.xpx, self.ypx)
+                self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
+            else:
+                shapes = [
+                    np.load(
+                        os.path.join(rawdir, THOR_RAW_FN[:-3] + "shape.npy"))
+                    for rawdir in sorted(glob.glob(self.dirname))]
+                self.raw_array = np.concatenate([
+                    raw2np(os.path.join(rawdir, THOR_RAW_FN), shape)
+                    for shape, rawdir in zip(
+                            shapes, sorted(glob.glob(self.dirname)))])
+
+        return self.raw_array
+
+    def format_index(self, n, width_idx=None):
+        return super(PrairieHaussIO, self).format_index(n, 6) + ".ome"
 
 
 class MovieHaussIO(HaussIO):
@@ -747,6 +801,7 @@ class MovieHaussIO(HaussIO):
         self.dt = dt
         print(dirname + ".mp4")
         self.movie = movies.numpy_movie(dirname + ".mp4")
+        self.pagesoffset = 1
         super(MovieHaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx)
 
@@ -799,6 +854,7 @@ class SI4HaussIO(HaussIO):
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
                  width_idx=4, maxtime=None, xycal=1200.0):
         self.xycal = xycal
+        self.pagesoffset = 1
         super(SI4HaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx, maxtime)
 
@@ -806,18 +862,18 @@ class SI4HaussIO(HaussIO):
         super(SI4HaussIO, self)._get_filenames(xml_path, sync_path)
         if "?" in self.filetrunk:
             self.mptifs = [
-                libtiff.tiff_file.TiffFile(dirname)
+                tifffile.TiffFile(dirname)
                 for dirname in self.dirnames]
         elif os.path.isfile(self.dirname):
-            self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
+            self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptifs = [libtiff.tiff_file.TiffFile(
+            self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].IFD[0].entries_dict["ImageDescription"]
+        self.ifd = self.mptifs[0].__str__()
         self.SI4dict = {
             l[:l.find('=')-1]: l[l.find('=')+2:]
-            for l in self.ifd.human().splitlines()
+            for l in self.ifd.splitlines()
             if not l[:l.find('=')-1].isspace()
         }
         if not os.path.isfile(self.dirnames[0]):
@@ -840,23 +896,36 @@ class SI4HaussIO(HaussIO):
 
     def _get_dimensions(self):
         if os.path.isfile(self.dirnames[0]):
-            self.xpx = int(self.SI4dict['scanimage.SI4.scanPixelsPerLine'])
-            self.ypx = int(self.SI4dict['scanimage.SI4.scanLinesPerFrame'])
+            if 'scanimage.SI4.scanPixelsPerLine' in self.SI4dict.keys():
+                self.xpx = int(self.SI4dict['scanimage.SI4.scanPixelsPerLine'])
+                self.ypx = int(self.SI4dict['scanimage.SI4.scanLinesPerFrame'])
+            else:
+                self.xpx = int(self.SI4dict['scanimage.SI.hRoiManager.pixelsPerLine'])
+                self.ypx = int(self.SI4dict['scanimage.SI.hRoiManager.linesPerFrame'])
+
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
             shape = np.load(shapefn)
             self.xpx, self.ypx = shape[1], shape[2]
 
-        self.xsize = self.ysize = self.xycal / float(
-            self.SI4dict['scanimage.SI4.scanZoomFactor'])
+        if 'scanimage.SI4.scanZoomFactor' in self.SI4dict.keys():
+            self.xsize = self.ysize = self.xycal / float(
+                self.SI4dict['scanimage.SI4.scanZoomFactor'])
+        else:
+            self.xsize = self.ysize = self.xycal / float(
+                self.SI4dict['scanimage.SI.hRoiManager.scanZoomFactor'])
+
         self.naverage = None
 
     def _get_timing(self):
-        dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
+        if 'scanimage.SI4.scanFramePeriod' in self.SI4dict.keys():
+            dt = float(self.SI4dict['scanimage.SI4.scanFramePeriod'])
+        else:
+            dt = float(self.SI4dict['scanimage.SI.hRoiManager.scanFramePeriod'])
         if self.mptifs is not None:
             nframes = np.sum([
-                mptif.get_depth()-1 for mptif in self.mptifs])
+                len(mptif.pages)-1 for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -876,7 +945,7 @@ class SI4HaussIO(HaussIO):
             t0 = time.time()
             if self.mptifs is not None:
                 self.raw_array = np.concatenate([
-                    np.array(mptif.get_tiff_array()).astype(np.int32)[1:]
+                    mptif.asarray().astype(np.int32)[1:]
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
@@ -901,26 +970,28 @@ class DoricHaussIO(HaussIO):
     def __init__(self, dirname, chan='A', xml_path=None, sync_path=None,
                  width_idx=4, maxtime=None, xycal=350.0):
         self.xycal = xycal
+        self.pagesoffset = 0
         super(DoricHaussIO, self).__init__(
             dirname, chan, xml_path, sync_path, width_idx, maxtime)
 
     def _get_filenames(self, xml_path, sync_path):
         super(DoricHaussIO, self)._get_filenames(xml_path, sync_path)
+        self.basefile = "Chan" + self.chan + "_0001_0001_0001_"
+        self.filetrunk = os.path.join(self.dirname, self.basefile)
         if "?" in self.filetrunk:
-            self.mptifs = [
-                libtiff.tiff_file.TiffFile(dirname)
-                for dirname in self.dirnames]
-        elif os.path.isfile(self.dirname):
-            self.mptifs = [libtiff.tiff_file.TiffFile(self.dirname)]
+            self.dirnames = sorted(glob.glob(self.dirname))
+            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
+                "?") + ".tif'"
+        else:
+            self.dirnames = [self.dirname]
+            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+        if os.path.isfile(self.dirname):
+            self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptifs = [libtiff.tiff_file.TiffFile(
+            self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].IFD[0].entries_dict["ImageDescription"].human()
-        self.DoricDict = {
-            entry[:entry.find(': ')]: entry[entry.find(': ')+1:]
-            for entry in self.ifd[self.ifd.find('="')+2:self.ifd.find('",')].split(', ')
-        }
+        self.ifd = self.mptifs[0].__str__()
         if not os.path.isfile(self.dirnames[0]):
             self.rawfile = os.path.join(
                 self.dirname, "Image_0001_0001.raw")
@@ -933,16 +1004,17 @@ class DoricHaussIO(HaussIO):
 
         self.filenames = None
 
-        if "?" in self.filetrunk:
-            self.ffmpeg_fn = "'" + self.filetrunk + self.format_index(
-                "?") + ".tif'"
-        else:
-            self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
+        self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
 
     def _get_dimensions(self):
         if os.path.isfile(self.dirnames[0]):
-            self.xpx = self.mptifs[0].IFD[0].entries_dict['ImageWidth'].value
-            self.ypx = self.mptifs[0].IFD[0].entries_dict['ImageLength'].value
+            sizestr = self.ifd[self.ifd.find('Series '):][
+                self.ifd[self.ifd.find('Series '):].find(':')+1:][
+                    :self.ifd[self.ifd.find('Series '):][
+                        self.ifd[self.ifd.find('Series '):].find(':')+1:].find(', ')]
+            framesize = sizestr[sizestr.find('x')+1:]
+            self.xpx = int(framesize[:framesize.find('x')])
+            self.ypx = int(framesize[framesize.find('x')+1:])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -953,10 +1025,12 @@ class DoricHaussIO(HaussIO):
         self.naverage = None
 
     def _get_timing(self):
-        dt = float(self.DoricDict['Exposure'][:-2])*1e-3
+        dt = float(
+            self.ifd[self.ifd.find('Exposure: ') + len('Exposure: '):][
+                :self.ifd[self.ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
         if self.mptifs is not None:
             nframes = np.sum([
-                len(mptif.IFD) for mptif in self.mptifs])
+                len(mptif.pages)-1 for mptif in self.mptifs])
         else:
             shapefn = os.path.join(
                 self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
@@ -976,7 +1050,7 @@ class DoricHaussIO(HaussIO):
             t0 = time.time()
             if self.mptifs is not None:
                 self.raw_array = np.concatenate([
-                    tifffile.TiffFile(mptif.filename).asarray().astype(np.int32)
+                    mptif.asarray().astype(np.int32)
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
@@ -1074,6 +1148,7 @@ def compress_np(arr, path, rawfn, shape=None, compress=True):
 
     shapefn = os.path.join(path, THOR_RAW_FN[:-3] + "shape.npy")
     np.save(shapefn, shape)
+    np.savetxt(shapefn + ".txt", shape)
 
     rawfn = os.path.join(path, rawfn)
 

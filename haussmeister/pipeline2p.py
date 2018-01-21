@@ -20,6 +20,7 @@ import numpy as np
 import scipy.signal as signal
 import scipy.stats as stats
 from scipy.io import savemat
+from scipy.optimize import fminbound
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -38,6 +39,8 @@ import sima.motion
 import sima.segment
 import sima.spikes
 from sima.ROI import ROIList
+
+import shapely
 
 if sys.version_info.major < 3:
     sys.path.append(os.path.expanduser("~/CaImAn/"))
@@ -89,6 +92,9 @@ NCPUS = int(mp.cpu_count()/2)
 # out of memory (128 GB)
 MAXFRAMES_ICA = 1600
 
+MIN_SPEED = 1.0
+STD_SCALE = 2.0
+
 
 class ThorExperiment(object):
     """
@@ -115,9 +121,12 @@ class ThorExperiment(object):
         Default: ""
     mc_method : str, optional
         Motion correction method. One of "hmmc", "dft", "hmmcres", "hmmcframe",
-        "hmmcpx", "calblitz". Default: "hmmc"
+        "hmmcpx", "calblitz", "normcorr". Default: "hmmc"
     detrend : bool, optional
         Whether to detrend fluorescence traces. Default: False
+    subtract_halo : float, optional
+        Relative size of halo to subtract from each ROI.
+        No halo subtraction is applied for values <= 1.0. Default: 1.0
     nrois_init : int, optional
         Estimate of the number of ROIs. Default: 200
     roi_translate : 2-tuple of ints, optional
@@ -126,7 +135,7 @@ class ThorExperiment(object):
         Root directory leading to fn2p. Default: ""
     seg_method : str, optional
         One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
-        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used), 
+        are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used),
         "cnmf" (constrained non-negative matrix factorization).
         Default: "cnmf"
     maxtime : float, optional
@@ -135,11 +144,12 @@ class ThorExperiment(object):
         Whether to ignore mismatch between imaging and VR recording file
         lengths. Default: False
     """
-    def __init__(self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None, fntrack=None,
-                 roi_subset="", mc_method="hmmc", detrend=False, nrois_init=200,
-                 roi_translate=None, root_path="", ftype="thor",
-                 dx=None, dt=None, seg_method="cnmf", maxtime=None,
-                 ignore_sync_errors=False):
+    def __init__(
+            self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
+            fntrack=None, roi_subset="", mc_method="hmmc", detrend=False,
+            subtract_halo=1.0, nrois_init=200, roi_translate=None, root_path="",
+            ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
+            ignore_sync_errors=False):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -161,28 +171,33 @@ class ThorExperiment(object):
         assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
         self.seg_method = seg_method
 
+        if self.ftype == "prairie":
+            datatrunk = self.data_path
+        else:
+            datatrunk = os.path.dirname(self.data_path)
+
         if self.fnsync is not None:
-            self.sync_path = os.path.dirname(self.data_path) + "/" + \
-                self.fnsync
+            self.sync_path = os.path.join(
+                datatrunk, self.fnsync)
         else:
             self.sync_path = None
 
         if self.fnvr is not None:
-            self.vr_path = os.path.dirname(self.data_path) + "/" + \
-                self.fnvr
+            self.vr_path = os.path.join(
+                datatrunk, self.fnvr)
             self.vr_path_comp = self.vr_path.replace("?", "n")
         else:
             self.vr_path = None
             self.vr_path_comp = None
 
         if self.fntrack is not None:
-            self.track_path = os.path.dirname(self.data_path) + "/" + \
-                self.fntrack
+            self.track_path = os.path.join(
+                datatrunk, self.fntrack)
             self.track_path_comp = self.track_path.replace("?", "n")
         else:
             self.track_path = None
             self.track_path_comp = None
-            
+
         self.mc_method = mc_method
         self.mc_suffix = "_mc_" + self.mc_method
         if self.mc_method == "hmmc":
@@ -210,6 +225,10 @@ class ThorExperiment(object):
             self.mc_approach = motion.CalBlitz(
                 max_displacement=[20, 30], fr=self.to_haussio().fps,
                 verbose=True)
+        elif self.mc_method == "normcorr":
+            self.mc_approach = motion.NormCorr(
+                max_displacement=[20, 30], fr=self.to_haussio().fps,
+                verbose=True, savedir=self.data_path_comp + ".sima")
         elif self.mc_method == "none":
             self.mc_suffix = ""
             self.mc_approach = None
@@ -235,6 +254,8 @@ class ThorExperiment(object):
             self.spikefn += "_detrend.pkl"
         else:
             self.spikefn += ".pkl"
+
+        self.subtract_halo = subtract_halo
 
         self.proj_fn = self.data_path_comp + self.mc_suffix + "_proj.npy"
 
@@ -297,6 +318,20 @@ class ThorExperiment(object):
                     chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+        elif self.ftype == "prairie":
+            if not mc:
+                return haussio.PrairieHaussIO(
+                    self.data_path, chan=self.ch2p,
+                    sync_path=self.sync_path, width_idx=4,
+                    maxtime=self.maxtime)
+            else:
+                basename = os.path.basename(self.data_path)
+                return haussio.PrairieHaussIO(
+                    self.data_path + self.mc_suffix,
+                    chan=self.ch2p,
+                    xml_path=os.path.join(self.data_path, basename+'.xml'),
+                    sync_path=self.sync_path, width_idx=5,
+                    maxtime=self.maxtime)
 
     def to_sima(self, mc=False, haussio_data=None):
         """
@@ -332,7 +367,7 @@ class ThorExperiment(object):
             try:
                 dataset.channel_names.index(self.ch2p)
                 dataset.sequences
-            except (ValueError, IOError):
+            except (ValueError, IOError, EOFError):
                 restore = True
 
         if restore:
@@ -373,15 +408,17 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
         raw_movie = movies.html_movie(haussio_data.movie_fn)
     else:
         try:
-            raw_movie = haussio_data.make_movie(norm=14.0, crf=28)
+            raw_movie = haussio_data.make_movie(norm=14.0, crf=22)
         except IOError:
-            raw_movie = haussio_data.make_movie(norm=False, crf=28)
+            raw_movie = haussio_data.make_movie(norm=False, crf=22)
 
     if not os.path.exists(haussio_data.sima_dir):
         dataset = haussio_data.tosima(stopIdx=None)
     else:
         dataset = data.to_sima(mc=False, haussio_data=haussio_data)
 
+    print(dataset.savedir)
+    assert(dataset.savedir is not None)
     if not os.path.exists(data.sima_mc_dir):
         t0 = time.time()
         dataset_mc = data.mc_approach.correct(dataset, data.sima_mc_dir)
@@ -423,7 +460,7 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
         corr_movie = movies.html_movie(data.movie_mc_fn)
     else:
         corr_movie = haussio_data.make_movie_extern(
-            data.mc_tiff_dir, norm=14.0, crf=28, width_idx=5)
+            data.mc_tiff_dir, norm=14.0, crf=22, width_idx=5)
 
     return dataset_mc
 
@@ -511,6 +548,7 @@ def process_data(data, detrend=False, base_fraction=0.2, zscore=True):
     # Fmu and Fsig should be of shape (nrois)
     # data and ret_data should be of shape (nrois, nframes)
     ret_data = ((data.T-Fmu)/Fsig).T * 100.0
+    ret_data[np.isnan(ret_data)] = 0
 
     if detrend:
         ret_data = np.array([
@@ -616,22 +654,53 @@ def colorline(
 
     # Default colors equally spaced on [0,1]:
     if z is None:
-        z = np.linspace(0.0, 1.0, len(x))
+        zc = np.linspace(0.0, 1.0, len(x))
+    else:
+        zc = z.copy()
 
     # Special case if a single number:
-    if not hasattr(z, "__iter__"):  # to check for numerical input -- this is a hack
-        z = np.array([z])
+    if not hasattr(zc, "__iter__"):  # to check for numerical input -- this is a hack
+        zc = np.array([zc])
 
-    z = np.asarray(z)
+    zc = np.asarray(zc)
 
     segments = make_segments(x, y)
-    lc = mcoll.LineCollection(segments, array=z, cmap=cmap, norm=norm,
+    lc = mcoll.LineCollection(segments, array=zc, cmap=cmap, norm=norm,
                               linewidth=linewidth, alpha=alpha)
 
     ax.add_collection(lc)
 
     return lc
 
+
+def find_events(norm_meas, track_speed, min_speed, std_scale):
+    above = np.zeros(norm_meas.shape)
+    above[(norm_meas > norm_meas.mean()+std_scale*norm_meas.std()) &
+          (track_speed > min_speed)] = 1
+    transitions_up = np.where(np.diff(above) == 1)[0]
+    if transitions_up.shape[0] == 0:
+        return [], np.array([])
+
+    transitions_down = np.where(np.diff(above) == -1)[0]
+    if transitions_down.shape[0] == 0:
+        transitions_down = np.array([norm_meas.shape[0]-1, ])
+    if transitions_up[0] > transitions_down[0]:
+        transitions_down = transitions_down[1:]
+    transitions_down = transitions_down[:transitions_up.shape[0]]
+    if transitions_down.shape[0] < transitions_up.shape[0]:
+        try:
+            transitions_down = np.concatenate((transitions_down, [norm_meas.shape[0]-1,]))
+        except ValueError as err:
+            print(transitions_up.shape, transitions_down.shape, norm_meas.shape[0])
+            raise err
+
+    ipeaks = []
+    amp_events = []
+    for tu, td in zip(transitions_up, transitions_down):
+        ipeaks.append(np.argmax(norm_meas[tu:td]) + tu)
+        amp_events.append(np.sum(norm_meas[tu:td]))
+
+    return ipeaks, np.array(amp_events)
 
 def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
@@ -753,11 +822,26 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
 
     elif has_track:
         ax_track = stfio_plot.StandardAxis(
-            fig, gs[0:2, 0:1], hasx=False, hasy=False)
+            fig, gs[0:1, 0:1], hasx=False, hasy=False)
 
         ax_track.plot(trackdict['posx'], trackdict['posy'])
         ax_track.set_aspect('equal', adjustable='datalim')
         ax_track.set_xlim(trackdict['posx'].min(), trackdict['posx'].max())
+        CM_PER_PX = 0.11
+        track_speed = np.sqrt(
+            (np.diff(trackdict['posx_frames'])**2 +
+             np.diff(trackdict['posy_frames'])**2)
+        )  / haussio_data.dt * CM_PER_PX
+        track_speed = np.concatenate([[track_speed[0], ], track_speed])
+        track_speed = spectral.lowpass(
+            stfio_plot.Timeseries(track_speed, haussio_data.dt),
+            0.1, verbose=False).data
+        ax_track_speed = stfio_plot.StandardAxis(
+            fig, gs[1:2, 0:1], hasx=False, hasy=True, sharex=ax_spike)
+        ax_track_speed.plot(
+            np.arange(track_speed.shape[0])*haussio_data.dt,
+            track_speed)
+        ax_track_speed.set_ylabel("Speed (cm/s)")
 
     normamp = None
     for nroi, roi in enumerate(rois):
@@ -805,19 +889,37 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                     pos = pos_nospike
             else:
                 spikes_filt -= spikes_filt.min()
+                trange_adj = trange[1:1+len(spikes_filt)]
+                spikes_adj = spikes_filt[
+                    ndiscard:ndiscard+len(trange[1:])] / spikes_filt[
+                        ndiscard:ndiscard+len(trange[1:])].max() * normamp + pos
                 ax_nospike.plot(
-                    trange[1:1+len(spikes_filt)], spikes_filt[
-                        ndiscard:ndiscard+len(trange[1:])] /
-                    spikes_filt[
-                        ndiscard:ndiscard+len(trange[1:])].max() *
-                    normamp + pos,
+                    trange_adj, spikes_adj,
                     colors[nroi % len(colors)])
+                if has_track:
+                    ax_nospike.plot(
+                        np.ma.array(
+                            trange_adj, mask=(spikes_adj <= spikes_adj.mean()+STD_SCALE*spikes_adj.std()) |
+                            (track_speed[1:] <= MIN_SPEED)),
+                        np.ma.array(
+                            spikes_adj, mask=(spikes_adj <= spikes_adj.mean()+STD_SCALE*spikes_adj.std()) |
+                            (track_speed[1:] <= MIN_SPEED)),
+                        '-r', lw=4, alpha=0.8)
         fontweight = 'normal'
         fontsize = 14
+        trange_adj = trange[:len(meas_filt)]
+        meas_filt_adj = meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos
         ax.plot(
-            trange[:len(meas_filt)],
-            meas_filt[:len(trange)]-meas_filt[:len(trange)].min()+pos,
-            colors[nroi % len(colors)])
+            trange_adj, meas_filt_adj, colors[nroi % len(colors)])
+        if has_track:
+            ax.plot(
+                np.ma.array(
+                    trange_adj, mask=(meas_filt_adj <= meas_filt_adj.mean()+STD_SCALE*meas_filt_adj.std()) |
+                    (track_speed <= MIN_SPEED)),
+                np.ma.array(
+                    meas_filt_adj, mask=(meas_filt_adj <= meas_filt_adj.mean()+STD_SCALE*meas_filt_adj.std()) |
+                    (track_speed <= MIN_SPEED)),
+                '-r', lw=4, alpha=0.8)
         ax.text(0, (meas_filt-meas_filt.min()+pos).mean(),
                 "{0}".format(nroi),
                 color=colors[nroi % len(colors)], ha='right',
@@ -829,11 +931,12 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                               fluo + pos,
                               colors[nroi % len(colors)])
             if spikes is not None:
-                infer = norm(mapdict['infermap'][nroi][1]) * normamp
-                infer -= infer.min()
-                ax_maps_infer.plot(mapdict['infermap'][nroi][0],
-                                   infer + pos,
-                                   colors[nroi % len(colors)])
+                if len(mapdict['infermap']) > nroi and len(mapdict['infermap'][nroi]):
+                    infer = norm(mapdict['infermap'][nroi][1]) * normamp
+                    infer -= infer.min()
+                    ax_maps_infer.plot(mapdict['infermap'][nroi][0],
+                                       infer + pos,
+                                       colors[nroi % len(colors)])
 
         if infer_threshold is None:
             pos_spike += meas_filt.max()-meas_filt.min()+1.0
@@ -843,9 +946,11 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             pos_nospike += meas_filt.max()-meas_filt.min()+1.0
 
     sys.stdout.write("\n")
-    scalebars.add_scalebar(ax_spike)
+    # scalebars.add_scalebar(ax_spike, hidex=False, hidey=False)
+    stfio_plot.plot_scalebars(ax_spike, xunits="s", yunits="DF/F")
     if infer_threshold is not None:
-        scalebars.add_scalebar(ax_nospike)
+        scalebars.add_scalebar(ax_nospike, hidex=False, hidey=False)
+        stfio_plot.plot_scalebars(ax_nospike, xunits="s", yunits="AU")
 
     if region is None:
         regionstr = "undefined region"
@@ -875,12 +980,18 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
     fig_rois_spikes = plt.figure(figsize=(24, 24))
     if has_track:
         ncols = int(np.ceil(np.sqrt(len(rois))))
+        if ncols == 0:
+            ncols = 1
         nrows = int(np.ceil(len(rois)/float(ncols)))
     elif selected_rois is None:
         ncols = int(np.ceil(np.sqrt(len(minimaps))))
+        if ncols == 0:
+            ncols = 1
         nrows = int(np.ceil(len(minimaps)/float(ncols)))
     else:
         ncols = int(np.ceil(np.sqrt(len(selected_rois))))
+        if ncols == 0:
+            ncols = 1
         nrows = int(np.ceil(len(selected_rois)/float(ncols)))
     gs_fluo = gridspec.GridSpec(nrows, ncols)
     gs_spikes = gridspec.GridSpec(nrows, ncols)
@@ -933,19 +1044,30 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             roi_counter += 1
 
     elif has_track:
-        posx = trackdict['posx']-trackdict['posx'].min()
-        posy = trackdict['posy']-trackdict['posy'].min()
+        fig_check = plt.figure()
+        posx = trackdict['posx_frames']-trackdict['posx_frames'].min()
+        posy = trackdict['posy_frames']-trackdict['posy_frames'].min()
+        mscale = lambda x: np.log10(norm(x)+np.sqrt(2))*1e3
+        measured_filt = []
         for nroi, roi in enumerate(rois):
             col = nroi % ncols
             row = int(nroi/ncols)
             ax_fluo = stfio_plot.StandardAxis(
                 fig_rois_fluo, gs_fluo[row, col],
                 hasx=False, hasy=False)
+            ax_check_track = stfio_plot.StandardAxis(
+                fig_check, len(rois), 1, nroi+1,
+                hasx=False, hasy=False)
             ax_spikes = stfio_plot.StandardAxis(
                 fig_rois_spikes, gs_spikes[row, col],
                 hasx=False, hasy=False)
-            # ax_fluo.set_aspect('equal')
-            # ax_spikes.set_aspect('equal')
+
+            for ax in [ax_fluo, ax_spikes]:
+                ax.set_aspect('equal', adjustable='datalim')
+                ax.set_title(r"{0}".format(nroi))
+                ax.set_xlim(posx.min(), posx.max())
+                ax.set_ylim(posy.min(), posy.max())
+
             if lopass is not None:
                 measured_float = measured[nroi, :].astype(np.float)
                 meas_filt = spectral.lowpass(
@@ -955,25 +1077,49 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                 meas_filt = measured[nroi, ndiscard:]
             meas_filt -= meas_filt.min()
 
-
-            norm_meas = norm(meas_filt)
-            norm_meas -= norm_meas.min()
-            colorline(ax_fluo, posx, posy, norm_meas)
+            norm_meas = measured[nroi, ndiscard:].copy()
+            measured_filt.append(norm_meas)
+            # Find event peaks:
+            ievents, amp_events = find_events(
+                norm_meas, track_speed, MIN_SPEED, STD_SCALE)
+            ax_fluo.plot(
+                np.ma.array(posx, mask=track_speed < MIN_SPEED),
+                np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k', alpha=0.3)
+            if len(ievents) > 0:
+                ax_fluo.scatter(
+                    posx[ievents], posy[ievents], c='r', s=mscale(amp_events),
+                    alpha=0.8, edgecolors='none')
+            ax_check_track.plot(norm_meas, '-k')
+            ax_check_track.plot(np.ma.array(
+                norm_meas, mask=(norm_meas <= norm_meas.mean()+STD_SCALE*norm_meas.std()) |
+                (track_speed <= MIN_SPEED)), '-r')
             if spikes is not None:
-                norm_spikes = norm(spikes[nroi][1:])
-                norm_spikes -= norm_spikes.min()
-                colorline(ax_spikes, posx, posy, norm_spikes)
+                norm_spikes = spikes[nroi].copy()
+                ievents, amp_events = find_events(
+                    norm_spikes, track_speed, MIN_SPEED, STD_SCALE)
+                ax_spikes.plot(
+                    np.ma.array(posx, mask=track_speed < MIN_SPEED),
+                    np.ma.array(posy, mask=track_speed < MIN_SPEED), '-k', alpha=0.3)
+                # ax_spikes.plot(
+                #     posx[
+                #         (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
+                #         (track_speed > MIN_SPEED)],
+                #     posy[
+                #         (norm_spikes > norm_spikes.mean()+STD_SCALE*norm_spikes.std()) &
+                #         (track_speed > MIN_SPEED)], 'or', ms=6)
+                if len(ievents) > 0:
+                    ax_spikes.scatter(
+                        posx[ievents], posy[ievents], c='r',
+                        s=mscale(amp_events), alpha=0.8, edgecolors='none')
 
-            for ax in [ax_fluo, ax_spikes]:
-                ax.set_aspect('equal', adjustable='datalim')
-                ax.set_title(r"{0}".format(nroi))
-                ax.set_xlim(posx.min(), posx.max())
-                # ax.set_ylim(posy.min(), posy.max())
 
     fig_rois_fluo.savefig(
         data_path + "_rois_fluo" + pdf_suffix + ".pdf", dpi=dpi)
     fig_rois_spikes.savefig(
         data_path + "_rois_spikes" + pdf_suffix + ".pdf", dpi=dpi)
+
+    if has_track:
+        return track_speed, measured_filt, spikes, haussio_data.dt
 
 
 def plot_decoded(decoded, mapdict):
@@ -1302,12 +1448,10 @@ def get_rois_thunder(
 
         print("Running thunder ICA... ")
         t0 = time.time()
-        W, sigs, A = ICA(
+        imgs, A = ICA(
             k=int(nrois_init/2), k_pca=nrois_init, svd_method='em').fit(
                 data_series)
         print("Thunder ICA took {0:.2f} s".format(time.time()-t0))
-
-        imgs = sigs.toarray()
 
         np.save(thunder_roiraw_fn, imgs)
 
@@ -1514,7 +1658,7 @@ def thor_extract_roi(
         lopass = None
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
-    
+
     if data.fnvr is not None:
         fnmini = data.vr_path_comp + "_" + data.seg_method + "_minimaps.pck"
         if not os.path.exists(fnmini):
@@ -1562,18 +1706,21 @@ def thor_extract_roi(
             new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
                            for nroi in irois])
 
-        decoded = decode.decodeMLNonparam(
-            spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
-                :, np.newaxis]).T,
-            nentries=10)
-        # decoded = decode.decodeMLNonparam(
-        #     fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
-        #         :, np.newaxis]).T,
-        #     nentries=2)
-        # decoded = decode.decodeMLPoisson(
-        #     infermap.T, counts.T).squeeze()
+        if len(spikemap):
+            decoded = decode.decodeMLNonparam(
+                spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
+                    :, np.newaxis]).T,
+                nentries=10)
+            # decoded = decode.decodeMLNonparam(
+            #     fluomap, (measured[irois]-np.min(measured[irois], axis=-1)[
+            #         :, np.newaxis]).T,
+            #     nentries=2)
+            # decoded = decode.decodeMLPoisson(
+            #     infermap.T, counts.T).squeeze()
 
-        plot_decoded(decoded, mapdict)
+            plot_decoded(decoded, mapdict)
+        else:
+            decoded = None
     else:
         minimaps = None
         decoded = None
@@ -1581,7 +1728,7 @@ def thor_extract_roi(
     if decoded_only:
         return
 
-    plot_rois(
+    return plot_rois(
         rois, measured, haussio_data, zproj, data.data_path_comp,
         pdf_suffix="_" + data.seg_method, spikes=spikes, region=data.area2p,
         infer_threshold=infer_threshold, mapdict=mapdict, lopass=lopass,
@@ -1653,7 +1800,7 @@ def create_mini_maps(measured, spikes, mapdict, vrdict,
                 (ds*np.abs(
                     minimap_fluo[0][1].argmax()-
                     mapdict['fluomap'][iroi][1].argmax())) < (field_size/2.0))
-        if (float(naligned) / len(minimaps_roi)) > fraction_aligned:
+        if len(minimaps_roi) and ((float(naligned) / len(minimaps_roi)) > fraction_aligned):
             minimaps_aligned.append((iroi, minimaps_roi))
 
     print("")
@@ -1797,15 +1944,51 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
     """
     if signal_label in dataset.signals().keys():
         signals = dataset.signals()[signal_label]
-        if not compare_rois(dataset.signals()[signal_label]['rois'],
-                            rois):
+        if not compare_rois(
+                dataset.signals()[signal_label]['rois'], rois):
             signals = dataset.extract(rois, label=signal_label,
-                                      save_summary=False, n_processes=NCPUS)
+                                      save_summary=False, n_processes=int(NCPUS/4))
     else:
         signals = dataset.extract(rois, label=signal_label,
-                                  save_summary=False, n_processes=NCPUS)
+                                  save_summary=False, n_processes=int(NCPUS/4))
 
-    measured = process_data(signals['raw'][0], detrend=data.detrend)
+    if data.subtract_halo > 1.0:
+        halo_rois = []
+        for roi in rois:
+            halo_polygons = []
+            for polygon in roi.polygons:
+                scaled_polygon = shapely.affinity.scale(
+                    polygon,
+                    xfact=data.subtract_halo, yfact=data.subtract_halo,
+                    origin='centroid')
+                scale2 = data.subtract_halo/2.0 + 0.5
+                scaled_polygon2 = shapely.affinity.scale(
+                    polygon,
+                    xfact=scale2, yfact=scale2,
+                    origin='centroid')
+                halo_polygons.append(
+                    scaled_polygon.difference(scaled_polygon2))
+            halo_roi = sima.ROI.ROI(
+                polygons=shapely.geometry.MultiPolygon(halo_polygons),
+                im_shape=roi.im_shape)
+            halo_roi.label = roi.label
+            halo_roi.id = roi.id
+            halo_roi.tags = roi.tags
+            halo_rois.append(halo_roi)
+
+        signals_halo = dataset.extract(
+            sima.ROI.ROIList(rois=halo_rois), label=signal_label + '_halo',
+            save_summary=False, n_processes=int(NCPUS/4))
+
+        # find best scale between halo and center:
+        fmin = lambda scale: np.sum((signals['raw'][0]-scale*(signals_halo['raw'][0]))**2)
+        min_scale = fminbound(fmin, 0, 1.5)
+        print("min_scale:", min_scale)
+        measured = signals['raw'][0]-min_scale*signals_halo['raw'][0]
+    else:
+        measured = signals['raw'][0]
+
+    measured = process_data(measured, detrend=data.detrend)
 
     if not os.path.exists(data.proj_fn):
         zproj = utils.zproject(haussio_data.read_raw().squeeze())
@@ -1865,7 +2048,7 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
             ax.bar(pos, data.mean, width=bar_width, color=data.color,
                    edgecolor='k')
         if data.data is not None:
-            ax.plot([pos+boffset for dat in data.data], 
+            ax.plot([pos+boffset for dat in data.data],
                     data.data, 'o', ms=ms, mew=0, lw=1.0, alpha=0.5,
                     mfc='grey', color='grey')
             if paired:
@@ -2006,17 +2189,19 @@ def get_rois_cnmf(
         #     roi_iceberg=roi_iceberg)
 
     if vrdict is not None:
-        if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
-            vrdict["evlist"] = [
-                ev for ev in vrdict["evlist"]
-                if ev.time <= vrdict["frametvr"][-1]*1e-3]
+        if len(vrdict["evlist"]):
+            if vrdict["evlist"][-1].time > vrdict["frametvr"][-1]*1e-3:
+                vrdict["evlist"] = [
+                    ev for ev in vrdict["evlist"]
+                    if ev.time <= vrdict["frametvr"][-1]*1e-3]
 
-        vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
+            vrdict["evlist_orig"] = [ev for ev in vrdict["evlist"]]
         if speed_thr is not None and time_thr is not None:
             maskvr = contiguous_stationary(
                 vrdict["speedvr"], vrdict["frametvr"], speed_thr, time_thr)
-            vrdict["evlist"] = collapse_events(
-                vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
+            if len(vrdict["evlist"]):
+                vrdict["evlist"] = collapse_events(
+                    vrdict["frametvr"]*1e-3, maskvr, vrdict["evlist"])
             vrdict["vrtimes"] = collapse_time(vrdict["vrtimes"], maskvr)
             vrdict["frametvr"] = collapse_time(vrdict["frametvr"], maskvr)[:-1]
             vrdict["posx"] = vrdict["posx"][np.invert(maskvr)]
@@ -2026,7 +2211,7 @@ def get_rois_cnmf(
             vrdict["speed2p"] = vrdict["speed2p"][np.invert(mask2p)]
 
 
-    measured = process_data(measured, base_fraction=None, zscore=False)
+    measured = process_data(measured+noise, base_fraction=None, zscore=False)
 
     return rois, measured, zproj, spikes, vrdict
 
