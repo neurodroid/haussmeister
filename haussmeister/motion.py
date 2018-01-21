@@ -20,7 +20,13 @@ try:
     from caiman.motion_correction import MotionCorrect
 except ImportError:
     print("CaiMan import failed")
-from ipyparallel import Client
+try:
+    import ipyparallel
+    from ipyparallel import Client
+    HAS_IPYPARALLEL = True
+except ImportError:
+    print("ipyparallel unavailable")
+    HAS_IPYPARALLEL = False
 
 
 class CalBlitz(motion.MotionEstimationStrategy):
