@@ -27,7 +27,11 @@ import matplotlib.cm as cm
 import matplotlib.collections as mcoll
 import matplotlib.path as mpath
 
-import cv2
+try:
+    import cv2
+except ImportError:
+    print("cv2 unavailable")
+    HAS_CV2 = False
 
 import sima
 import sima.motion
