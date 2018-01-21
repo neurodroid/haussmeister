@@ -18,8 +18,13 @@ import multiprocessing as mp
 import tempfile
 import glob
 
-import ipyparallel
-from ipyparallel import Client
+try:
+    import ipyparallel
+    from ipyparallel import Client
+    HAS_IPYPARALLEL = True
+except ImportError:
+    print("ipyparallel unavailable")
+    HAS_IPYPARALLEL = False
 
 import numpy as np
 from scipy.io import savemat, loadmat
