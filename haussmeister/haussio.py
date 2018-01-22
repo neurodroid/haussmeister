@@ -32,7 +32,7 @@ import tables
 from scipy.io import loadmat, savemat
 
 import sima
-import tifffile
+from skimage.external import tifffile
 try:
     import libtiff
 except ImportError:
@@ -45,7 +45,6 @@ except (SystemError, ValueError):
 
 THOR_RAW_FN = "Image_0001_0001.raw"
 XZ_BIN = "/usr/local/bin/xz"
-
 
 class HaussIO(object):
     """
@@ -870,7 +869,7 @@ class SI4HaussIO(HaussIO):
             print(self.dirname[:self.dirname.rfind(".tif")+4])
             self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].__str__()
+        self.ifd = self.mptifs[0].info()
         self.SI4dict = {
             l[:l.find('=')-1]: l[l.find('=')+2:]
             for l in self.ifd.splitlines()
@@ -991,7 +990,7 @@ class DoricHaussIO(HaussIO):
             print(self.dirname[:self.dirname.rfind(".tif")+4])
             self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].__str__()
+        self.ifd = self.mptifs[0].info()
         if not os.path.isfile(self.dirnames[0]):
             self.rawfile = os.path.join(
                 self.dirname, "Image_0001_0001.raw")
