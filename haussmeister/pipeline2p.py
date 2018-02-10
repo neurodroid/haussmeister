@@ -408,9 +408,9 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
         raw_movie = movies.html_movie(haussio_data.movie_fn)
     else:
         try:
-            raw_movie = haussio_data.make_movie(norm=14.0, crf=22)
+            raw_movie = haussio_data.make_movie(norm=14.0, crf=24)
         except IOError:
-            raw_movie = haussio_data.make_movie(norm=False, crf=22)
+            raw_movie = haussio_data.make_movie(norm=False, crf=24)
 
     if not os.path.exists(haussio_data.sima_dir):
         dataset = haussio_data.tosima(stopIdx=None)
@@ -435,11 +435,18 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
     filenames_mc = ["{0}{1:05d}.tif".format(haussio_data.filetrunk, nf+1)
                     for nf in range(haussio_data.nframes)]
     if data.maxtime is None:
-        try:
-            assert(len(filenames_mc) == dataset_mc.sequences[0].shape[0])
-        except AssertionError as err:
-            print(len(filenames_mc), dataset_mc.sequences[0].shape[0])
-            raise err
+        if len(filenames_mc) < dataset_mc.sequences[0].shape[0]:
+            if dataset_mc.sequences[0].shape[0]-len(filenames_mc) < 5:
+                dataset_mc.sequences[0] = dataset_mc.sequences[0][
+                    :len(filenames_mc), :, :, :, :]
+            else:
+                raise AssertionError(
+                    "File lengths mismatch: {0}, {1}".format(
+                        len(filenames_mc), dataset_mc.sequences[0].shape[0]))
+        elif len(filenames_mc) != dataset_mc.sequences[0].shape[0]:
+            raise AssertionError(
+                "File lengths mismatch: {0}, {1}".format(
+                    len(filenames_mc), dataset_mc.sequences[0].shape[0]))
 
     raw_fn = "Image_0001_0001.raw"
     if compress and os.name != 'nt':

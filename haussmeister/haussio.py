@@ -754,17 +754,40 @@ class PrairieHaussIO(HaussIO):
 
         self.sync_xml = sorted(glob.glob(self.sync_path + ".xml"))
         self.sync_csv = sorted(glob.glob(self.sync_path + ".csv"))
-        print(self.sync_path + ".csv")
+        if len(self.sync_csv) == 0:
+            self.sync_csv = sorted(glob.glob(self.sync_path))
+
+        if len(self.sync_csv):
+            print(self.sync_csv[0])
 
     def read_sync(self):
         sync_data = []
         sync_dt = []
-        for csv in self.sync_csv:
-            csv2mat = csv.replace('csv', 'mat')
+        assert(len(self.sync_csv))
+        for (csv, xml) in zip(self.sync_csv, self.sync_xml):
+            csv2mat = self.sync_path + ".mat"
             if os.path.exists(csv2mat):
                 trace = loadmat(csv2mat)['trace']
             else:
-                trace = np.loadtxt(csv, delimiter=',', skiprows=1) # shape (npt, 2)
+                if csv.endswith('csv'):
+                    trace = np.loadtxt(csv, delimiter=',', skiprows=1) # shape (npt, 2)
+                else:
+                    self.sync_root = ET.parse(xml).getroot()
+                    syncrate = float(
+                        self.sync_root.find("Experiment").find("Rate").text)
+                    syncrate = 82644.0
+                    synctime = float(
+                        self.sync_root.find("Experiment").find("AcquisitionTime").text)
+                    syncsamples = int(self.sync_root.find("SamplesAcquired").text)
+                    with open(csv, 'rb') as syncf:
+                        syncrawdata = syncf.read()
+                    syncdata = np.frombuffer(
+                        syncrawdata[:syncsamples*2], dtype=np.int16) *20.0 / 2**16
+                    synctimes = np.arange(syncsamples) * 1.0e3 / syncrate
+                    # assert(np.allclose(synctimes[-1], synctime))
+                    trace = np.empty((syncsamples, 2))
+                    trace[:, 0] = synctimes
+                    trace[:, 1] = syncdata
                 savemat(csv2mat, {'trace': trace})
             sync_data.append({'VR frames D': trace[:,1] > 2.5})
             sync_dt.append({
@@ -832,7 +855,7 @@ class PrairieHaussIO(HaussIO):
                     for shape, rawdir in zip(
                             shapes, sorted(glob.glob(self.dirname)))])
 
-        return self.raw_array
+        return self.raw_array[:self.nframes, :, :]
 
     def format_index(self, n, width_idx=None):
         return super(PrairieHaussIO, self).format_index(n, 6) + ".ome"
