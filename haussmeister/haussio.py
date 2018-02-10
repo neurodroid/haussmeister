@@ -30,6 +30,7 @@ import xml.etree.ElementTree as ET
 from PIL import Image
 import tables
 from scipy.io import loadmat, savemat
+import bottleneck as bn
 
 import sima
 from skimage.external import tifffile
@@ -44,6 +45,7 @@ except (SystemError, ValueError):
     import movies
 
 THOR_RAW_FN = "Image_0001_0001.raw"
+PRAIRIE_RAW_FN = "CYCLE_000001_RAWDATA_"
 XZ_BIN = "/usr/local/bin/xz"
 
 class HaussIO(object):
@@ -711,7 +713,14 @@ class PrairieHaussIO(HaussIO):
 
         self.rawfile = os.path.join(self.dirname_comp, THOR_RAW_FN)
         if not os.path.exists(self.rawfile):
-            self.rawfile = None
+            rawfiles = sorted(glob.glob(
+                os.path.join(
+                    self.dirname_comp, PRAIRIE_RAW_FN + '*')))
+            if len(rawfiles):
+                self.rawfile = rawfiles[0]
+                self.filenames = None
+            else:
+                self.rawfile = None
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
@@ -727,6 +736,8 @@ class PrairieHaussIO(HaussIO):
                         self.xsize = float(child.attrib['value'])
                     if child.attrib['index'] == 'YAxis':
                         self.ysize = float(child.attrib['value'])
+            elif fi.attrib['key'] == "resonantSamplesPerPixel":
+                self.nsamplesperpixel = int(fi.attrib['value'])
 
         self.xsize *= self.xpx
         self.ysize *= self.ypx
@@ -774,6 +785,43 @@ class PrairieHaussIO(HaussIO):
                 else:
                     shape = (self.nframes, self.xpx, self.ypx)
                 self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
+            elif len(glob.glob(
+                    os.path.join(
+                        self.dirname_comp, PRAIRIE_RAW_FN + '*'))):
+                remdata = b''
+                nbytes = 2
+                dtype = np.int16
+                framesize = self.xpx*self.ypx*nbytes*self.nsamplesperpixel
+                self.raw_array = np.empty((0, self.xpx, self.ypx), dtype=np.uint16)
+                rawfiles = sorted(glob.glob(
+                    os.path.join(
+                        self.dirname_comp, PRAIRIE_RAW_FN + '*')))
+                for rf in rawfiles:
+                    print(rf)
+                    with open(rf, 'rb') as rawf:
+                        rawdata = remdata + rawf.read()
+                    # Raw files are not necessarily aligned to frame limits
+                    straybytes = len(rawdata)%(framesize)
+                    if straybytes > 0:
+                        npdata = np.frombuffer(rawdata[:-straybytes], dtype=dtype).reshape(
+                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel)
+                        remdata = rawdata[-straybytes:]
+                    else:
+                        npdata = np.frombuffer(rawdata, dtype=dtype).reshape(
+                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel)
+                        remdata = b''
+                    # Data have 13bit offset
+                    npdata_corr = npdata.astype(np.float) - 2**13
+                    # Some mysterious negative numbers that need to be discarded
+                    # (PrairieView does this as well)
+                    npdata_corr[npdata_corr < 0] = np.nan
+                    # Average all non-negative samples per pixel
+                    chall = bn.nanmean(npdata_corr, axis=-1)
+                    # (PrairieView does this as well)
+                    chall[np.isnan(chall)] = 0
+                    # Account for alternating resonant scanning directions
+                    chall[:, ::2, ::] = np.flip(chall[:, ::2, ::], axis=2)
+                    self.raw_array = np.concatenate([self.raw_array, chall.astype(np.uint16)])
             else:
                 shapes = [
                     np.load(

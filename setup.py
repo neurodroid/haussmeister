@@ -10,5 +10,6 @@ setup(name='haussmeister',
           'pillow',
           'tables',
           'sima',
+          'bottleneck',
       ]
       )
