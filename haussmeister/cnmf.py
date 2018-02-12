@@ -194,7 +194,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
         # YrA: residuals ("noise", i.e. traces = C+YrA)
         # S: Spikes
         savemat(fn_cnmf, {"A": cnm2.A.tocsc(), "C": cnm2.C, "YrA": cnm2.YrA, "S": cnm2.S, "bl": cnm2.b})
-
+        dview.terminate()
     else:
         resdict = loadmat(fn_cnmf)
         A2 = resdict["A"]
