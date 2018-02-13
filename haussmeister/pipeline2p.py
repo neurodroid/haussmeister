@@ -467,7 +467,7 @@ def thor_preprocess(data, ffmpeg=movies.FFMPEG, compress=False):
         corr_movie = movies.html_movie(data.movie_mc_fn)
     else:
         corr_movie = haussio_data.make_movie_extern(
-            data.mc_tiff_dir, norm=14.0, crf=22, width_idx=5)
+            data.mc_tiff_dir, norm=14.0, crf=24, width_idx=5)
 
     return dataset_mc
 
@@ -492,7 +492,7 @@ def activity_level(data, infer_threshold=0.15, roi_subset=""):
     """
 
     if not os.path.exists(data.spikefn):
-        print("Couldn't spike inference file", data.spikefn)
+        print("Couldn't find spike inference file", data.spikefn)
         return None, None
 
     spikefile = open(data.spikefn, 'rb')
