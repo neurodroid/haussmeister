@@ -775,7 +775,8 @@ class PrairieHaussIO(HaussIO):
                     self.sync_root = ET.parse(xml).getroot()
                     syncrate = float(
                         self.sync_root.find("Experiment").find("Rate").text)
-                    syncrate = 82644.0
+                    if int(syncrate) == 82500:
+                        syncrate = 82644.628
                     synctime = float(
                         self.sync_root.find("Experiment").find("AcquisitionTime").text)
                     syncsamples = int(self.sync_root.find("SamplesAcquired").text)
