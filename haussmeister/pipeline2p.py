@@ -1603,7 +1603,7 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
 
 def thor_extract_roi(
         data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None,
-        roi_iceberg=0.9, decoded_only=False):
+        roi_iceberg=0.9, merge_unconnected=None, decoded_only=False):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1623,6 +1623,9 @@ def thor_extract_roi(
         Indices of ROIs to be plotted. Default: None (plots all ROIs)
     roi_iceberg : float, optional
         Relative level at which CNMF ROI contours will be plotted. Default: 0.9
+    merge_unconnected : float, optional
+        Correlation threshold for eliminating unconnected ROIs. 
+        None to skip this step. Default: None
     decoded_only : bool, optional
         Only plot spatial decoding. Default: False
     """
@@ -1661,7 +1664,7 @@ def thor_extract_roi(
         time_thr = None # 5000.0  # ms
         rois, measured, zproj, spikes, vrdict = get_rois_cnmf(
             data, haussio_data, vrdict, speed_thr, time_thr, data.nrois_init,
-            roi_iceberg)
+            roi_iceberg, merge_unconnected)
         lopass = None
 
     mapdict = get_vr_maps(data, measured, spikes, vrdict, data.seg_method)
@@ -2136,7 +2139,7 @@ def bargraph(datasets, ax, ylabel=None, labelpos=0, ylim=0, paired=False,
 
 def get_rois_cnmf(
         data, haussio_data, vrdict, speed_thr, time_thr, nrois_init,
-        roi_iceberg=0.9):
+        roi_iceberg=0.9, merge_unconnected=None):
     """
     Identify ROIs, extract fluorescence and infer spikes using constrained
     non-negative matrix factorization (CNMF)
@@ -2159,6 +2162,9 @@ def get_rois_cnmf(
         Estimate of the number of ROIs.
     roi_iceberg : float, optional
         Relative level at which ROI contours will be plotted. Default: 0.9
+    merge_unconnected : float, optional
+        Correlation threshold for eliminating unconnected ROIs. 
+        None to skip this step. Default: None
 
     Returns
     -------
@@ -2190,7 +2196,7 @@ def get_rois_cnmf(
     rois, measured, zproj, spikes, movie, noise = \
         cnmf.process_data(
             haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
-            roi_iceberg=roi_iceberg)
+            roi_iceberg=roi_iceberg, merge_unconnected=merge_unconnected)
         # cnmf.process_data_patches(
         #     haussio_data, mask=mask2p, p=2, nrois_init=nrois_init,
         #     roi_iceberg=roi_iceberg)

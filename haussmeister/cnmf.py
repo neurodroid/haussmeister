@@ -115,7 +115,7 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
         # 888s
 
 
-def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
+def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, merge_unconnected=None):
     if mask is not None:
         raise RuntimeError("mask not supported in cnmf.process_data")
 
@@ -184,16 +184,29 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
                          method_deconvolution='oasis', check_nan = True)
         cnm2 = cnm2.fit(images)
         
-        A2 = cnm2.A.tocsc()
-        C2 = cnm2.C
-        YrA = cnm2.YrA
-        S2 = cnm2.S
+        if merge_unconnected is not None:
+            idx_merge = []
+            for nroi, ca_roi in enumerate(cnm2.C):
+                for nroi_compare_counter, ca_roi_compare in enumerate(cnm2.C[nroi+1:]):
+                    nroi_compare = nroi_compare_counter+nroi+1
+                    if nroi_compare not in idx_merge:
+                        correls = np.correlate(ca_roi, ca_roi_compare, mode='same')
+                        correls /= np.sqrt(np.dot(ca_roi, ca_roi) * np.dot(ca_roi_compare, ca_roi_compare))
+                        if correls.max() > merge_unconnected:
+                            idx_merge.append(nroi_compare)
+            idx_no_merge = [idx for idx in range(cnm2.C.shape[0]) if idx not in idx_merge]
+        else:
+            idx_no_merge = range(cnm2.C.shape[0])
+        A2 = cnm2.A[:, idx_no_merge].tocsc()
+        C2 = cnm2.C[idx_no_merge]
+        YrA = cnm2.YrA[idx_no_merge]
+        S2 = cnm2.S[idx_no_merge]
 
         # A: spatial components (ROIs)
         # C: denoised [Ca2+]
         # YrA: residuals ("noise", i.e. traces = C+YrA)
         # S: Spikes
-        savemat(fn_cnmf, {"A": cnm2.A.tocsc(), "C": cnm2.C, "YrA": cnm2.YrA, "S": cnm2.S, "bl": cnm2.b})
+        savemat(fn_cnmf, {"A": A2, "C": C2, "YrA": YrA, "S": S2, "bl": cnm2.b})
         dview.terminate()
     else:
         resdict = loadmat(fn_cnmf)
@@ -215,7 +228,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9):
 
     logfiles = glob.glob("*LOG*")
     for logfile in logfiles:
-        os.unlink(logfile)
+        try:
+            os.unlink(logfile)
+        except OSError:
+            pass
 
     polygons = contour(A2, images.shape[1], images.shape[2], thr=roi_iceberg)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
