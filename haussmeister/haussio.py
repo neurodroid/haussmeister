@@ -36,8 +36,8 @@ import sima
 from skimage.external import tifffile
 try:
     import libtiff
-except ImportError:
-    sys.stdout.write("Couldn't find libtiff\n")
+except (ImportError, NameError):
+    sys.stdout.write("Couldn't import libtiff\n")
 
 try:
     from . import movies
