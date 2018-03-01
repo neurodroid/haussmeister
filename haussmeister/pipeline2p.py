@@ -167,6 +167,10 @@ class ThorExperiment(object):
         self.nrois_init = nrois_init
         self.maxtime = maxtime
         self.ignore_sync_errors = ignore_sync_errors
+        self._as_haussio_mc = None
+        self._as_haussio = None
+        self._as_sima_mc = None
+        self._as_sima = None
 
         assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
         self.seg_method = seg_method
@@ -273,65 +277,81 @@ class ThorExperiment(object):
         dataset : haussio.HaussIO
             A haussio.HaussIO instance
         """
+        if not mc:
+            if self._as_haussio is not None:
+                return self._as_haussio
+        else:
+            if self._as_haussio_mc is not None:
+                return self._as_haussio_mc
         if self.ftype == "thor":
             if not mc:
-                return haussio.ThorHaussIO(
+                self._as_haussio = haussio.ThorHaussIO(
                     self.data_path, chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=4,
                     maxtime=self.maxtime)
+                return self._as_haussio
             else:
-                return haussio.ThorHaussIO(
+                self._as_haussio_mc = haussio.ThorHaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p, xml_path=self.data_path+"/Experiment.xml",
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+                return self._as_haussio_mc
         elif self.ftype == "movie":
             if not mc:
-                return haussio.MovieHaussIO(
+                self._as_haussio = haussio.MovieHaussIO(
                     self.data_path, self.dx, self.dt, chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=4)
+                return self._as_haussio
             else:
-                return haussio.MovieHaussIO(
+                self._as_haussio_mc = haussio.MovieHaussIO(
                     self.data_path + self.mc_suffix, self.dx, self.dt,
                     chan=self.ch2p, sync_path=self.sync_path, width_idx=5)
+                return self._as_haussio_mc
         elif self.ftype == "si4":
             if not mc:
-                return haussio.SI4HaussIO(
+                self._as_haussio = haussio.SI4HaussIO(
                     self.data_path, chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=4,
                     maxtime=self.maxtime)
+                return self._as_haussio
             else:
-                return haussio.SI4HaussIO(
+                self._as_haussio_mc = haussio.SI4HaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+                return self._as_haussio_mc
         elif self.ftype == "doric":
             if not mc:
-                return haussio.DoricHaussIO(
+                self._as_haussio = haussio.DoricHaussIO(
                     self.data_path, chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=4,
                     maxtime=self.maxtime)
+                return self._as_haussio
             else:
-                return haussio.DoricHaussIO(
+                self._as_haussio_mc = haussio.DoricHaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+                return self._as_haussio_mc
         elif self.ftype == "prairie":
             if not mc:
-                return haussio.PrairieHaussIO(
+                self._as_haussio = haussio.PrairieHaussIO(
                     self.data_path, chan=self.ch2p,
                     sync_path=self.sync_path, width_idx=4,
                     maxtime=self.maxtime)
+                return self._as_haussio
             else:
                 basename = os.path.basename(self.data_path)
-                return haussio.PrairieHaussIO(
+                self._as_haussio_mc = haussio.PrairieHaussIO(
                     self.data_path + self.mc_suffix,
                     chan=self.ch2p,
                     xml_path=os.path.join(self.data_path, basename+'.xml'),
                     sync_path=self.sync_path, width_idx=5,
                     maxtime=self.maxtime)
+                return self._as_haussio_mc
 
     def to_sima(self, mc=False, haussio_data=None):
         """
@@ -350,8 +370,12 @@ class ThorExperiment(object):
             A sima.ImagingDataset instance
         """
         if mc:
+            if self._as_sima_mc is not None:
+                return self._as_sima_mc
             suffix = self.mc_suffix
         else:
+            if self._as_sima is not None:
+                return self._as_sima
             suffix = ""
         sima_dir = self.data_path_comp + suffix + ".sima"
         if not os.path.exists(sima_dir):
@@ -384,6 +408,11 @@ class ThorExperiment(object):
                 while os.path.exists(haussio_data.sima_dir):
                     time.wait(1)
             dataset = haussio_data.tosima(stopIdx=None)
+
+        if mc:
+            self._as_sima_mc = dataset
+        else:
+            self._as_sima = dataset
 
         return dataset
 

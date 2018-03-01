@@ -106,7 +106,8 @@ class HaussIO(object):
             self.sync_episodes = None
             self.sync_xml = None
 
-        sys.stdout.write("Reading experiment settings... ")
+        sys.stdout.write("Reading experiment settings for {0}... ".format(
+            self.dirname))
         sys.stdout.flush()
         if self.xml_name is not None:
             self.xml_root = ET.parse(self.xml_name).getroot()
@@ -1056,17 +1057,16 @@ class DoricHaussIO(HaussIO):
         else:
             self.dirnames = [self.dirname]
             self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
-        if os.path.isfile(self.dirname):
+        if "?" in self.filetrunk:
+            self.mptifs = [
+                tifffile.TiffFile(dirname)
+                for dirname in self.dirnames]
+        elif os.path.isfile(self.dirname):
             self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            if "?" in self.filetrunk:
-                self.mptifs = [
-                    tifffile.TiffFile(dirname)
-                    for dirname in self.dirnames]
-            else:
-                self.mptifs = [tifffile.TiffFile(
-                    self.dirname[:self.dirname.rfind(".tif")+4])]
+            self.mptifs = [tifffile.TiffFile(
+                self.dirname[:self.dirname.rfind(".tif")+4])]
         self.ifd = self.mptifs[0].info()
         if not os.path.isfile(self.dirnames[0]):
             self.rawfile = os.path.join(
@@ -1125,7 +1125,7 @@ class DoricHaussIO(HaussIO):
             sys.stdout.flush()
             t0 = time.time()
             if self.mptifs is not None:
-                self.raw_array = np.concatenate([mptif.asarray()
+                self.raw_array = np.concatenate([mptif.asarray(out='memmap')
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
