@@ -1060,8 +1060,13 @@ class DoricHaussIO(HaussIO):
             self.mptifs = [tifffile.TiffFile(self.dirname)]
         else:
             print(self.dirname[:self.dirname.rfind(".tif")+4])
-            self.mptifs = [tifffile.TiffFile(
-                self.dirname[:self.dirname.rfind(".tif")+4])]
+            if "?" in self.filetrunk:
+                self.mptifs = [
+                    tifffile.TiffFile(dirname)
+                    for dirname in self.dirnames]
+            else:
+                self.mptifs = [tifffile.TiffFile(
+                    self.dirname[:self.dirname.rfind(".tif")+4])]
         self.ifd = self.mptifs[0].info()
         if not os.path.isfile(self.dirnames[0]):
             self.rawfile = os.path.join(
@@ -1120,8 +1125,7 @@ class DoricHaussIO(HaussIO):
             sys.stdout.flush()
             t0 = time.time()
             if self.mptifs is not None:
-                self.raw_array = np.concatenate([
-                    mptif.asarray().astype(np.int32)
+                self.raw_array = np.concatenate([mptif.asarray()
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
