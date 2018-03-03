@@ -382,9 +382,15 @@ class ThorExperiment(object):
             restore = True
 
         try:
+            sys.stdout.write("Loading sima dataset {0}... ".format(
+                sima_dir))
+            sys.stdout.flush()
+            t0 = time.time()
             dataset = sima.ImagingDataset.load(sima_dir)
+            sys.stdout.write("done in {0:.1f}s\n".format(time.time()-t0))
             restore = False
         except (EOFError, IOError, IndexError):
+            sys.stdout.write("failure, will attempt to restore dataset\n")
             restore = True
 
         if not restore:

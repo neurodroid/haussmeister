@@ -189,7 +189,10 @@ class NormCorr(motion.MotionEstimationStrategy):
                     upsample_factor_grid=upsample_factor_grid,
                     max_deviation_rigid=max_deviation_rigid,
                     shifts_opencv=shifts_opencv, nonneg_movie=True)
+                sys.stdout.write("Applying motion correction... ")
+                sys.stdout.flush()
                 mc.motion_correct_rigid(save_movie=save_movie_rigid)
+                sys.stdout.write("done\n")
                 # fname_tot_rig, total_template_rig, templates_rig, shifts_rig = \
                 #     cb.motion_correction.motion_correct_batch_rigid(
                 #         self._params['savedir'], max_displacement, dview = dview, splits = splits,

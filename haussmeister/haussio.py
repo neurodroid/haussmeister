@@ -1057,7 +1057,29 @@ class DoricHaussIO(HaussIO):
         else:
             self.dirnames = [self.dirname]
             self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
-        if "?" in self.filetrunk:
+        if not os.path.isfile(self.dirnames[0]):
+            self.rawfile = os.path.join(
+                self.dirname_comp, "Image_0001_0001.raw")
+            if not os.path.exists(self.rawfile):
+                raise RuntimeError("Could not find " + self.rawfile)
+            print(self.dirname[:self.dirname.rfind(".tif")+4])
+            temptifs = [
+                tifffile.TiffFile(fn) for fn in sorted(glob.glob(
+                    self.dirname[:self.dirname.rfind(".tif")+4]))]
+            ifds = [temptif.info() for temptif in temptifs]
+            assert(np.all(np.diff(
+                np.array([self._read_exposure(ifd) for ifd in ifds]))==0))
+            nframes = np.sum([
+                len(temptif.pages) for temptif in temptifs])
+            print(nframes, np.mean(
+                np.array([self._read_exposure(ifd) for ifd in ifds])))
+            shape = self._read_shape()
+            assert(nframes == shape[0])
+            self.ifd = ifds[0]
+            for temptif in temptifs:
+                temptif.close()
+            self.mptifs = None
+        elif "?" in self.filetrunk:
             self.mptifs = [
                 tifffile.TiffFile(dirname)
                 for dirname in self.dirnames]
@@ -1067,14 +1089,11 @@ class DoricHaussIO(HaussIO):
             print(self.dirname[:self.dirname.rfind(".tif")+4])
             self.mptifs = [tifffile.TiffFile(
                 self.dirname[:self.dirname.rfind(".tif")+4])]
-        self.ifd = self.mptifs[0].info()
-        if not os.path.isfile(self.dirnames[0]):
-            self.rawfile = os.path.join(
-                self.dirname, "Image_0001_0001.raw")
-            assert(os.path.exists(self.rawfile))
+        if self.mptifs is not None:
+            self.ifd = self.mptifs[0].info()
+
             for mptif in self.mptifs:
                 mptif.close()
-            self.mptifs = None
 
         self.xml_name = None
 
@@ -1092,32 +1111,39 @@ class DoricHaussIO(HaussIO):
             self.xpx = int(framesize[:framesize.find('x')])
             self.ypx = int(framesize[framesize.find('x')+1:])
         else:
-            shapefn = os.path.join(
-                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
-            shape = np.load(shapefn)
+            shape = self._read_shape()
             self.xpx, self.ypx = shape[1], shape[2]
 
         self.xsize = self.ysize = self.xycal
         self.naverage = None
 
+    def _read_exposure(self, ifd):
+        return float(
+            ifd[ifd.find('Exposure: ') + len('Exposure: '):][
+                :ifd[ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+
     def _get_timing(self):
-        dt = float(
-            self.ifd[self.ifd.find('Exposure: ') + len('Exposure: '):][
-                :self.ifd[self.ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+        dt = self._read_exposure(self.ifd)
         if self.mptifs is not None:
             nframes = np.sum([
                 len(mptif.pages)-1 for mptif in self.mptifs])
         else:
-            shapefn = os.path.join(
-                self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
-            shape = np.load(shapefn)
-            nframes = shape[0]
+            nframes = self._read_shape()[0]
         self.timing = np.array([
             dt*nframe for nframe in range(nframes)])
 
     def _get_sync(self):
         if self.sync_path is None:
             return
+
+    def _read_shape(self):
+        shapefn = os.path.join(
+            self.dirname_comp, THOR_RAW_FN[:-3] + "shape.npy")
+        if os.path.exists(shapefn):
+            shape = np.load(shapefn)
+        else:
+            shape = (self.nframes, self.xpx, self.ypx)
+        return shape
 
     def read_raw(self):
         if self.raw_array is None:
