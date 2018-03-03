@@ -87,15 +87,13 @@ def tiffs_to_cnmf(haussio_data, mask=None, force=False):
                 filenames = [fn for fn, masked in zip(
                     haussio_data.filenames, mask_full) if not masked]
             tiff_sequence = tifffile.TiffSequence(filenames, pattern=None)
-            tiff_data = tiff_sequence.asarray(memmap=True).astype(
-                dtype=np.float32)
+            tiff_data = tiff_sequence.asarray(memmap=True)
         else:
             if mask is not None:
-                tiff_data = haussio_data.read_raw().squeeze().astype(
-                    np.float32)[np.invert(mask), :, :]
+                tiff_data = haussio_data.read_raw().squeeze()[
+                    np.invert(mask), :, :]
             else:
-                tiff_data = haussio_data.read_raw().squeeze().astype(
-                    np.float32)
+                tiff_data = haussio_data.read_raw().squeeze()
 
         tiff_data = np.transpose(tiff_data, (1, 2, 0))
         d1, d2, T = tiff_data.shape
