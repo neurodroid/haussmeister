@@ -204,8 +204,10 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
         # C: denoised [Ca2+]
         # YrA: residuals ("noise", i.e. traces = C+YrA)
         # S: Spikes
-        savemat(fn_cnmf, {"A": A2, "C": C2, "YrA": YrA, "S": S2, "bl": cnm2.b})
+        # f: temporal background
+        savemat(fn_cnmf, {"A": A2, "C": C2, "YrA": YrA, "S": S2, "bl": cnm2.b, "f": cnm2.f})
         dview.terminate()
+        cm.stop_server()
     else:
         resdict = loadmat(fn_cnmf)
         A2 = resdict["A"]
@@ -213,6 +215,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
         YrA = resdict["YrA"]
         S2 = resdict["S"]
         bl2 = resdict["bl"]
+        f = resdict["f"]
         images = haussio_data.read_raw().squeeze()
 
     proj_fn = haussio_data.dirname_comp + "_proj.npy"
@@ -221,8 +224,6 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
         np.save(proj_fn, zproj)
     else:
         zproj = np.load(proj_fn)
-
-    cm.stop_server()
 
     logfiles = glob.glob("*LOG*")
     for logfile in logfiles:
