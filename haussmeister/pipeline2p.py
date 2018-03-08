@@ -744,6 +744,17 @@ def find_events(norm_meas, track_speed, min_speed, std_scale):
 
     return ipeaks, np.array(amp_events)
 
+def trackspeed(trackdict, cm_per_px=0.11, lopass=0.1):
+    track_speed = np.sqrt(
+        (np.diff(trackdict['posx_frames'].squeeze())**2 +
+         np.diff(trackdict['posy_frames'].squeeze())**2)
+    )  / np.diff(trackdict['frametimes'].squeeze()) * cm_per_px
+    track_speed = np.concatenate([[track_speed[0], ], track_speed])
+    track_speed = spectral.lowpass(
+        stfio_plot.Timeseries(track_speed, np.mean(np.diff(trackdict['frametimes']))),
+        lopass, verbose=False).data
+    return track_speed
+
 def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
               spikes=None, infer_threshold=0.15, region="", mapdict=None,
               lopass=1.0, plot_events=False, minimaps=None, dpi=1200,
@@ -869,15 +880,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         ax_track.plot(trackdict['posx'], trackdict['posy'])
         ax_track.set_aspect('equal', adjustable='datalim')
         ax_track.set_xlim(trackdict['posx'].min(), trackdict['posx'].max())
-        CM_PER_PX = 0.11
-        track_speed = np.sqrt(
-            (np.diff(trackdict['posx_frames'])**2 +
-             np.diff(trackdict['posy_frames'])**2)
-        )  / haussio_data.dt * CM_PER_PX
-        track_speed = np.concatenate([[track_speed[0], ], track_speed])
-        track_speed = spectral.lowpass(
-            stfio_plot.Timeseries(track_speed, haussio_data.dt),
-            0.1, verbose=False).data
+        track_speed = trackspeed(trackdict)
         ax_track_speed = stfio_plot.StandardAxis(
             fig, gs[1:2, 0:1], hasx=False, hasy=True, sharex=ax_spike)
         ax_track_speed.plot(
