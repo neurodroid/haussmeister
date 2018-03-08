@@ -29,7 +29,8 @@ except ImportError:
 import numpy as np
 from scipy.io import savemat, loadmat
 
-from matplotlib import _cntr
+from contours.core import shapely_formatter as shapely_fmt
+from contours.quad import QuadContourGenerator
 
 import sima
 from sima.misc import tifffile
@@ -232,6 +233,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
         except OSError:
             pass
 
+    print(images.shape[1], images.shape[2])
     polygons = contour(A2, images.shape[1], images.shape[2], thr=roi_iceberg)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
 
@@ -248,8 +250,9 @@ def contour(A, d1, d2, thr=None):
 
     d, nr = np.shape(A)
 
-    x, y = np.mgrid[:d1:1, :d2:1]
-
+    # x, y = np.mgrid[:d1:1, :d2:1]
+    x = np.arange(d1)
+    y = np.arange(d2)
     coordinates = []
     for i in range(nr):
         indx = np.argsort(A[:, i], axis=None)[::-1]
@@ -258,11 +261,16 @@ def contour(A, d1, d2, thr=None):
         Bvec = np.zeros(d)
         Bvec[indx] = cumEn
         Bmat = np.reshape(Bvec, (d1, d2), order='F')
-        cntr = _cntr.Cntr(y, x, Bmat)
-        cs = cntr.trace(thr)
+        Bmat = 1-Bmat
+        c = QuadContourGenerator.from_rectilinear(y, x, Bmat, shapely_fmt)
+        cs = c.filled_contour(min=1-thr, max=None)
+        # cs = cntr.trace(thr)
         if len(cs) > 0:
-            coordinates.append(cs[0])
+            for csn in cs:
+                print(list(csn.exterior.coords))
+            coordinates.append(cs)
         else:
+            sys.stdout.write("No polygon found\n")
             coordinates.append([[0, 0, 0], [0, 0, 0], [0, 0, 0]])
 
     return coordinates

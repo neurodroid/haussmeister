@@ -11,5 +11,6 @@ setup(name='haussmeister',
           'tables',
           'sima',
           'bottleneck',
+          'contours'
       ]
       )
