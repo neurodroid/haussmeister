@@ -1071,7 +1071,7 @@ class DoricHaussIO(HaussIO):
                 np.array([self._read_exposure(ifd) for ifd in ifds]))==0))
             nframes = np.sum([
                 len(temptif.pages) for temptif in temptifs])
-            print(nframes, np.mean(
+            print("nframes, dt = ", nframes, np.mean(
                 np.array([self._read_exposure(ifd) for ifd in ifds])))
             shape = self._read_shape()
             assert(nframes == shape[0])
@@ -1143,6 +1143,8 @@ class DoricHaussIO(HaussIO):
             shape = np.load(shapefn)
         else:
             shape = (self.nframes, self.xpx, self.ypx)
+        if shape.shape[0] > 3:
+            shape = (shape[0], shape[2], shape[3])
         return shape
 
     def read_raw(self):
