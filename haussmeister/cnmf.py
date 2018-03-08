@@ -233,7 +233,6 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
         except OSError:
             pass
 
-    print(images.shape[1], images.shape[2])
     polygons = contour(A2, images.shape[1], images.shape[2], thr=roi_iceberg)
     rois = ROIList([sima.ROI.ROI(polygons=poly) for poly in polygons])
 
@@ -266,8 +265,6 @@ def contour(A, d1, d2, thr=None):
         cs = c.filled_contour(min=1-thr, max=None)
         # cs = cntr.trace(thr)
         if len(cs) > 0:
-            for csn in cs:
-                print(list(csn.exterior.coords))
             coordinates.append(cs)
         else:
             sys.stdout.write("No polygon found\n")
