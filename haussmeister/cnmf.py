@@ -192,6 +192,7 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
                         correls = np.correlate(ca_roi, ca_roi_compare, mode='same')
                         correls /= np.sqrt(np.dot(ca_roi, ca_roi) * np.dot(ca_roi_compare, ca_roi_compare))
                         if correls.max() > merge_unconnected:
+                            print("Merging ", nroi_compare)
                             idx_merge.append(nroi_compare)
             idx_no_merge = [idx for idx in range(cnm2.C.shape[0]) if idx not in idx_merge]
         else:
