@@ -1153,7 +1153,7 @@ class DoricHaussIO(HaussIO):
             sys.stdout.flush()
             t0 = time.time()
             if self.mptifs is not None:
-                self.raw_array = np.concatenate([mptif.asarray(out='memmap')
+                self.raw_array = np.concatenate([mptif.asarray()
                     for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
