@@ -1153,8 +1153,8 @@ class DoricHaussIO(HaussIO):
             sys.stdout.flush()
             t0 = time.time()
             if self.mptifs is not None:
-                self.raw_array = np.concatenate([mptif.asarray()
-                    for mptif in self.mptifs])
+                self.raw_array = np.concatenate([
+                    mptif.asarray(memmap=True) for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
                 assert(np.all(self.raw_array >= 0))
             else:
@@ -1168,7 +1168,10 @@ class DoricHaussIO(HaussIO):
 
             sys.stdout.write(" took {0:.2f}s\n".format(time.time()-t0))
 
-        return self.raw_array.astype(np.uint16)
+            if self.raw_array.dtype != np.uint16:
+                self.raw_array = self.raw_array.astype(np.uint16)
+
+        return self.raw_array
 
 
 def sima_export_frames(dataset, path, filenames, startIdx=0, stopIdx=None,
