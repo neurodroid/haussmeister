@@ -1221,7 +1221,8 @@ def infer_spikes(dataset, signal_label, measured):
     inference = []
     fit = []
     for measured_roi in measured:
-        c, bl, c1, g, sn, sp = caiman_cnmf.deconvolution.constrained_foopsi(measured_roi, p=2)
+
+        c, bl, c1, g, sn, sp, lam = caiman_cnmf.deconvolution.constrained_foopsi(measured_roi, p=2)
         inference.append(sp)
         fit.append(c)
 
