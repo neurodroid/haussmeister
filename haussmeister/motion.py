@@ -147,7 +147,9 @@ class NormCorr(motion.MotionEstimationStrategy):
             (2, num_frames*num_cycles)-array of integers giving the
             estimated displacement of each frame
         """
-        ncpus = mp.cpu_count()
+        ncpus = int(mp.cpu_count() / 4.0)
+        if ncpus == 0:
+            ncpus = 1
         verbose = self._params['verbose']
         if self._params['max_displacement'] is None:
             max_displacement = (1e15, 1e15)
