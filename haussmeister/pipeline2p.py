@@ -1642,7 +1642,7 @@ def get_vr_maps(data, measured, spikes, vrdict, method):
 
 def thor_extract_roi(
         data, sc=None, infer=True, infer_threshold=0.15, selected_rois=None,
-        roi_iceberg=0.9, merge_unconnected=None, decoded_only=False):
+        roi_iceberg=0.9, merge_unconnected=None, decoded_only=False, do_decode=False):
     """
     Extract and process fluorescence data from ROIs
 
@@ -1755,7 +1755,7 @@ def thor_extract_roi(
             new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
                            for nroi in irois])
 
-        if len(spikemap):
+        if len(spikemap) and do_decode:
             decoded = decode.decodeMLNonparam(
                 spikemap, (spikes[irois]-np.min(spikes[irois], axis=-1)[
                     :, np.newaxis]).T,

@@ -123,14 +123,14 @@ def decodeMLNonparam(activity_map, activity_time, nentries=4):
     # TODO: vectorize!
 
     Pmaps = np.array([
-        np.sum(np.log([
+        np.sum(np.log(np.array([
             [
                 # Compute probability for each position:
                 histo[0][np.where(activity[nroi] < histo[1])[0][0]-1]
                 for npos, histo in histos[nroi].items()
             ]
             for nroi in range(activity_time.shape[-1])
-        ]), axis=0)
+        ])), axis=0)
         for activity in activity_time
     ])
 
