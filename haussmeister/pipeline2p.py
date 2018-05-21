@@ -2034,6 +2034,17 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
         min_scale = fminbound(fmin, 0, 1.5)
         print("min_scale:", min_scale)
         measured = signals['raw'][0]-min_scale*signals_halo['raw'][0]
+    elif data.subtract_halo == 0:
+        mean_frames = np.array([
+            np.median(frame) for frame in dataset.sequences[0]])
+        print(mean_frames.shape)
+        measured = []
+        for trace in signals['raw'][0]:
+            fmin = lambda scale: np.sum((trace-scale*(mean_frames))**2)
+            min_scale = fminbound(fmin, 0, 5.0)
+            print("min_scale full frame:", min_scale)
+            measured.append(trace-min_scale*mean_frames)
+        measured = np.array(measured)
     else:
         measured = signals['raw'][0]
 
