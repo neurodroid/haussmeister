@@ -1275,7 +1275,7 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
         "Extracting signals with label {0}... ".format(signal_label))
     sys.stdout.flush()
     t0 = time.time()
-    measured, zproj = extract_rois(
+    measured, mean_frames, zproj = extract_rois(
         signal_label, dataset, rois, data, haussio_data)
     sys.stdout.write("done (took %.2fs)\n" % (time.time()-t0))
     sys.stdout.flush()
@@ -1308,7 +1308,7 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
     else:
         spikes = measured
 
-    return measured, zproj, spikes
+    return measured, mean_frames, zproj, spikes
 
 
 def get_rois_ij(data, haussio_data, infer=True):
@@ -1350,10 +1350,10 @@ def get_rois_ij(data, haussio_data, infer=True):
 
     signal_label = 'imagej_rois' + data.roi_subset
 
-    measured, zproj, spikes = extract_signals(
+    measured, mean_frames, zproj, spikes = extract_signals(
         signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, zproj, spikes
+    return rois, measured, mean_frames, zproj, spikes
 
 
 def get_rois_sima(data, haussio_data, infer=True):
@@ -1406,7 +1406,7 @@ def get_rois_sima(data, haussio_data, infer=True):
 
     signal_label = 'sima_stICA_rois' + data.roi_subset
 
-    measured, zproj, spikes = extract_signals(
+    measured, mean_frames, zproj, spikes = extract_signals(
         signal_label, rois, data, haussio_data, infer=infer)
 
     return rois, measured, zproj, spikes
@@ -1542,7 +1542,7 @@ def get_rois_thunder(
 
     signal_label = 'thunder_ICA_rois' + data.roi_subset
 
-    measured, zproj, spikes = extract_signals(
+    measured, mean_frames, zproj, spikes = extract_signals(
         signal_label, rois, data, haussio_data, infer=infer)
 
     return rois, measured, zproj, spikes
@@ -1697,7 +1697,7 @@ def thor_extract_roi(
         rois, measured, zproj, spikes = get_rois_sima(
             data, haussio_data, infer)
     elif data.seg_method == "ij":
-        rois, measured, zproj, spikes = get_rois_ij(
+        rois, measured, mean_frames, zproj, spikes = get_rois_ij(
             data, haussio_data, infer)
     elif data.seg_method == "cnmf":
         speed_thr = None # 0.01  # m/s
@@ -2057,7 +2057,7 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
     else:
         zproj = np.load(data.proj_fn)
 
-    return measured, zproj
+    return measured, mean_frames, zproj
 
 
 class Bardata(object):
