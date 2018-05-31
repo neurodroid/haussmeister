@@ -45,3 +45,9 @@ def zproject(stack):
         ]), axis=0)
 
     return zproj
+
+def xcorr(x, y, normed=True):
+    correls = np.correlate(x, y, mode=2)
+    if normed:
+        correls /= np.sqrt(np.dot(x, x) * np.dot(y, y))
+    return correls
