@@ -149,7 +149,7 @@ class ThorExperiment(object):
             fntrack=None, roi_subset="", mc_method="hmmc", detrend=False,
             subtract_halo=1.0, nrois_init=200, roi_translate=None, root_path="",
             ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
-            ignore_sync_errors=False):
+            ignore_sync_errors=False, rois_eliminate=None):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -167,6 +167,7 @@ class ThorExperiment(object):
         self.nrois_init = nrois_init
         self.maxtime = maxtime
         self.ignore_sync_errors = ignore_sync_errors
+        self.rois_eliminate = rois_eliminate
         self._as_haussio_mc = None
         self._as_haussio = None
         self._as_sima_mc = None
