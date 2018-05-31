@@ -602,6 +602,8 @@ def process_data(data, detrend=False, base_fraction=0.2, zscore=True):
                            int(data.shape[0])])
             for trace in ret_data])
 
+    ret_data = (ret_data.T-ret_data.min(axis=1)).T
+
     return ret_data
 
 
