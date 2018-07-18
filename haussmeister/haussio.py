@@ -839,6 +839,8 @@ class PrairieHaussIO(HaussIO):
                         remdata = b''
                     # Data have 13bit offset
                     intchan = int(self.chan) - 1
+                    if npdata.shape[4] <= intchan:
+                        intchan = 0
                     npdata_corr = npdata[:, :, :, :, intchan].astype(np.float) - 2**13
                     # Some mysterious negative numbers that need to be discarded
                     # (PrairieView does this as well)
