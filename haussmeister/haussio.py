@@ -816,7 +816,9 @@ class PrairieHaussIO(HaussIO):
                 remdata = b''
                 nbytes = 2
                 dtype = np.int16
-                framesize = self.xpx*self.ypx*nbytes*self.nsamplesperpixel
+                xml_frames = [frame for frame in self.xml_root.find('Sequence').findall('Frame')]
+                nchannels = len(xml_frames[0].findall('File'))
+                framesize = self.xpx*self.ypx*nbytes*self.nsamplesperpixel*nchannels
                 self.raw_array = np.empty((0, self.xpx, self.ypx), dtype=np.uint16)
                 rawfiles = sorted(glob.glob(
                     os.path.join(
@@ -829,14 +831,15 @@ class PrairieHaussIO(HaussIO):
                     straybytes = len(rawdata)%(framesize)
                     if straybytes > 0:
                         npdata = np.frombuffer(rawdata[:-straybytes], dtype=dtype).reshape(
-                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel)
+                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
                         remdata = rawdata[-straybytes:]
                     else:
                         npdata = np.frombuffer(rawdata, dtype=dtype).reshape(
-                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel)
+                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
                         remdata = b''
                     # Data have 13bit offset
-                    npdata_corr = npdata.astype(np.float) - 2**13
+                    intchan = int(self.chan) - 1
+                    npdata_corr = npdata[:, :, :, :, intchan].astype(np.float) - 2**13
                     # Some mysterious negative numbers that need to be discarded
                     # (PrairieView does this as well)
                     npdata_corr[npdata_corr < 0] = np.nan
@@ -1153,6 +1156,9 @@ class DoricHaussIO(HaussIO):
             sys.stdout.flush()
             t0 = time.time()
             if self.mptifs is not None:
+                sys.stdout.write(" concatenating tiffs...")
+                sys.stdout.flush()
+                
                 self.raw_array = np.concatenate([
                     mptif.asarray(memmap=True) for mptif in self.mptifs])
                 self.raw_array -= self.raw_array.min()
