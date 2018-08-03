@@ -43,7 +43,6 @@ from sima.ROI import ROIList
 import shapely
 
 if sys.version_info.major < 3:
-    sys.path.append(os.path.expanduser("~/CaImAn/"))
     try:
         import caiman.source_extraction.cnmf as caiman_cnmf
     except ImportError:
@@ -149,7 +148,7 @@ class ThorExperiment(object):
             fntrack=None, roi_subset="", mc_method="hmmc", detrend=False,
             subtract_halo=1.0, nrois_init=200, roi_translate=None, root_path="",
             ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
-            ignore_sync_errors=False, rois_eliminate=None):
+            ignore_sync_errors=False, rois_eliminate=None, mousecal=None):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -168,6 +167,7 @@ class ThorExperiment(object):
         self.maxtime = maxtime
         self.ignore_sync_errors = ignore_sync_errors
         self.rois_eliminate = rois_eliminate
+        self.mousecal = mousecal
         self._as_haussio_mc = None
         self._as_haussio = None
         self._as_sima_mc = None
@@ -746,6 +746,68 @@ def find_events(norm_meas, track_speed, min_speed, std_scale):
         amp_events.append(np.sum(norm_meas[tu:td]))
 
     return ipeaks, np.array(amp_events)
+
+
+def detect_events(cnmfdict, track_speed, std_scale, dt):
+    if 'YrA' in cnmfdict.keys():
+        C_df_f = caiman_cnmf.utilities.detrend_df_f(
+            cnmfdict['A'],
+            cnmfdict['bl'].squeeze(),
+            cnmfdict['C'].squeeze(),
+            cnmfdict['f'].squeeze(),
+            cnmfdict['YrA'].squeeze())
+    else:
+        C_df_f = cnmfdict['C'].squeeze()
+        C_df_f = np.array([
+            spectral.lowpass(stfio_plot.Timeseries(C_df_roi, dt), 1.0, verbose=False).data
+            for C_df_roi in C_df_f
+        ])
+    ievents = [
+        find_events(C_df_roi, track_speed, -5, std_scale)[0]
+        for C_df_roi in C_df_f
+    ]
+    spikes = np.array(cnmfdict['S']).squeeze()
+
+    return C_df_f, ievents, spikes
+
+
+def bin_events(times, ievents, binsize, nroi_eliminate):
+    binstart = times[0]
+    binend = times[-1] + times[1]-times[0]
+    bins = np.arange(binstart, binend, binsize)
+    binsum = np.zeros((bins.shape[0]-1))
+    nrois_final = 0
+    for nroi, ievent_roi in enumerate(ievents):
+        if nroi_eliminate is None or nroi not in nroi_eliminate:
+            nrois_final += 1
+            for ievent in ievent_roi:
+                try:
+                    binsum[np.where(times[ievent] < bins)[0][0]] += 1.0/binsize
+                except IndexError:
+                    binsum[-1] += 1.0/binsize
+    binsum /= nrois_final
+    return bins, binsum
+
+
+def bin_spikes(times, spikes, binsize, nroi_eliminate):
+    binstart = times[0]
+    binend = times[-1] + times[1]-times[0]
+    bins = np.arange(binstart, binend, binsize)
+    binsum = np.zeros((bins.shape[0]-1))
+    for nroi, spikes_roi in enumerate(spikes):
+        if nroi_eliminate is None or nroi not in nroi_eliminate:
+            for nbin, (binstart, binend) in enumerate(
+                zip(bins[:-1], bins[1:])):
+                binsum[nbin] += np.mean((spikes_roi/spikes_roi.max())[
+                    (times >= binstart) & (times < binend)])
+    return bins, binsum
+
+
+def sum_calcium(C_df_f, nroi_eliminate):
+    return np.mean([
+        norm(C_df_f_n) for nroi, C_df_f_n in enumerate(C_df_f) 
+        if nroi_eliminate is None or nroi not in nroi_eliminate], axis=0)
+
 
 def trackspeed(trackdict, cm_per_px=0.11, lopass=0.1):
     track_speed = np.sqrt(
