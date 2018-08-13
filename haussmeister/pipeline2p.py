@@ -723,34 +723,56 @@ def colorline(
     return lc
 
 
-def find_events(norm_meas, track_speed, min_speed, std_scale):
-    above = np.zeros(norm_meas.shape)
-    above[(norm_meas > norm_meas.mean()+std_scale*norm_meas.std()) &
-          (track_speed > min_speed)] = 1
-    transitions_up = np.where(np.diff(above) == 1)[0]
-    if transitions_up.shape[0] == 0:
-        return [], np.array([])
+def find_events(norm_meas, track_speed, min_speed, std_scale, fixed_std=None, min_inter_samples=10, min_event_samples=10, max_event_samples=1000):
+    assert(norm_meas.shape == track_speed.shape)
+    zsignal = norm_meas.copy()
+    if fixed_std is None:
+        zsignal[track_speed >= min_speed] = stats.zscore(norm_meas[track_speed > min_speed])
+    else:
+        zsignal[track_speed >= min_speed] = (
+            norm_meas[track_speed > min_speed]-norm_meas[track_speed > min_speed].mean())/fixed_std
 
-    transitions_down = np.where(np.diff(above) == -1)[0]
-    if transitions_down.shape[0] == 0:
-        transitions_down = np.array([norm_meas.shape[0]-1, ])
-    if transitions_up[0] > transitions_down[0]:
-        transitions_down = transitions_down[1:]
-    transitions_down = transitions_down[:transitions_up.shape[0]]
-    if transitions_down.shape[0] < transitions_up.shape[0]:
-        try:
-            transitions_down = np.concatenate((transitions_down, [norm_meas.shape[0]-1,]))
-        except ValueError as err:
-            print(transitions_up.shape, transitions_down.shape, norm_meas.shape[0])
-            raise err
+    zsignal[track_speed < min_speed] = 0
+    thresholded = (zsignal > std_scale).astype(int)
 
-    ipeaks = []
-    amp_events = []
-    for tu, td in zip(transitions_up, transitions_down):
-        ipeaks.append(np.argmax(norm_meas[tu:td]) + tu)
-        amp_events.append(np.sum(norm_meas[tu:td]))
+    start = np.where(np.diff(thresholded) > 0)[0]
+    if not len(start):
+        return [], []
+    stop = np.where(np.diff(thresholded) < 0)[0]
+    if len(stop) == len(start)-1:
+        start = start[:-1]
+    if len(stop)-1 == len(start):
+        stop = stop[1:]
+    if start[0] > stop[0]:
+        start = start[:-1]
+        stop = stop[1:]
 
-    return ipeaks, np.array(amp_events)
+    if not len(start):
+        return [], []
+
+    merged = True
+    events = np.array([start, stop])
+    while merged:
+        merged = False
+        tmpevents = [events[:, 0].tolist()]
+        for ir, (r1, r2) in enumerate(zip(events[0, 1:], events[1, :-1])):
+            if r1-r2 > min_inter_samples:
+                tmpevents[-1][1] = r2
+                tmpevents.append([r1, events[1, ir+1]])
+            else:
+                merged = True
+        events = np.array(tmpevents).T.copy()
+    durations = (events[1, :]-events[0, :])
+    assert(np.all(durations > 0))
+    events = events[:, durations < max_event_samples]
+    assert(np.all(durations > 0))
+    durations = (events[1, :]-events[0, :])
+    events = events[:, durations >= min_event_samples]
+
+    eventmaxs = np.array([np.sum(norm_meas[event[0]:event[1]]) for event in events.T])
+    # events = events[:, eventmaxs > highThresholdFactor]
+    eventargmaxs = np.array([np.argmax(norm_meas[event[0]:event[1]])+event[0] for event in events.T])
+    return events[0, :], eventmaxs
 
 
 def detect_events(cnmfdict, track_speed, std_scale, dt):
@@ -985,6 +1007,8 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
                      fontsize=10)
         except sima.ROI.NonBooleanMask:
             print("NonBooleanMask")
+        except IndexError:
+            print("IndexError")
 
         if has_vr:
             trange = mapdict['t_2p'][ndiscard:] * 1e-3
