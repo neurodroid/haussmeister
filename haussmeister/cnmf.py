@@ -129,7 +129,20 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
     fn_mmap = get_mmap_name(haussio_data.dirname_comp + os.path.sep + 'Yr', d1, d2, shape[0])
     
     tiffs_to_cnmf(haussio_data)
-    if not os.path.exists(fn_cnmf):
+    if os.path.exists(fn_cnmf):
+        resdict = loadmat(fn_cnmf)
+        if "dFoF" in resdict.keys():
+            A2 = resdict["A"]
+            C2 = resdict["C"]
+            YrA = resdict["YrA"]
+            S2 = resdict["S"]
+            dFoF = resdict["dFoF"]
+            bl2 = resdict["bl"]
+            f = resdict["f"]
+            images = haussio_data.read_raw().squeeze()
+        else:
+            dFoF = None
+    if not os.path.exists(fn_cnmf) or dFoF is None:
         c, dview, n_processes = cm.cluster.setup_cluster(
             backend='multiprocessing', n_processes=NCPUS, single_thread=False)
 
@@ -201,24 +214,22 @@ def process_data(haussio_data, mask=None, p=2, nrois_init=400, roi_iceberg=0.9, 
         C2 = cnm2.C[idx_no_merge]
         YrA = cnm2.YrA[idx_no_merge]
         S2 = cnm2.S[idx_no_merge]
-
+        dFoF = cnm2.detrend_df_f(frames_window=300)[idx_no_merge]
         # A: spatial components (ROIs)
         # C: denoised [Ca2+]
         # YrA: residuals ("noise", i.e. traces = C+YrA)
         # S: Spikes
         # f: temporal background
-        savemat(fn_cnmf, {"A": A2, "C": C2, "YrA": YrA, "S": S2, "bl": cnm2.b, "f": cnm2.f})
+        savemat(fn_cnmf, {
+            "A": A2,
+            "C": C2,
+            "YrA": YrA,
+            "S": S2,
+            "dFoF": dFoF,
+            "bl": cnm2.b,
+            "f": cnm2.f})
         dview.terminate()
         cm.stop_server()
-    else:
-        resdict = loadmat(fn_cnmf)
-        A2 = resdict["A"]
-        C2 = resdict["C"]
-        YrA = resdict["YrA"]
-        S2 = resdict["S"]
-        bl2 = resdict["bl"]
-        f = resdict["f"]
-        images = haussio_data.read_raw().squeeze()
 
     proj_fn = haussio_data.dirname_comp + "_proj.npy"
     if not os.path.exists(proj_fn):

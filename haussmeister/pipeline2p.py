@@ -13,6 +13,7 @@ import sys
 import shutil
 import time
 import pickle
+import tempfile
 import multiprocessing as mp
 from functools import partial
 
@@ -21,6 +22,8 @@ import scipy.signal as signal
 import scipy.stats as stats
 from scipy.io import savemat
 from scipy.optimize import fminbound
+from scipy.optimize import fmin_bfgs
+from scipy.ndimage import percentile_filter
 
 import matplotlib.pyplot as plt
 import matplotlib.gridspec as gridspec
@@ -45,6 +48,8 @@ import shapely
 if sys.version_info.major < 3:
     try:
         import caiman.source_extraction.cnmf as caiman_cnmf
+        import caiman.source_extraction.cnmf.temporal as caiman_temporal
+        import caiman.utils.stats as caiman_stats
     except ImportError:
         sys.stderr.write("Could not find caiman cnmf module")
 
@@ -1339,40 +1344,12 @@ def extract_signals(signal_label, rois, data, haussio_data, infer=True):
         "Extracting signals with label {0}... ".format(signal_label))
     sys.stdout.flush()
     t0 = time.time()
-    measured, mean_frames, zproj = extract_rois(
+    signal_dict = extract_rois(
         signal_label, dataset, rois, data, haussio_data)
     sys.stdout.write("done (took %.2fs)\n" % (time.time()-t0))
     sys.stdout.flush()
 
-    measured[np.isnan(measured)] = 0
-
-    assert(np.any(np.isnan(measured)) == False)
-
-    if infer:
-        if not os.path.exists(data.spikefn):
-            sys.stdout.write("Inferring spikes... ")
-            sys.stdout.flush()
-            t0 = time.time()
-            spikes, fits, parameters = infer_spikes(dataset, signal_label, measured)
-            spikefile = open(data.spikefn, 'wb')
-            pickle.dump(spikes, spikefile)
-            pickle.dump(fits, spikefile)
-            pickle.dump(parameters, spikefile)
-            spikefile.close()
-            sys.stdout.write(
-                "done (took %.2fs)\n" % (time.time()-t0))
-        else:
-            spikefile = open(data.spikefn, 'rb')
-            spikes = pickle.load(spikefile)
-            fits = pickle.load(spikefile)
-            parameters = pickle.load(spikefile)
-            spikefile.close()
-
-        spikes = np.array([spike-spike[1:].min() for spike in spikes])
-    else:
-        spikes = measured
-
-    return measured, mean_frames, zproj, spikes
+    return signal_dict
 
 
 def get_rois_ij(data, haussio_data, infer=True):
@@ -1414,10 +1391,10 @@ def get_rois_ij(data, haussio_data, infer=True):
 
     signal_label = 'imagej_rois' + data.roi_subset
 
-    measured, mean_frames, zproj, spikes = extract_signals(
+    signal_dict = extract_signals(
         signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, mean_frames, zproj, spikes
+    return rois, signal_dict
 
 
 def get_rois_sima(data, haussio_data, infer=True):
@@ -1470,10 +1447,10 @@ def get_rois_sima(data, haussio_data, infer=True):
 
     signal_label = 'sima_stICA_rois' + data.roi_subset
 
-    measured, mean_frames, zproj, spikes = extract_signals(
+    signal_dict = extract_signals(
         signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, zproj, spikes
+    return rois, signal_dict
 
 
 def get_rois_thunder(
@@ -1606,10 +1583,10 @@ def get_rois_thunder(
 
     signal_label = 'thunder_ICA_rois' + data.roi_subset
 
-    measured, mean_frames, zproj, spikes = extract_signals(
+    signal_dict = extract_signals(
         signal_label, rois, data, haussio_data, infer=infer)
 
-    return rois, measured, zproj, spikes
+    return rois, signal_dict
 
 
 def get_vr_maps(data, measured, spikes, vrdict, method):
@@ -1754,14 +1731,14 @@ def thor_extract_roi(
 
     lopass = 1.0
     if data.seg_method == "thunder":
-        rois, measured, zproj, spikes = get_rois_thunder(
+        rois, signal_dict = get_rois_thunder(
             data, haussio_data, sc, infer, speed=vrspeed,
             nrois_init=data.nrois_init)
     elif data.seg_method == "sima":
-        rois, measured, zproj, spikes = get_rois_sima(
+        rois, signal_dict = get_rois_sima(
             data, haussio_data, infer)
     elif data.seg_method == "ij":
-        rois, measured, mean_frames, zproj, spikes = get_rois_ij(
+        rois, signal_dict = get_rois_ij(
             data, haussio_data, infer)
     elif data.seg_method == "cnmf":
         speed_thr = None # 0.01  # m/s
@@ -2031,6 +2008,35 @@ def compare_rois(rois1, rois2):
 
     return True
 
+class ParallelMedian(object):
+    def __init__(self, rois, measured, tempf, shape, dtype):
+        self.rois = rois
+        self.measured = measured
+        self.tempf = tempf
+        self.shape = shape
+        self.dtype = dtype
+
+    def __call__(self, nroi):
+        sys.stdout.write('.')
+        sys.stdout.flush()
+        raw = np.memmap(self.tempf, mode='r', shape=self.shape, dtype=self.dtype)
+        roi = self.rois[nroi]
+        trace = self.measured[nroi]
+        if len(roi.coords):
+            ymin = int(np.round(roi.coords[0][:,1].min()))
+            ymax = int(np.round(roi.coords[0][:,1].max()))
+            return np.median(raw[:, ymin:ymax, :], axis=(1,2))
+        else:
+            return np.full(trace.shape, np.nan)
+
+def constrained_foopsi_parallel(trace):
+    sys.stdout.write('.')
+    sys.stdout.flush()
+    if np.any(np.isnan(trace)):
+        return np.full(trace.shape, np.nan)
+
+    c, bl, c1, g, sn, sp, lam = caiman_cnmf.deconvolution.constrained_foopsi(trace, p=2)
+    return sp
 
 def extract_rois(signal_label, dataset, rois, data, haussio_data):
     """
@@ -2061,12 +2067,42 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
         if not compare_rois(
                 dataset.signals()[signal_label]['rois'], rois):
             signals = dataset.extract(rois, label=signal_label,
-                                      save_summary=False, n_processes=int(NCPUS/4))
+                                      save_summary=False, n_processes=int(NCPUS))
     else:
         signals = dataset.extract(rois, label=signal_label,
-                                  save_summary=False, n_processes=int(NCPUS/4))
+                                  save_summary=False, n_processes=int(NCPUS))
 
-    if data.subtract_halo > 1.0:
+    mean_frames = np.array([
+        np.median(frame) for frame in dataset.sequences[0]])
+    if isinstance(data.subtract_halo, str):
+        if data.subtract_halo == "lines":
+            raw = haussio_data.read_raw().squeeze()
+            with tempfile.NamedTemporaryFile(delete=False) as ntf:
+                temp_name = ntf.name
+                arr = np.memmap(ntf, mode='w+', shape=raw.shape, dtype=raw.dtype)
+                arr[:] = raw
+            parmed = ParallelMedian(rois, signals['raw'][0], temp_name, raw.shape, raw.dtype)
+            pool = mp.Pool(NCPUS)
+            B = pool.map(parmed, range(len(rois)))
+            pool.close()
+            if os.path.exists(temp_name):
+                os.unlink(temp_name)
+            measured = []
+            for nroi, trace in enumerate(signals['raw'][0]):
+                sys.stdout.write('.')
+                sys.stdout.flush()
+                if not np.any(np.isnan(trace)):
+                    fmin = lambda x: np.sum((trace-(x[0]*B[nroi]+x[1]))**2)
+                    opt = fmin_bfgs(fmin, (1.0, 0), disp=False)
+                    min_scale, min_offset = opt
+                    trace_corr = trace - min_scale*B[nroi]
+                    measured.append(trace_corr-trace_corr.mean() + trace.mean())
+                else:
+                    measured.append(np.full(trace.shape, np.nan))
+            sys.stdout.write('\n')
+            measured = np.array(measured)
+            B = np.array(B)
+    elif data.subtract_halo > 1.0:
         halo_rois = []
         for roi in rois:
             halo_polygons = []
@@ -2099,29 +2135,64 @@ def extract_rois(signal_label, dataset, rois, data, haussio_data):
         min_scale = fminbound(fmin, 0, 1.5)
         print("min_scale:", min_scale)
         measured = signals['raw'][0]-min_scale*signals_halo['raw'][0]
+        B = signals_halo['raw'][0]
     elif data.subtract_halo == 0:
-        mean_frames = np.array([
-            np.median(frame) for frame in dataset.sequences[0]])
         print(mean_frames.shape)
         measured = []
+        B = []
         for trace in signals['raw'][0]:
             fmin = lambda scale: np.sum((trace-scale*(mean_frames))**2)
             min_scale = fminbound(fmin, 0, 5.0)
             print("min_scale full frame:", min_scale)
             measured.append(trace-min_scale*mean_frames)
         measured = np.array(measured)
+        B = mean_frames
     else:
         measured = signals['raw'][0]
+        B = signals['raw'][0]
 
-    measured = process_data(measured, detrend=data.detrend)
+    sys.stdout.write("Computing deconvolution")
+    sys.stdout.flush()
+    pool = mp.Pool(NCPUS)
+    results = pool.map_async(
+        constrained_foopsi_parallel, measured).get(4294967)
+    spikes = np.array(results)
+    pool.close()
+    sys.stdout.write(" done\n")
 
+    # measured = process_data(measured, detrend=data.detrend)
+    dF_F = dFoF(measured, B)
     if not os.path.exists(data.proj_fn):
         zproj = utils.zproject(haussio_data.read_raw().squeeze())
         np.save(data.proj_fn, zproj)
     else:
         zproj = np.load(data.proj_fn)
 
-    return measured, mean_frames, zproj
+    return {"raw": signals['raw'][0],
+            "corrected": measured,
+            "dF_F": dF_F,
+            "S": spikes,
+            "mean_frames": mean_frames,
+            "zproj": zproj}
+
+def dFoF(measured, B):
+    measured_nonan = measured.copy()
+    measured_nonan[np.isnan(measured_nonan)] = 0
+    data_prct, val = caiman_stats.df_percentile(
+        measured_nonan[:, :300], axis=1)
+    data_prct[np.isnan(data_prct)] = 0
+    Fd = np.stack([percentile_filter(
+        f, prctileMin, (300)) for f, prctileMin in
+                   zip(measured_nonan, data_prct)])
+    B_nonan = B.copy()
+    B_nonan[np.isnan(B_nonan)] = 0
+    Df = np.stack([percentile_filter(
+        f, prctileMin, (300)) for f, prctileMin in
+                   zip(B_nonan, data_prct)])
+    dff =  (measured - Fd) / (Df + Fd)
+    dff[np.isnan(measured)] = np.nan
+
+    return dff
 
 
 class Bardata(object):
