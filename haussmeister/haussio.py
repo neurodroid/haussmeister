@@ -282,6 +282,87 @@ class HaussIO(object):
         return sima.ImagingDataset(
             sequences, self.sima_dir, channel_names=[self.chan, ])
 
+    def tosuite2p(self, ops):
+        """
+        Writes out files in suite2p format
+
+        Parameters
+        ----------
+        ops : dict
+            suite2p options dictionary
+        """
+        nplanes = ops['nplanes']
+        nchannels = ops['nchannels']
+        ops1 = []
+        # open all binary files for writing
+        reg_file = []
+        if nchannels>1:
+            reg_file_chan2 = []
+        for j in range(0,nplanes):
+            ops['save_path'] = os.path.join(ops['save_path0'], 'suite2p', 'plane%d'%j)
+            if ('fast_disk' not in ops) or len(ops['fast_disk'])>0:
+                ops['fast_disk'] = ops['save_path0']
+            ops['fast_disk'] = os.path.join(ops['fast_disk'], 'suite2p', 'plane%d'%j)
+            ops['ops_path'] = os.path.join(ops['save_path'],'ops.npy')
+            ops['reg_file'] = os.path.join(ops['fast_disk'], 'data.bin')
+            if nchannels>1:
+                ops['reg_file_chan2'] = os.path.join(ops['fast_disk'], 'data_chan2.bin')
+            if not os.path.isdir(ops['fast_disk']):
+                os.makedirs(ops['fast_disk'])
+            if not os.path.isdir(ops['save_path']):
+                os.makedirs(ops['save_path'])
+            ops1.append(ops.copy())
+            reg_file.append(open(ops['reg_file'], 'wb'))
+            if nchannels>1:
+                reg_file_chan2.append(open(ops['reg_file_chan2'], 'wb'))
+
+        rawdata = self.read_raw()
+        assert(rawdata.dtype == np.uint16)
+        nbatch = int(np.round(nplanes*nchannels*np.ceil(ops['batch_size']/(nplanes*nchannels))))
+        nframes_all = rawdata.shape[0]
+        # loop over all tiffs
+        i0 = 0
+        while True:
+            irange = np.arange(i0, min(i0+nbatch, nframes_all), 1)
+            if irange.size==0:
+                break
+            im = rawdata[irange, :, :]
+            if i0==0:
+                ops1[j]['meanImg'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
+                if nchannels>1:
+                    ops1[j]['meanImg_chan2'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
+                ops1[j]['nframes'] = 0
+            nframes = im.shape[0]
+            for j in range(0,nplanes):
+                im2write = im[np.arange(j, nframes, nplanes*nchannels),:,:]
+                reg_file[j].write(bytearray(im2write))
+                ops1[j]['meanImg'] += im2write.astype(np.float32).sum(axis=0)
+                if nchannels>1:
+                    im2write = im[np.arange(j+1, nframes, nplanes*nchannels),:,:]
+                    reg_file_chan2[j].write(bytearray(im2write))
+                    ops1[j]['meanImg_chan2'] += im2write.astype(np.float32).sum(axis=0)
+                ops1[j]['nframes'] += im2write.shape[0]
+            i0 += nframes
+        # write ops files
+        do_registration = ops['do_registration']
+        for ops in ops1:
+            ops['Ly'] = im2write.shape[1]
+            ops['Lx'] = im2write.shape[2]
+            if not do_registration:
+                ops['yrange'] = np.array([0,ops['Ly']])
+                ops['xrange'] = np.array([0,ops['Lx']])
+            ops['meanImg'] /= ops['nframes']
+            if nchannels>1:
+                ops['meanImg_chan2'] /= ops['nframes']
+            np.save(ops['ops_path'], ops)
+        # close all binary files and write ops files
+        for j in range(0,nplanes):
+            reg_file[j].close()
+            if nchannels>1:
+                reg_file_chan2[j].close()
+
+        return ops1
+
     def asarray(self):
         return np.array(self.tosima().sequences[0]).squeeze()
 
@@ -1295,3 +1376,25 @@ def raw2np(filename, shape):
         sys.stdout.write("Reading {0}...\n".format(filename))
         sys.stdout.flush()
         return np.fromfile(filename, dtype=np.uint16).reshape(shape)
+
+
+def load_haussio(dirname, ftype=None):
+    if ftype is None:
+        # Try to get ftype from files in directory
+        basename = os.path.basename(dirname)
+        if os.path.exists(os.path.join(dirname, basename+".env")):
+            ftype = "prairie"
+        elif os.path.exists(os.path.join(dirname, "Experiment.xml")):
+            ftype = "thor"
+
+    if ftype is None:
+        raise RuntimeError("File autodetection only for ThorLabs and Prairie files")
+
+    if ftype == "thor":
+        return ThorHaussIO(dirname, 'A')
+    elif ftype == "si4":
+        return SI4HaussIO(dirname)
+    elif ftype == "doric":
+        return DoricHaussIO(dirname)
+    elif ftype == "prairie":
+        return PrairieHaussIO(dirname, '1')
