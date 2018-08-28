@@ -831,11 +831,12 @@ class PrairieHaussIO(HaussIO):
                     straybytes = len(rawdata)%(framesize)
                     if straybytes > 0:
                         npdata = np.frombuffer(rawdata[:-straybytes], dtype=dtype).reshape(
-                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
+                            len(rawdata)//(framesize),
+                            self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
                         remdata = rawdata[-straybytes:]
                     else:
                         npdata = np.frombuffer(rawdata, dtype=dtype).reshape(
-                            len(rawdata)/(framesize), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
+                            len(rawdata)//(framesize), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
                         remdata = b''
                     # Data have 13bit offset
                     intchan = int(self.chan) - 1
