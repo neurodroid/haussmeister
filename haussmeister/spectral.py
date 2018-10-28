@@ -260,3 +260,12 @@ def findRipples(signal_bp, signal_noise_bp, std_thresholds=(2, 10), durations=(3
     rippleargmaxs = np.array([np.argmax(zsignal[ripple[0]:ripple[1]])+ripple[0] for ripple in ripples.T])
 
     return ripples, rippleargmaxs
+
+
+def xcorr(x, y, normed=True):
+    correls = np.correlate(x, y, mode=2)
+
+    if normed:
+        correls /= np.sqrt(np.dot(x, x) * np.dot(y, y))
+
+    return correls
