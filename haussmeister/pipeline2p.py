@@ -740,7 +740,7 @@ def find_events(norm_meas, track_speed, min_speed, std_scale, fixed_std=None, mi
         return [], []
     stop = np.where(np.diff(thresholded) < 0)[0]
     if len(stop) == len(start)-1:
-        start = start[:-1]
+        stop = np.concatenate(stop, [len(thresholded)])
     if len(stop)-1 == len(start):
         stop = stop[1:]
     if start[0] > stop[0]:
