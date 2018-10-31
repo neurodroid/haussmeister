@@ -125,7 +125,7 @@ class ThorExperiment(object):
         Default: ""
     mc_method : str, optional
         Motion correction method. One of "hmmc", "dft", "hmmcres", "hmmcframe",
-        "hmmcpx", "calblitz", "normcorr". Default: "hmmc"
+        "hmmcpx", "calblitz", "normcorr", "suite2p". Default: "hmmc"
     detrend : bool, optional
         Whether to detrend fluorescence traces. Default: False
     subtract_halo : float, optional
@@ -140,7 +140,7 @@ class ThorExperiment(object):
     seg_method : str, optional
         One of "thunder" (ROIs are identified by thunder's ICA), "sima" (ROIs
         are identified by SIMA's stICA), "ij" (an ImageJ RoiSet is used),
-        "cnmf" (constrained non-negative matrix factorization).
+        "cnmf" (constrained non-negative matrix factorization), "suite2p".
         Default: "cnmf"
     maxtime : float, optional
         Limit data to maxtime. Default: None
@@ -178,13 +178,19 @@ class ThorExperiment(object):
         self._as_sima_mc = None
         self._as_sima = None
 
-        assert(seg_method in ["thunder", "sima", "ij", "cnmf"])
+        assert(seg_method in ["thunder", "sima", "ij", "cnmf", "suite2p"])
         self.seg_method = seg_method
 
         if self.ftype == "prairie":
             datatrunk = self.data_path
         else:
             datatrunk = os.path.dirname(self.data_path)
+
+        if self.ftype == "doric":
+            max_displacement = [64, 64]
+            print(max_displacement)
+        else:
+            max_displacement = [20, 30]
 
         if self.fnsync is not None:
             self.sync_path = os.path.join(
@@ -213,32 +219,34 @@ class ThorExperiment(object):
         if self.mc_method == "hmmc":
             self.mc_suffix = "_mc"  # special case
             self.mc_approach = sima.motion.HiddenMarkov2D(
-                granularity='row', max_displacement=[20, 30],
+                granularity='row', max_displacement=max_displacement,
                 n_processes=NCPUS, verbose=True)
         elif self.mc_method == "dft":
             self.mc_approach = sima.motion.DiscreteFourier2D(
-                max_displacement=[20, 30], n_processes=NCPUS, verbose=True)
+                max_displacement=max_displacement, n_processes=NCPUS, verbose=True)
         elif self.mc_method == "hmmcres":
             self.mc_approach = sima.motion.ResonantCorrection(
                 sima.motion.HiddenMarkov2D(
-                    granularity='row', max_displacement=[20, 30],
+                    granularity='row', max_displacement=max_displacement,
                     n_processes=4, verbose=True))
         elif self.mc_method == "hmmcframe":
             self.mc_approach = sima.motion.HiddenMarkov2D(
-                granularity='frame', max_displacement=[20, 30],
+                granularity='frame', max_displacement=max_displacement,
                 n_processes=NCPUS, verbose=True)
         elif self.mc_method == "hmmcpx":
             self.mc_approach = sima.motion.HiddenMarkov2D(
-                granularity='column', max_displacement=[20, 30],
+                granularity='column', max_displacement=max_displacement,
                 n_processes=4, verbose=True)
         elif self.mc_method == "calblitz":
             self.mc_approach = motion.CalBlitz(
-                max_displacement=[20, 30], fr=self.to_haussio().fps,
+                max_displacement=max_displacement, fr=self.to_haussio().fps,
                 verbose=True)
         elif self.mc_method == "normcorr":
             self.mc_approach = motion.NormCorr(
-                max_displacement=[20, 30], fr=self.to_haussio().fps,
+                max_displacement=max_displacement, fr=self.to_haussio().fps,
                 verbose=True, savedir=self.data_path_comp + ".sima")
+        elif self.mc_method == "suite2p":
+            self.mc_approach = None
         elif self.mc_method == "none":
             self.mc_suffix = ""
             self.mc_approach = None
@@ -743,6 +751,8 @@ def find_events(norm_meas, track_speed, min_speed, std_scale, fixed_std=None, mi
         start = start[:-1]
     if len(stop)-1 == len(start):
         stop = stop[1:]
+    if not len(start) or not len(stop):
+        return [], []
     if start[0] > stop[0]:
         start = start[:-1]
         stop = stop[1:]
@@ -2527,3 +2537,38 @@ def contiguous_stationary(speed, speed_time, speed_thr, time_thr):
 
     # return inverted mask (stationary: mask=True)
     return np.invert(speed_masked.mask)
+
+
+def read_s2p_results(data, haussio_data):
+    """
+    Extract fluorescence data from ImageJ ROIs
+
+    Parameters
+    ----------
+    data : ThorExperiment
+        The ThorExperiment to be processed
+    haussio_data : haussio.HaussIO
+        haussio.HaussIO instance
+
+    Returns
+    -------
+    results : dictionary 
+        Results from suite2p
+    """
+
+    # Load results from suite2p
+    # Assemble the directory name
+    s2pdir = os.path.join(data.data_path, "suite2p", "plane0")
+    iscell = np.load(os.path.join(s2pdir, "iscell.npy"))
+    F = np.load(os.path.join(s2pdir, "F.npy"))[iscell[:, 0].astype(np.bool)]
+    Fneu = np.load(os.path.join(s2pdir, "Fneu.npy"))[iscell[:, 0].astype(np.bool)]
+    spks = np.load(os.path.join(s2pdir, "spks.npy"))[iscell[:, 0].astype(np.bool)]
+    ops = np.load(os.path.join(s2pdir, "ops.npy"))
+    mean_img = ops.item()['meanImg']
+    mean_img_enhanced = ops.item()['meanImgE']
+    return {
+        "raw": F,
+        "dF_F": F/Fneu,
+        "S": spks,
+        "mean_frames": mean_img,
+        "zproj": mean_img_enhanced}
