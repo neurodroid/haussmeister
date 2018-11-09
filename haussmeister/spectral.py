@@ -196,6 +196,33 @@ def fhilbert(signal):
     return result
 
 def findRipples(signal_bp, signal_noise_bp, std_thresholds=(2, 10), durations=(30, 100), fn_hilbert=None):
+    """
+    Find ripples in a signal
+
+    Parameters
+    ----------
+    signal_bp : numpy.ndarray
+        Signal bandpass-filtered in the ripple band
+    signal_noise_bp : numpy.ndarray
+        Signal bandpass-filtered in the noise band, used as a reference signal
+        to avoid false positives
+    std_thresholds : tuple of ints, optional
+        Detection thresholds, expressed in standard deviations. First element
+        is the minimal detection threshold, second element is the minimal amplitude
+        of the largest point within the ripple
+    durations : tuple of ints, optional
+        Minimal and maximal duration thresholds for a ripple
+    fn_hilbert : string, optional
+        File name of a previously computed hilbert transform in MATLAB format.
+        If the file does not exist, the hilbert transform will be computed and stored
+        to this file name.
+
+    Returns
+    -------
+    ripples, ripplesargmaxs:
+        ripples are the starting and ending indices of the detected ripples.
+        ripplesargmaxs are the indices of the maximal values within each ripple.
+    """
     lowThresholdFactor, highThresholdFactor = std_thresholds
     minInterRippleInterval, maxRippleDuration = durations
     
