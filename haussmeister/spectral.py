@@ -14,11 +14,11 @@ try:
 except ImportError:
     sys.stderr.write("pyfftw unavailable\n")
 
-try:
-    from stfio import plot as stfio_plot
-except ImportError:
-    sys.stderr.write("stfio unavailable\n")
 
+class Timeseries(object):
+    def __init__(self, data, dt):
+        self.data = data
+        self.dt = dt
 
 def fgaussColqu(x, f_c):
     """
@@ -45,7 +45,7 @@ def convolve(x, transfer, arglist, verbose=True):
 
     Parameters
     ----------
-    x : stfio_plot.Timeseries
+    x : Timeseries
         Input data
     transfer : function
         Transfer function
@@ -56,7 +56,7 @@ def convolve(x, transfer, arglist, verbose=True):
 
     Returns
     -------
-    filtered : stfio_plot.Timeseries
+    filtered : Timeseries
         Filtered data
     """
 
@@ -102,7 +102,7 @@ def convolve(x, transfer, arglist, verbose=True):
         sys.stdout.write("done (%.2f ms)\n" % ((time.time()-t0)*1e3))
         sys.stdout.flush()
 
-    return stfio_plot.Timeseries(inputa, x.dt)
+    return Timeseries(inputa, x.dt)
 
 
 def gaussian_filter(x, f_c, verbose=True):
@@ -111,7 +111,7 @@ def gaussian_filter(x, f_c, verbose=True):
 
     Parameters
     ----------
-    x : stfio_plot.Timeseries
+    x : Timeseries
         Input data
     f_c : float
         Cutoff frequency in kHz (-3 dB)
@@ -132,7 +132,7 @@ def lowpass(x, f_c, verbose=True):
 
     Parameters
     ----------
-    x : stfio_plot.Timeseries
+    x : Timeseries
         Input data
     f_c : float
         Cutoff frequency in kHz (-3 dB)
@@ -152,7 +152,7 @@ def highpass(x, f_c, verbose=True):
 
     Parameters
     ----------
-    x : stfio_plot.Timeseries
+    x : Timeseries
         Input data
     f_c : float
         Cutoff frequency in kHz (-3 dB)
