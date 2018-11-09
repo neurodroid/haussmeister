@@ -248,6 +248,8 @@ def findRipples(signal_bp, signal_noise_bp, std_thresholds=(2, 10), durations=(3
             if r1-r2 > minInterRippleSamples:
                 tmpripples[-1][1] = r2
                 tmpripples.append([r1, ripples[1, ir+1]])
+            elif ir == ripples.shape[-2]:
+                tmpripples[-1][1] = ripples[1][-1]
             else:
                 merged = True
         ripples = np.array(tmpripples).T.copy()
