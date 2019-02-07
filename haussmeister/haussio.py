@@ -360,7 +360,8 @@ class HaussIO(object):
             reg_file[j].close()
             if nchannels>1:
                 reg_file_chan2[j].close()
-
+        for j in range(nplanes):
+            print(ops1[j]['nframes'])
         return ops1
 
     def asarray(self):
@@ -827,7 +828,7 @@ class PrairieHaussIO(HaussIO):
 
     def _get_timing(self):
         self.timing = np.array(
-            [float(frame.attrib['absoluteTime'])
+            [float(frame.attrib['relativeTime'])
              for frame in self.xml_root.find('Sequence').findall('Frame')])
 
     def _get_sync(self):
@@ -847,7 +848,7 @@ class PrairieHaussIO(HaussIO):
         sync_dt = []
         assert(len(self.sync_csv))
         for (csv, xml) in zip(self.sync_csv, self.sync_xml):
-            csv2mat = self.sync_path + ".mat"
+            csv2mat = self.sync_path + "_v2.mat"
             if os.path.exists(csv2mat):
                 trace = loadmat(csv2mat)['trace']
             else:
@@ -912,12 +913,12 @@ class PrairieHaussIO(HaussIO):
                     straybytes = len(rawdata)%(framesize)
                     if straybytes > 0:
                         npdata = np.frombuffer(rawdata[:-straybytes], dtype=dtype).reshape(
-                            len(rawdata)//(framesize),
+                            int(len(rawdata)/(framesize)),
                             self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
                         remdata = rawdata[-straybytes:]
                     else:
                         npdata = np.frombuffer(rawdata, dtype=dtype).reshape(
-                            len(rawdata)//(framesize), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
+                            int(len(rawdata)/(framesize)), self.xpx, self.ypx, self.nsamplesperpixel, nchannels)
                         remdata = b''
                     # Data have 13bit offset
                     intchan = int(self.chan) - 1
@@ -1145,8 +1146,11 @@ class DoricHaussIO(HaussIO):
             self.dirnames = [self.dirname]
             self.ffmpeg_fn = self.filetrunk + self.format_index("%") + ".tif"
         if not os.path.isfile(self.dirnames[0]):
-            self.rawfile = os.path.join(
-                self.dirname_comp, "Image_0001_0001.raw")
+            if not self.dirname_comp.endswith('.tif'):
+                self.rawfile = os.path.join(
+                    self.dirname_comp, "Image_0001_0001.raw")
+            else:
+                self.rawfile = self.dirname_comp
             if not os.path.exists(self.rawfile):
                 raise RuntimeError("Could not find " + self.rawfile)
             print(self.dirname[:self.dirname.rfind(".tif")+4])
@@ -1205,9 +1209,19 @@ class DoricHaussIO(HaussIO):
         self.naverage = None
 
     def _read_exposure(self, ifd):
-        return float(
-            ifd[ifd.find('Exposure: ') + len('Exposure: '):][
-                :ifd[ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+        try:
+            return float(
+                ifd[ifd.find('Exposure: ') + len('Exposure: '):][
+                    :ifd[ifd.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+        except ValueError:
+            temptifs = [
+                tifffile.TiffFile(fn) for fn in sorted(glob.glob(
+                    self.dirname[:self.dirname.rfind(".tif")+4]))]
+            metadata = temptifs[0][0].image_description.decode('utf-8').replace("\"", "")
+            return float(
+                metadata[metadata.find('Exposure: ') + len('Exposure: '):][
+                    :metadata[metadata.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+                    
 
     def _get_timing(self):
         dt = self._read_exposure(self.ifd)
@@ -1386,6 +1400,15 @@ def load_haussio(dirname, ftype=None):
             ftype = "prairie"
         elif os.path.exists(os.path.join(dirname, "Experiment.xml")):
             ftype = "thor"
+        else:
+            # find all tiffs:
+            tiffs = glob.glob(os.path.join(dirname, "*.tif"))
+            # attempt to open first tiff:
+            if len(tiffs):
+                sampletiff = tifffile.TiffFile(tiffs[0])
+                sampleifd = sampletiff.info()
+                if 'Exposure' in sampleifd and 'Gain' in sampleifd:
+                    ftype = "doric"
 
     if ftype is None:
         raise RuntimeError("File autodetection only for ThorLabs and Prairie files")
@@ -1395,6 +1418,6 @@ def load_haussio(dirname, ftype=None):
     elif ftype == "si4":
         return SI4HaussIO(dirname)
     elif ftype == "doric":
-        return DoricHaussIO(dirname)
+        return DoricHaussIO(tiffs[0])
     elif ftype == "prairie":
         return PrairieHaussIO(dirname, '1')
