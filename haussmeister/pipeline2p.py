@@ -153,7 +153,8 @@ class ThorExperiment(object):
             fntrack=None, roi_subset="", mc_method="hmmc", detrend=False,
             subtract_halo=1.0, nrois_init=200, roi_translate=None, root_path="",
             ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
-            ignore_sync_errors=False, rois_eliminate=None, mousecal=None):
+            ignore_sync_errors=False, rois_eliminate=None, mousecal=None,
+            rotate_track=None, track_sync=False, cmperpx=None, override_sync_mismatch=False):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -173,6 +174,10 @@ class ThorExperiment(object):
         self.ignore_sync_errors = ignore_sync_errors
         self.rois_eliminate = rois_eliminate
         self.mousecal = mousecal
+        self.rotate_track = rotate_track
+        self.track_sync = track_sync
+        self.cmperpx = cmperpx
+        self.override_sync_mismatch = override_sync_mismatch
         self._as_haussio_mc = None
         self._as_haussio = None
         self._as_sima_mc = None
@@ -247,7 +252,7 @@ class ThorExperiment(object):
                 verbose=True, savedir=self.data_path_comp + ".sima")
         elif self.mc_method == "suite2p":
             self.mc_approach = None
-        elif self.mc_method == "none":
+        elif self.mc_method == "none" or self.mc_method == "doric":
             self.mc_suffix = ""
             self.mc_approach = None
 
@@ -769,6 +774,8 @@ def find_events(norm_meas, track_speed, min_speed, std_scale, fixed_std=None, mi
             if r1-r2 > min_inter_samples:
                 tmpevents[-1][1] = r2
                 tmpevents.append([r1, events[1, ir+1]])
+            elif ir == events.shape[-2]:
+                tmpevents[-1][1] = events[1][-1]
             else:
                 merged = True
         events = np.array(tmpevents).T.copy()
@@ -2559,6 +2566,8 @@ def read_s2p_results(data, haussio_data):
     # Load results from suite2p
     # Assemble the directory name
     s2pdir = os.path.join(data.data_path, "suite2p", "plane0")
+    if not os.path.exists(s2pdir):
+        s2pdir = os.path.join(os.path.dirname(data.data_path), "suite2p", "plane0")
     iscell = np.load(os.path.join(s2pdir, "iscell.npy"))
     F = np.load(os.path.join(s2pdir, "F.npy"))[iscell[:, 0].astype(np.bool)]
     Fneu = np.load(os.path.join(s2pdir, "Fneu.npy"))[iscell[:, 0].astype(np.bool)]
@@ -2567,8 +2576,8 @@ def read_s2p_results(data, haussio_data):
     mean_img = ops.item()['meanImg']
     mean_img_enhanced = ops.item()['meanImgE']
     return {
-        "raw": F,
-        "dF_F": F/Fneu,
+        "Fraw": F,
+        "Fneu": Fneu,
         "S": spks,
         "mean_frames": mean_img,
         "zproj": mean_img_enhanced}
