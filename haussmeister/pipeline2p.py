@@ -144,9 +144,12 @@ class ThorExperiment(object):
         Default: "cnmf"
     maxtime : float, optional
         Limit data to maxtime. Default: None
-    ignore_sync_errors: bool, optional
+    ignore_sync_errors : bool, optional
         Whether to ignore mismatch between imaging and VR recording file
         lengths. Default: False
+    behav_frame_trigger : bool, optional
+        Whether behavioural movie frames were triggered by imaging movie
+        frames. Default: False
     """
     def __init__(
             self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
@@ -154,7 +157,8 @@ class ThorExperiment(object):
             subtract_halo=1.0, nrois_init=200, roi_translate=None, root_path="",
             ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
             ignore_sync_errors=False, rois_eliminate=None, mousecal=None,
-            rotate_track=None, track_sync=False, cmperpx=None, override_sync_mismatch=False):
+            rotate_track=None, track_sync=False, cmperpx=None, override_sync_mismatch=False,
+            behav_frame_trigger=False):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -178,6 +182,11 @@ class ThorExperiment(object):
         self.track_sync = track_sync
         self.cmperpx = cmperpx
         self.override_sync_mismatch = override_sync_mismatch
+        self.behav_frame_trigger = behav_frame_trigger
+        if self.behav_frame_trigger:
+            if not self.track_sync:
+                raise AssertionError(
+                    "behav_frame_trigger == True implies track_sync == True")
         self._as_haussio_mc = None
         self._as_haussio = None
         self._as_sima_mc = None
