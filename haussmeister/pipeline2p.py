@@ -63,15 +63,25 @@ try:
     from . import motion
     from . import decode
 except ValueError:
-    import utils
-    import haussio
-    import movies
-    import scalebars
-    import spectral
-    import cnmf
-    import motion
-    import decode
-
+    try:
+        import utils
+        import haussio
+        import movies
+        import scalebars
+        import spectral
+        import cnmf
+        import motion
+        import decode
+    except ImportError:
+        from haussmeister import utils
+        from haussmeister import haussio
+        from haussmeister import movies
+        from haussmeister import scalebars
+        from haussmeister import spectral
+        from haussmeister import cnmf
+        from haussmeister import motion
+        from haussmeister import decode
+    
 try:
     import stfio
     from stfio import plot as stfio_plot
