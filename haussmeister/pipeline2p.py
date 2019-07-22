@@ -818,6 +818,47 @@ def find_events(norm_meas, track_speed, min_speed, std_scale, fixed_std=None, mi
     return events[0, :], eventmaxs
 
 
+def compute_dff(exp, vrdict, calciumdict_in, config):
+    calciumdict = calciumdict_in.copy()
+    # Neuropil subtraction / normalization
+    if 'dF_F' not in calciumdict:
+        if config['Fneu_factor'] is None:
+            calciumdict['dF_F'] = calciumdict['Fraw']/calciumdict['Fneu']
+        else:
+            calciumdict['dF_F'] = calciumdict['Fraw']-config['Fneu_factor']*calciumdict['Fneu']
+    dt = np.median(np.diff(vrdict['framet2p']))*1e-3
+    if exp.rois_eliminate is None:
+        rois_eliminate = []
+    else:
+        rois_eliminate = exp.rois_eliminate
+    nrois_total = calciumdict['dF_F'].shape[0]
+    nrois_total_range = np.arange(nrois_total)
+    calciumdict['nrois_index_eliminated'] = np.array([
+        nroi for nroi in nrois_total_range if nroi not in rois_eliminate
+    ])
+    calciumdict['dF_F'] = np.array([
+        spectral.lowpass(
+            spectral.highpass(
+                spectral.Timeseries(df.astype(np.float), dt), 0.002, verbose=False),
+            config["F_filter"], verbose=False).data
+        for nroi, df in enumerate(calciumdict['dF_F']) if nroi not in rois_eliminate])
+    calciumdict['S'] = np.array([
+        S for nroi, S in enumerate(calciumdict['S']) if nroi not in rois_eliminate])
+    
+    # Bootstrap
+    calciumdict['dF_F_bs'] = np.empty(calciumdict['dF_F'].shape)
+    calciumdict['dF_F_bs'][:, :int(calciumdict['dF_F_bs'].shape[1]/2)] = \
+        calciumdict['dF_F'][:, -int(calciumdict['dF_F_bs'].shape[1]/2):]
+    calciumdict['dF_F_bs'][:, -int(calciumdict['dF_F_bs'].shape[1]/2):] = \
+        calciumdict['dF_F'][:, :int(calciumdict['dF_F_bs'].shape[1]/2)]
+    calciumdict['S_bs'] = np.empty(calciumdict['S'].shape)
+    calciumdict['S_bs'][:, :int(calciumdict['S_bs'].shape[1]/2)] = \
+        calciumdict['S'][:, -int(calciumdict['S_bs'].shape[1]/2):]
+    calciumdict['S_bs'][:, -int(calciumdict['S_bs'].shape[1]/2):] = \
+        calciumdict['S'][:, :int(calciumdict['S_bs'].shape[1]/2)]
+    return calciumdict
+
+
 def detect_events(cnmfdict, track_speed, std_scale, dt):
     if 'YrA' in cnmfdict.keys():
         C_df_f = caiman_cnmf.utilities.detrend_df_f(
@@ -826,12 +867,15 @@ def detect_events(cnmfdict, track_speed, std_scale, dt):
             cnmfdict['C'].squeeze(),
             cnmfdict['f'].squeeze(),
             cnmfdict['YrA'].squeeze())
-    else:
+    elif ['C'] in cnmfdict.keys():
         C_df_f = cnmfdict['C'].squeeze()
         C_df_f = np.array([
             spectral.lowpass(stfio_plot.Timeseries(C_df_roi, dt), 1.0, verbose=False).data
             for C_df_roi in C_df_f
         ])
+    else:
+        C_df_f = cnmfdict['dF_F']
+
     ievents = [
         find_events(C_df_roi, track_speed, -5, std_scale)[0]
         for C_df_roi in C_df_f
