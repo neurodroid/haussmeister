@@ -163,6 +163,8 @@ class ThorExperiment(object):
     conditions : list, optional
         List of strings defining experimental conditions for each file
         in a series of concatenated files. Default: None
+    session_number : int, optional
+        Session number/index. Default: None
     """
     def __init__(
             self, fn2p, ch2p="A", area2p=None, fnsync=None, fnvr=None,
@@ -171,7 +173,7 @@ class ThorExperiment(object):
             ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
             ignore_sync_errors=False, rois_eliminate=None, mousecal=None,
             rotate_track=None, track_sync=False, cmperpx=None, override_sync_mismatch=False,
-            behav_frame_trigger=False, conditions=None):
+            behav_frame_trigger=False, conditions=None, session_number=None):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -201,6 +203,7 @@ class ThorExperiment(object):
                 raise AssertionError(
                     "behav_frame_trigger == True implies track_sync == True")
         self.conditions = conditions
+        self.session_number = session_number
         self._as_haussio_mc = None
         self._as_haussio = None
         self._as_sima_mc = None
