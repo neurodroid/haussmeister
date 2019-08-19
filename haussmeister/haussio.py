@@ -666,10 +666,12 @@ class ThorHaussIO(HaussIO):
                 for grandchild in child:
                     if grandchild.tag == "Wells":
                         for ggrandchild in grandchild:
-                            self.xsize = float(
-                                ggrandchild.attrib['subOffsetXMM'])*1e3
-                            self.ysize = float(
-                                ggrandchild.attrib['subOffsetYMM'])*1e3
+                            if self.xsize is None:
+                                self.xsize = float(
+                                    ggrandchild.attrib['subOffsetXMM'])*1e3
+                            if self.ysize is None:
+                                self.ysize = float(
+                                    ggrandchild.attrib['subOffsetYMM'])*1e3
 
     def _get_timing(self):
         if "?" in self.dirname:
