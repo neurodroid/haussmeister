@@ -1217,11 +1217,17 @@ class DoricHaussIO(HaussIO):
             temptifs = [
                 tifffile.TiffFile(fn) for fn in sorted(glob.glob(
                     self.dirname[:self.dirname.rfind(".tif")+4]))]
-            metadata = temptifs[0][0].image_description.decode('utf-8').replace("\"", "")
-            return float(
-                metadata[metadata.find('Exposure: ') + len('Exposure: '):][
-                    :metadata[metadata.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
-                    
+            try:
+                metadata = temptifs[0][0].image_description.decode('utf-8').replace("\"", "")
+                return float(
+                    metadata[metadata.find('Exposure: ') + len('Exposure: '):][
+                        :metadata[metadata.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+            except IndexError:
+                print(self.dirname)
+                ts_fn = self.dirname[:self.dirname.rfind(".tif")] + "_timestamps.npy"
+                timestamps = np.load(ts_fn)
+                assert(np.var(np.diff(timestamps))==0)
+                return np.mean(np.diff(timestamps))*1e-3
 
     def _get_timing(self):
         dt = self._read_exposure(self.ifd)
