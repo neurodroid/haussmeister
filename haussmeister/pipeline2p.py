@@ -219,7 +219,7 @@ class ThorExperiment(object):
 
         if self.ftype == "doric":
             max_displacement = [64, 64]
-            print(max_displacement)
+            # print(max_displacement)
         else:
             max_displacement = [20, 30]
 
@@ -2642,7 +2642,7 @@ def read_s2p_results(data, haussio_data):
     F = np.load(os.path.join(s2pdir, "F.npy"))[iscell[:, 0].astype(np.bool)]
     Fneu = np.load(os.path.join(s2pdir, "Fneu.npy"))[iscell[:, 0].astype(np.bool)]
     spks = np.load(os.path.join(s2pdir, "spks.npy"))[iscell[:, 0].astype(np.bool)]
-    ops = np.load(os.path.join(s2pdir, "ops.npy"))
+    ops = np.load(os.path.join(s2pdir, "ops.npy"), allow_pickle=True)
     mean_img = ops.item()['meanImg']
     mean_img_enhanced = ops.item()['meanImgE']
     return {
