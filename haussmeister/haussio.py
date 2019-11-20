@@ -62,6 +62,10 @@ class HaussIO(object):
         Width of frames in pixels
     ypx : int
         Height of frames in pixels
+    flyback : int
+        Number of flyback frames
+    zplanes: int
+        Number of scanned planes
     timing : numpy.ndarray
         Time points of frame acquisitions
     fps : float
@@ -650,7 +654,7 @@ class ThorHaussIO(HaussIO):
 
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
-        self.xpx, self.ypx = None, None
+        self.xpx, self.ypx, self.flyback, self.zplanes = None, None, None, None
         for child in self.xml_root:
             if child.tag == "LSM":
                 self.xpx = int(child.attrib['pixelX'])
@@ -672,6 +676,12 @@ class ThorHaussIO(HaussIO):
                             if self.ysize is None:
                                 self.ysize = float(
                                     ggrandchild.attrib['subOffsetYMM'])*1e3
+            elif child.tag == "Streaming":
+                    self.flyback = int(child.attrib['flybackFrames'])
+                    print('The number of flyback frames are:', self.flyback)
+            elif child.tag == "ZStage":
+                    self.zplanes = int(child.attrib['steps']) + self.flyback
+                    print('The number of planes are:', self.zplanes)
 
     def _get_timing(self):
         if "?" in self.dirname:
