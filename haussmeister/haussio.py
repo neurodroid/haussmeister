@@ -326,23 +326,42 @@ class HaussIO(object):
         nframes_all = rawdata.shape[0]
         # loop over all tiffs
         i0 = 0
+        if nplanes > 1:
+            rawdata.ndim == 4
         while True:
             irange = np.arange(i0, min(i0+nbatch, nframes_all), 1)
             if irange.size==0:
                 break
-            im = rawdata[irange, :, :]
+            if nplanes > 1:
+                im = rawdata[irange, :, : ,:]
+            else:
+                im = rawdata[irange, :, :]
             if i0==0:
-                ops1[j]['meanImg'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
+                if nplanes > 1:
+                    for j in range(0, nplanes):
+                        ops1[j]['meanImg'] = np.zeros((im.shape[2],im.shape[3]),np.float32)
+                else:
+                    ops1[j]['meanImg'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
                 if nchannels>1:
                     ops1[j]['meanImg_chan2'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
-                ops1[j]['nframes'] = 0
+                if nplanes > 1:
+                    for j in range(0,nplanes):
+                        ops1[j]['nframes'] = 0
+                else:
+                    ops1[j]['nframes'] = 0
             nframes = im.shape[0]
             for j in range(0,nplanes):
-                im2write = im[np.arange(j, nframes, nplanes*nchannels),:,:]
+                if nplanes > 1:
+                    im2write = im[:,j,:,:]
+                else:
+                    im2write = im[np.arange(j, nframes, nplanes*nchannels),:,:]
                 reg_file[j].write(bytearray(im2write))
-                ops1[j]['meanImg'] += im2write.astype(np.float32).sum(axis=0)
+                ops1[j]['meanImg'] = ops1[j]['meanImg'] + im2write.astype(np.float32).sum(axis=0)
                 if nchannels>1:
-                    im2write = im[np.arange(j+1, nframes, nplanes*nchannels),:,:]
+                    if nplanes > 1:
+                        im2write = im[:,j,:,:]
+                    else:
+                        im2write = im[np.arange(j+1, nframes, nplanes*nchannels),:,:]
                     reg_file_chan2[j].write(bytearray(im2write))
                     ops1[j]['meanImg_chan2'] += im2write.astype(np.float32).sum(axis=0)
                 ops1[j]['nframes'] += im2write.shape[0]
@@ -655,6 +674,7 @@ class ThorHaussIO(HaussIO):
     def _get_dimensions(self):
         self.xsize, self.ysize = None, None
         self.xpx, self.ypx, self.flyback, self.plane, self.zplanes = None, None, 0, 0, None
+        self.zenable = None
         for child in self.xml_root:
             if child.tag == "LSM":
                 self.xpx = int(child.attrib['pixelX'])
@@ -678,12 +698,15 @@ class ThorHaussIO(HaussIO):
                                     ggrandchild.attrib['subOffsetYMM'])*1e3
             if child.tag == "Streaming":
                     self.flyback = int(child.attrib['flybackFrames'])
-                    print('The number of flyback frames are:', self.flyback)
+                    self.zenable = int(child.attrib['zFastEnable'])
             if child.tag == "ZStage":
-                    self.plane= int(child.attrib['steps']) + self.flyback
-                    print('The number of planes are:', self.plane)
-        self.zplanes = self.flyback + self.plane
-        print('The number of zplanes is:', self.zplanes)
+                    self.plane= int(child.attrib['steps'])
+        if self.plane != None:
+            if self.zenable > 0:
+                self.zplanes = self.flyback + self.plane
+                print('The number of zplanes are:', self.zplanes)
+        else:
+            self.zplanes = 1
 
     def _get_timing(self):
         if "?" in self.dirname:
@@ -706,6 +729,10 @@ class ThorHaussIO(HaussIO):
                         nframes = int(child.attrib['frames'])
                 dt = 1.0/framerate
                 self.timing = np.arange((nframes), dtype=float) * dt
+                if self.zplanes != None:
+                    if self.zplanes > 1:
+                        nframes = int(nframes/self.zplanes)
+                        print('The number of frames is: ', nframes)
 
     def _get_sync(self):
         if self.sync_path is None:
@@ -762,7 +789,12 @@ class ThorHaussIO(HaussIO):
                 if os.path.exists(shapefn):
                     shape = np.load(shapefn)
                 else:
-                    shape = (self.nframes, self.xpx, self.ypx)
+                    if (self.zplanes != None):
+                        if (self.zplanes>1):
+                            self.nframes = int(self.nframes/self.zplanes)
+                            shape = (self.nframes, self.zplanes, self.xpx, self.ypx)
+                    else:
+                        shape = (self.nframes, self.xpx, self.ypx)
                 self.raw_array = raw2np(self.rawfile, shape)[:self.iend]
             else:
                 shapes = [
@@ -1263,7 +1295,11 @@ class DoricHaussIO(HaussIO):
         if os.path.exists(shapefn):
             shape = np.load(shapefn)
         else:
-            shape = (self.nframes, self.xpx, self.ypx)
+            if self.zplanes != None & self.zplanes >1:
+                shape = self.nframes, self.xpx, self.xpy
+            else:
+                shape = (self.nframes, self.xpx, self.ypx)
+
         if shape.shape[0] > 3:
             shape = (shape[0], shape[2], shape[3])
         return shape
