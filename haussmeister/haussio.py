@@ -33,7 +33,10 @@ from scipy.io import loadmat, savemat
 import bottleneck as bn
 
 import sima
-from skimage.external import tifffile
+try:
+    from skimage.external import tifffile
+except ImportError:
+    from sima.misc import tifffile
 try:
     import libtiff
 except (ImportError, NameError):
