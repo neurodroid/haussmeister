@@ -1225,21 +1225,28 @@ class DoricHaussIO(HaussIO):
                     metadata[metadata.find('Exposure: ') + len('Exposure: '):][
                         :metadata[metadata.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
             except IndexError:
-                print(self.dirname)
-                ts_fn = self.dirname[:self.dirname.rfind(".tif")] + "_timestamps.npy"
-                timestamps = np.load(ts_fn)
-                assert(np.var(np.diff(timestamps))==0)
-                return np.mean(np.diff(timestamps))*1e-3
+                return None
 
     def _get_timing(self):
         dt = self._read_exposure(self.ifd)
-        if self.mptifs is not None:
-            nframes = np.sum([
-                len(mptif.pages)-1 for mptif in self.mptifs])
+        if dt is None:
+            print(self.dirname)
+            ts_fn = self.dirname[:self.dirname.rfind(".tif")] + "_timestamps.npy"
+            timestamps = np.load(ts_fn)
+            if np.var(np.diff(timestamps)) != 0:
+                print("WARNING: unevenly sampled time stamps;")
+                print("WARNING: time stamp variance is ", np.var(np.diff(timestamps)))
+                print("WARNING: time stamp mean is ", np.mean(np.diff(timestamps)))
+                print("WARNING: var/mean = ", np.var(np.diff(timestamps))/np.mean(np.diff(timestamps)))
+            self.timing = timestamps * 1e-3
         else:
-            nframes = self._read_shape()[0]
-        self.timing = np.array([
-            dt*nframe for nframe in range(nframes)])
+            if self.mptifs is not None:
+                nframes = np.sum([
+                    len(mptif.pages)-1 for mptif in self.mptifs])
+            else:
+                nframes = self._read_shape()[0]
+            self.timing = np.array([
+                dt*nframe for nframe in range(nframes)])
 
     def _get_sync(self):
         if self.sync_path is None:

@@ -173,7 +173,7 @@ class ThorExperiment(object):
             ftype="thor", dx=None, dt=None, seg_method="cnmf", maxtime=None,
             ignore_sync_errors=False, rois_eliminate=None, mousecal=None,
             rotate_track=None, track_sync=False, cmperpx=None, override_sync_mismatch=False,
-            behav_frame_trigger=False, conditions=None, session_number=None):
+            behav_frame_trigger=False, conditions=None, session_number=None, cut_periods=None):
         self.fn2p = fn2p
         self.ch2p = ch2p
         self.area2p = area2p
@@ -204,6 +204,7 @@ class ThorExperiment(object):
                     "behav_frame_trigger == True implies track_sync == True")
         self.conditions = conditions
         self.session_number = session_number
+        self.cut_periods = cut_periods
         self._as_haussio_mc = None
         self._as_haussio = None
         self._as_sima_mc = None
@@ -867,7 +868,7 @@ def detect_events(cnmfdict, track_speed, std_scale, dt):
             cnmfdict['C'].squeeze(),
             cnmfdict['f'].squeeze(),
             cnmfdict['YrA'].squeeze())
-    elif ['C'] in cnmfdict.keys():
+    elif 'C' in cnmfdict.keys():
         C_df_f = cnmfdict['C'].squeeze()
         C_df_f = np.array([
             spectral.lowpass(stfio_plot.Timeseries(C_df_roi, dt), 1.0, verbose=False).data
