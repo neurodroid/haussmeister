@@ -871,7 +871,7 @@ def detect_events(cnmfdict, track_speed, std_scale, dt):
     elif 'C' in cnmfdict.keys():
         C_df_f = cnmfdict['C'].squeeze()
         C_df_f = np.array([
-            spectral.lowpass(stfio_plot.Timeseries(C_df_roi, dt), 1.0, verbose=False).data
+            spectral.lowpass(spectral.Timeseries(C_df_roi, dt), 1.0, verbose=False).data
             for C_df_roi in C_df_f
         ])
     else:
@@ -931,7 +931,7 @@ def trackspeed(trackdict, cm_per_px=0.11, lopass=0.1):
     )  / np.diff(trackdict['frametimes'].squeeze()) * cm_per_px
     track_speed = np.concatenate([[track_speed[0], ], track_speed])
     track_speed = spectral.lowpass(
-        stfio_plot.Timeseries(track_speed, np.mean(np.diff(trackdict['frametimes']))),
+        spectral.Timeseries(track_speed, np.mean(np.diff(trackdict['frametimes']))),
         lopass, verbose=False).data
     return track_speed
 
@@ -1078,7 +1078,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
         if lopass is not None:
             measured_float = measured[nroi, :].astype(np.float)
             meas_filt = spectral.lowpass(
-                stfio_plot.Timeseries(measured_float, haussio_data.dt),
+                spectral.Timeseries(measured_float, haussio_data.dt),
                 lopass, verbose=False).data[ndiscard:]
         else:
             meas_filt = measured[nroi, ndiscard:]
@@ -1298,7 +1298,7 @@ def plot_rois(rois, measured, haussio_data, zproj, data_path, pdf_suffix="",
             if lopass is not None:
                 measured_float = measured[nroi, :].astype(np.float)
                 meas_filt = spectral.lowpass(
-                    stfio_plot.Timeseries(measured_float, haussio_data.dt),
+                    spectral.Timeseries(measured_float, haussio_data.dt),
                     lopass, verbose=False).data[ndiscard:]
             else:
                 meas_filt = measured[nroi, ndiscard:]
@@ -1904,7 +1904,7 @@ def thor_extract_roi(
         new_dt_step = int(np.round(new_dt/mean_dt))
         new_dt = mean_dt * new_dt_step
         counts = np.array([spectral.lowpass(
-            stfio_plot.Timeseries(
+            spectral.Timeseries(
                 norm(spikes[nroi][ndiscard:]).astype(np.float64) * normamp*2.0, mean_dt),
             new_dt/2.0, verbose=False).data[::new_dt_step] * new_dt
                            for nroi in irois])
