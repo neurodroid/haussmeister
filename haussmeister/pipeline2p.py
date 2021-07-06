@@ -15,6 +15,7 @@ import time
 import pickle
 import tempfile
 import multiprocessing as mp
+import subprocess
 from functools import partial
 
 import numpy as np
@@ -2643,7 +2644,17 @@ def read_s2p_results(data, haussio_data):
     F = np.load(os.path.join(s2pdir, "F.npy"))[iscell[:, 0].astype(np.bool)]
     Fneu = np.load(os.path.join(s2pdir, "Fneu.npy"))[iscell[:, 0].astype(np.bool)]
     spks = np.load(os.path.join(s2pdir, "spks.npy"))[iscell[:, 0].astype(np.bool)]
-    ops = np.load(os.path.join(s2pdir, "ops.npy"), allow_pickle=True)
+    try:
+        ops = np.load(os.path.join(s2pdir, "ops.npy"), allow_pickle=True)
+    except ValueError as exc:
+        pckfn = os.path.join(s2pdir, "ops.npy") + ".pck"
+        process = subprocess.Popen(['python3', os.path.expanduser('~/Trillian/code/py2p/tools/convert.py'), os.path.join(s2pdir, "ops.npy")],
+                     stdout=subprocess.PIPE, 
+                     stderr=subprocess.PIPE)
+        stdout, stderr = process.communicate()
+        print(stdout, stderr)
+        with open(pckfn, 'rb') as pckf:
+            ops = pickle.load(pckf)
     mean_img = ops.item()['meanImg']
     mean_img_enhanced = ops.item()['meanImgE']
     return {
