@@ -2618,7 +2618,7 @@ def contiguous_stationary(speed, speed_time, speed_thr, time_thr):
     return np.invert(speed_masked.mask)
 
 
-def read_s2p_results(data, haussio_data):
+def read_s2p_results(data):
     """
     Extract fluorescence data from ImageJ ROIs
 
@@ -2626,8 +2626,6 @@ def read_s2p_results(data, haussio_data):
     ----------
     data : ThorExperiment
         The ThorExperiment to be processed
-    haussio_data : haussio.HaussIO
-        haussio.HaussIO instance
 
     Returns
     -------

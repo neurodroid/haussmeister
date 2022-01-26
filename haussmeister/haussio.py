@@ -33,13 +33,15 @@ from scipy.io import loadmat, savemat
 import bottleneck as bn
 
 import sima
+# import tifffile
 try:
     from skimage.external import tifffile
 except ImportError:
     from sima.misc import tifffile
+import tifffile as tifffile_new
 try:
     import libtiff
-except (ImportError, NameError):
+except (ImportError, NameError, ValueError):
     sys.stdout.write("Couldn't import libtiff\n")
 
 try:
@@ -1487,3 +1489,30 @@ def load_haussio(dirname, ftype=None):
         return DoricHaussIO(tiffs[0])
     elif ftype == "prairie":
         return PrairieHaussIO(dirname, '1')
+
+def read_doric_metadata(fn):
+    with tifffile_new.TiffFile(fn) as img:
+        p0 = img.pages[0]
+    resdict = {}
+    for tag in p0.tags:
+        if tag.name == "PageNumber":
+            resdict['nframes'] = tag.value[1]
+        if tag.name == "ImageDescription":
+            metadata = tag.value.replace("\"", "")
+            if metadata.find('Exposure: ') < 0:
+                exposure = 0.05
+            else:
+                exposure = float(metadata[metadata.find('Exposure: ') + len('Exposure: '):][
+                    :metadata[metadata.find('Exposure: ')+ len('Exposure: '):].find('ms')]) * 1e-3
+            resdict['fps'] = 1.0/exposure
+            nshape = metadata.find("shape")
+            if nshape >= 0:
+                nbracket = metadata[nshape:].find('[')
+                ncomma = metadata[nshape+nbracket+1:].find(',')
+                resdict['nframes'] = int(metadata[nshape+nbracket+1:nshape+nbracket+1+ncomma])
+
+        if tag.name == "ImageWidth":
+            resdict['x'] = tag.value
+        if tag.name == "ImageLength":
+            resdict['y'] = tag.value
+    return resdict
