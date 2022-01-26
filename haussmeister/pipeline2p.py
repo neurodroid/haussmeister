@@ -2654,7 +2654,11 @@ def read_s2p_results(data):
         with open(pckfn, 'rb') as pckf:
             ops = pickle.load(pckf)
     mean_img = ops.item()['meanImg']
-    mean_img_enhanced = ops.item()['meanImgE']
+    if 'meanImgE' in ops.item().keys():
+        mean_img_enhanced = ops.item()['meanImgE']
+    else:
+        mean_img_enhanced = ops.item()['meanImg']
+
     return {
         "Fraw": F,
         "Fneu": Fneu,

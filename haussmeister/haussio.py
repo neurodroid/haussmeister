@@ -345,29 +345,30 @@ class HaussIO(object):
                 if nplanes > 1:
                     for j in range(0, nplanes):
                         ops1[j]['meanImg'] = np.zeros((im.shape[2],im.shape[3]),np.float32)
+                        if nchannels>1:
+                            ops1[j]['meanImg_chan2'] = np.zeros((im.shape[2],im.shape[3]),np.float32)
                 else:
-                    ops1[j]['meanImg'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
-                if nchannels>1:
-                    ops1[j]['meanImg_chan2'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
+                    ops1[0]['meanImg'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
+                    ops1[0]['meanImg_chan2'] = np.zeros((im.shape[1],im.shape[2]),np.float32)
                 if nplanes > 1:
                     for j in range(0,nplanes):
                         ops1[j]['nframes'] = 0
                 else:
-                    ops1[j]['nframes'] = 0
+                    ops1[0]['nframes'] = 0
             nframes = im.shape[0]
             for j in range(0,nplanes):
                 if nplanes > 1:
                     im2write = im[:,j,:,:]
                 else:
                     im2write = im[np.arange(j, nframes, nplanes*nchannels),:,:]
-                reg_file[j].write(bytearray(im2write))
+                reg_file[j].write(bytearray(im2write.astype('int16')))
                 ops1[j]['meanImg'] = ops1[j]['meanImg'] + im2write.astype(np.float32).sum(axis=0)
                 if nchannels>1:
                     if nplanes > 1:
                         im2write = im[:,j,:,:]
                     else:
                         im2write = im[np.arange(j+1, nframes, nplanes*nchannels),:,:]
-                    reg_file_chan2[j].write(bytearray(im2write))
+                    reg_file_chan2[j].write(bytearray(im2write.astype('int16')))
                     ops1[j]['meanImg_chan2'] += im2write.astype(np.float32).sum(axis=0)
                 ops1[j]['nframes'] += im2write.shape[0]
             i0 += nframes
