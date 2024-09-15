@@ -1,4 +1,4 @@
 # haussmeister
-Handling 2-photon imaging datasets in Python
+Handling 2-photon imaging and electrophysiology datasets in Python
 
 [Documentation](https://neurodroid.github.io/haussmeister)
