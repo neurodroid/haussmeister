@@ -284,7 +284,7 @@ def convolve(x, transfer, arglist, verbose=True):
 
     inputa = x.data.copy()
     outsize = int(len(inputa)/2.0 + 1)
-    outputa = np.empty((outsize), dtype=np.complex)
+    outputa = np.empty((outsize), dtype=complex)
 
     fft = pyfftw.FFTW(inputa, outputa, direction='FFTW_FORWARD',
                       flags=('FFTW_ESTIMATE',), threads=8)
@@ -294,7 +294,7 @@ def convolve(x, transfer, arglist, verbose=True):
     if verbose:
         sys.stdout.write("Computing frequencies... ")
         sys.stdout.flush()
-    f = np.arange(0, len(outputa), dtype=np.float) / (len(inputa) * x.dt)
+    f = np.arange(0, len(outputa), dtype=float) / (len(inputa) * x.dt)
     try:
         assert(len(f) == len(outputa))
     except:

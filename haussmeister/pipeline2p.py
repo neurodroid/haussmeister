@@ -2488,7 +2488,7 @@ def get_rois_cnmf(
                 np.sum(mask2p)/float(mask2p.shape[0])*100.0))
             print("{0} frames".format(np.sum(np.invert(mask2p))))
         else:
-            mask2p = np.zeros(vrdict["speed2p"].shape).astype(np.bool)
+            mask2p = np.zeros(vrdict["speed2p"].shape).astype(bool)
     else:
         mask2p = None
 
@@ -2639,9 +2639,9 @@ def read_s2p_results(data):
     if not os.path.exists(s2pdir):
         s2pdir = os.path.join(os.path.dirname(data.data_path), "suite2p", "plane0")
     iscell = np.load(os.path.join(s2pdir, "iscell.npy"))
-    F = np.load(os.path.join(s2pdir, "F.npy"))[iscell[:, 0].astype(np.bool)]
-    Fneu = np.load(os.path.join(s2pdir, "Fneu.npy"))[iscell[:, 0].astype(np.bool)]
-    spks = np.load(os.path.join(s2pdir, "spks.npy"))[iscell[:, 0].astype(np.bool)]
+    F = np.load(os.path.join(s2pdir, "F.npy"))[iscell[:, 0].astype(bool)]
+    Fneu = np.load(os.path.join(s2pdir, "Fneu.npy"))[iscell[:, 0].astype(bool)]
+    spks = np.load(os.path.join(s2pdir, "spks.npy"))[iscell[:, 0].astype(bool)]
     try:
         ops = np.load(os.path.join(s2pdir, "ops.npy"), allow_pickle=True)
     except ValueError as exc:
